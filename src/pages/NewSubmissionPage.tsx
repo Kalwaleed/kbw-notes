@@ -1,16 +1,19 @@
+import { useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { Loader2 } from 'lucide-react'
 import { AppShell } from '../components/shell'
-import { useTheme, useAuth } from '../hooks'
+import { useTheme, useAuth, useSubmissions } from '../hooks'
 
 export function NewSubmissionPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { theme, toggleTheme } = useTheme()
+  useTheme()
   const { user, signOut } = useAuth()
+  const { create } = useSubmissions()
 
   const navigationItems = [
+    { label: 'Home', href: '/', isActive: false },
     { label: 'Submissions', href: '/submissions', isActive: location.pathname.startsWith('/submissions') },
-    { label: 'Notifications', href: '/notifications', isActive: false },
   ]
 
   const handleNavigate = (href: string) => {
@@ -34,6 +37,53 @@ export function NewSubmissionPage() {
       }
     : undefined
 
+  // Create new submission and redirect to edit page
+  useEffect(() => {
+    if (!user) return
+
+    const createAndRedirect = async () => {
+      const submission = await create()
+      if (submission) {
+        navigate(`/submissions/${submission.id}`, { replace: true })
+      } else {
+        navigate('/submissions', { replace: true })
+      }
+    }
+
+    createAndRedirect()
+  }, [user, create, navigate])
+
+  // Require authentication
+  if (!user) {
+    return (
+      <AppShell
+        navigationItems={navigationItems}
+        user={userDisplay}
+        onNavigate={handleNavigate}
+        onLogout={handleLogout}
+        onSignIn={handleSignIn}
+      >
+        <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+          <h1
+            className="text-2xl font-bold text-slate-900 dark:text-white mb-4"
+            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+          >
+            Sign in to create a submission
+          </h1>
+          <p className="text-slate-600 dark:text-slate-400 mb-6">
+            You need to be logged in to create blog submissions.
+          </p>
+          <button
+            onClick={handleSignIn}
+            className="px-6 py-3 text-sm font-medium rounded-lg bg-violet-600 text-white hover:bg-violet-700 transition-colors"
+          >
+            Sign In
+          </button>
+        </div>
+      </AppShell>
+    )
+  }
+
   return (
     <AppShell
       navigationItems={navigationItems}
@@ -42,42 +92,9 @@ export function NewSubmissionPage() {
       onLogout={handleLogout}
       onSignIn={handleSignIn}
     >
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1
-              className="text-3xl font-bold text-slate-900 dark:text-white"
-              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-            >
-              New Submission
-            </h1>
-            <p className="mt-1 text-slate-600 dark:text-slate-400">
-              Submit a new blog post for review
-            </p>
-          </div>
-          <button
-            onClick={toggleTheme}
-            className="px-4 py-2 text-sm font-medium rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors"
-          >
-            {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-          </button>
-        </div>
-
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-8 text-center">
-          <p className="text-slate-500 dark:text-slate-400">
-            Submission form will be implemented in the User Submissions milestone.
-          </p>
-          <p className="mt-2 text-sm text-slate-400 dark:text-slate-500">
-            Route: <code className="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded">/submissions/new</code>
-          </p>
-
-          <button
-            onClick={() => navigate('/submissions')}
-            className="mt-6 px-4 py-2 text-sm font-medium rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors"
-          >
-            Back to Submissions
-          </button>
-        </div>
+      <div className="flex flex-col items-center justify-center py-16">
+        <Loader2 className="w-8 h-8 text-violet-500 animate-spin mb-4" />
+        <p className="text-slate-600 dark:text-slate-400">Creating new submission...</p>
       </div>
     </AppShell>
   )

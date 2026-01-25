@@ -7,7 +7,7 @@ export function ProfileSetupPage() {
   const location = useLocation()
   const { theme, toggleTheme } = useTheme()
   const { user, isLoading: authLoading } = useAuth()
-  const { profile, isLoading: profileLoading, updateProfile, createProfile, profileComplete } = useProfile(user?.id)
+  const { profile, isLoading: profileLoading, updateProfile, createProfile } = useProfile(user?.id)
 
   // Form state
   const [displayName, setDisplayName] = useState('')

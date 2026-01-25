@@ -1,22 +1,30 @@
 // Submission Types
 
-export type SubmissionStatus = 'pending' | 'approved' | 'rejected'
+export type SubmissionStatus = 'draft' | 'published'
 
 export interface Submission {
   id: string
+  authorId: string
   title: string
+  slug: string | null
+  excerpt: string
   content: string
-  category: string
-  tags: string[]
   coverImageUrl: string | null
+  tags: string[]
   status: SubmissionStatus
-  submittedAt: string
+  publishedAt: string | null
+  createdAt: string
   updatedAt: string
-  feedback: string | null
 }
 
-export interface Category {
-  id: string
-  name: string
-  slug: string
+export interface SubmissionFormData {
+  title: string
+  excerpt: string
+  content: string
+  coverImageUrl: string | null
+  tags: string[]
+}
+
+export interface SubmissionListFilter {
+  status?: SubmissionStatus | 'all'
 }

@@ -1,9 +1,10 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import type { BlogPostCommentsProps, Comment } from './types'
 import { CommentThread } from './CommentThread'
 import { CommentForm } from './CommentForm'
 import { BlogPostSkeleton, CommentSkeleton } from './BlogPostSkeleton'
-import { Twitter, Linkedin, Link2, Clock, MessageCircle, ChevronDown } from 'lucide-react'
+import { Twitter, Linkedin, Link2, Clock, MessageCircle, ChevronDown, ArrowLeft } from 'lucide-react'
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString)
@@ -71,6 +72,7 @@ export function BlogPostView({
   onReport,
   onLoadMore,
 }: BlogPostCommentsProps) {
+  const navigate = useNavigate()
   const [isLoadingMore, setIsLoadingMore] = useState(false)
 
   // Filter comments: show approved OR show to author if pending review
@@ -106,8 +108,24 @@ export function BlogPostView({
     return <BlogPostSkeleton />
   }
 
+  const handleBack = () => {
+    navigate(-1) // Go back to previous page
+  }
+
   return (
-    <div className="min-h-screen bg-slate-300 dark:bg-slate-900 py-8 sm:py-12 md:py-16 px-4 sm:px-6">
+    <div className="min-h-screen bg-slate-300 dark:bg-slate-900 py-8 sm:py-12 md:py-16 px-4 sm:px-6 relative">
+      {/* Back button - fixed at top right */}
+      <div className="fixed top-4 right-4 sm:top-6 sm:right-6 z-50">
+        <button
+          onClick={handleBack}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 shadow-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700"
+          title="Go back"
+          aria-label="Go back"
+        >
+          <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
+          <span className="hidden sm:inline text-sm font-medium">Back</span>
+        </button>
+      </div>
       {/* Elevated article card */}
       <article className="max-w-3xl mx-auto bg-white dark:bg-slate-800 rounded-2xl shadow-xl shadow-slate-400/30 dark:shadow-slate-950/50 overflow-hidden">
         {/* Decorative top gradient bar */}

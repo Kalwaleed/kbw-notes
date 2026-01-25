@@ -1,16 +1,18 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import { AppShell } from '../components/shell'
-import { useTheme, useAuth } from '../hooks'
+import { SubmissionsList } from '../components/submissions'
+import { useTheme, useAuth, useSubmissions } from '../hooks'
 
 export function SubmissionsPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { theme, toggleTheme } = useTheme()
+  useTheme()
   const { user, signOut } = useAuth()
+  const { submissions, isLoading, error, create, remove } = useSubmissions()
 
   const navigationItems = [
+    { label: 'Home', href: '/', isActive: false },
     { label: 'Submissions', href: '/submissions', isActive: location.pathname.startsWith('/submissions') },
-    { label: 'Notifications', href: '/notifications', isActive: false },
   ]
 
   const handleNavigate = (href: string) => {
@@ -26,6 +28,26 @@ export function SubmissionsPage() {
     navigate('/login', { state: { from: location.pathname } })
   }
 
+  const handleNewSubmission = async () => {
+    const submission = await create()
+    if (submission) {
+      navigate(`/submissions/${submission.id}`)
+    }
+  }
+
+  const handleEditSubmission = (id: string) => {
+    navigate(`/submissions/${id}`)
+  }
+
+  const handleViewSubmission = (id: string) => {
+    // TODO: Navigate to public post view when slug is available
+    navigate(`/submissions/${id}`)
+  }
+
+  const handleDeleteSubmission = async (id: string) => {
+    await remove(id)
+  }
+
   // User display info
   const userDisplay = user
     ? {
@@ -33,6 +55,37 @@ export function SubmissionsPage() {
         avatarUrl: user.user_metadata?.avatar_url,
       }
     : undefined
+
+  // Require authentication
+  if (!user) {
+    return (
+      <AppShell
+        navigationItems={navigationItems}
+        user={userDisplay}
+        onNavigate={handleNavigate}
+        onLogout={handleLogout}
+        onSignIn={handleSignIn}
+      >
+        <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+          <h1
+            className="text-2xl font-bold text-slate-900 dark:text-white mb-4"
+            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+          >
+            Sign in to view your submissions
+          </h1>
+          <p className="text-slate-600 dark:text-slate-400 mb-6">
+            You need to be logged in to create and manage blog submissions.
+          </p>
+          <button
+            onClick={handleSignIn}
+            className="px-6 py-3 text-sm font-medium rounded-lg bg-violet-600 text-white hover:bg-violet-700 transition-colors"
+          >
+            Sign In
+          </button>
+        </div>
+      </AppShell>
+    )
+  }
 
   return (
     <AppShell
@@ -42,44 +95,15 @@ export function SubmissionsPage() {
       onLogout={handleLogout}
       onSignIn={handleSignIn}
     >
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1
-              className="text-3xl font-bold text-slate-900 dark:text-white"
-              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-            >
-              Submissions
-            </h1>
-            <p className="mt-1 text-slate-600 dark:text-slate-400">
-              Your blog post submissions
-            </p>
-          </div>
-          <div className="flex gap-3">
-            <button
-              onClick={() => navigate('/submissions/new')}
-              className="px-4 py-2 text-sm font-medium rounded-lg bg-violet-600 text-white hover:bg-violet-700 transition-colors"
-            >
-              New Submission
-            </button>
-            <button
-              onClick={toggleTheme}
-              className="px-4 py-2 text-sm font-medium rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors"
-            >
-              {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-            </button>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-8 text-center">
-          <p className="text-slate-500 dark:text-slate-400">
-            Submission list will be implemented in the User Submissions milestone.
-          </p>
-          <p className="mt-2 text-sm text-slate-400 dark:text-slate-500">
-            Route: <code className="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded">/submissions</code>
-          </p>
-        </div>
-      </div>
+      <SubmissionsList
+        submissions={submissions}
+        isLoading={isLoading}
+        error={error}
+        onNewSubmission={handleNewSubmission}
+        onEditSubmission={handleEditSubmission}
+        onViewSubmission={handleViewSubmission}
+        onDeleteSubmission={handleDeleteSubmission}
+      />
     </AppShell>
   )
 }

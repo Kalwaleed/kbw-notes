@@ -1,15 +1,25 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import { AppShell } from '../components/shell'
-import { useTheme, useAuth } from '../hooks'
+import { NotificationsList } from '../components/notifications'
+import { useTheme, useAuth, useNotifications } from '../hooks'
 
 export function NotificationsPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { theme, toggleTheme } = useTheme()
   const { user, signOut } = useAuth()
+  const {
+    notifications,
+    unreadCount,
+    isLoading,
+    error,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification,
+  } = useNotifications()
 
   const navigationItems = [
-    { label: 'Submissions', href: '/submissions', isActive: false },
+    { label: 'Home', href: '/', isActive: false },
     { label: 'Notifications', href: '/notifications', isActive: location.pathname === '/notifications' },
   ]
 
@@ -63,14 +73,18 @@ export function NotificationsPage() {
           </button>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-8 text-center">
-          <p className="text-slate-500 dark:text-slate-400">
-            Notifications will be implemented in a future milestone.
-          </p>
-          <p className="mt-2 text-sm text-slate-400 dark:text-slate-500">
-            Route: <code className="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded">/notifications</code>
-          </p>
-        </div>
+        <NotificationsList
+          notifications={notifications}
+          unreadCount={unreadCount}
+          isLoading={isLoading}
+          error={error}
+          isAuthenticated={!!user}
+          onMarkAsRead={markAsRead}
+          onMarkAllAsRead={markAllAsRead}
+          onDelete={deleteNotification}
+          onNavigate={handleNavigate}
+          onSignIn={handleSignIn}
+        />
       </div>
     </AppShell>
   )

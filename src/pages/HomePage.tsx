@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { Settings } from 'lucide-react'
 import { AppShell } from '../components/shell'
 import { BlogFeed } from '../components/blog-feed'
 import { useTheme, useAuth, useProfile, useBlogPosts, usePostEngagement } from '../hooks'
@@ -23,6 +24,7 @@ export function HomePage() {
   const navigationItems = [
     { label: 'Submissions', href: '/submissions', isActive: location.pathname === '/submissions' },
     { label: 'Notifications', href: '/notifications', isActive: location.pathname === '/notifications' },
+    { label: 'Settings', href: '/settings', isActive: location.pathname === '/settings' },
   ]
 
   const handleNavigate = (href: string) => {
@@ -139,12 +141,21 @@ export function HomePage() {
               Tech discoveries, projects, and insights
             </p>
           </div>
-          <button
-            onClick={toggleTheme}
-            className="px-4 py-2 text-sm font-medium rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors"
-          >
-            {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={toggleTheme}
+              className="px-4 py-2 text-sm font-medium rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors"
+            >
+              {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+            </button>
+            <button
+              onClick={() => navigate('/settings')}
+              className="p-2 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors"
+              aria-label="Settings"
+            >
+              <Settings className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Blog Feed */}

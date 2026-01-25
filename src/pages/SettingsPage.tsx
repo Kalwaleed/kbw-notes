@@ -1,4 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
 import { AppShell } from '../components/shell'
 import { useAuth, useSettings } from '../hooks'
 import {
@@ -25,8 +26,8 @@ export function SettingsPage() {
   } = useSettings()
 
   const navigationItems = [
-    { label: 'Submissions', href: '/submissions', isActive: false },
-    { label: 'Notifications', href: '/notifications', isActive: false },
+    { label: 'Home', href: '/', isActive: false },
+    { label: 'Settings', href: '/settings', isActive: location.pathname === '/settings' },
   ]
 
   const handleNavigate = (href: string) => {
@@ -59,6 +60,14 @@ export function SettingsPage() {
       onSignIn={handleSignIn}
     >
       <div className="space-y-6">
+        <button
+          onClick={() => navigate('/')}
+          className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Home
+        </button>
+
         <div className="mb-8">
           <h1
             className="text-3xl font-bold text-slate-900 dark:text-white"
