@@ -11,16 +11,22 @@ export interface ProfileUpdate {
 // Use localStorage to track profile completion (workaround for schema cache)
 const PROFILE_COMPLETE_KEY = 'kbw_profile_complete'
 
+/**
+ * Validate profile completion flag from localStorage
+ * Only 'true' is accepted, anything else is false
+ */
+function validateProfileComplete(): boolean {
+  if (typeof window === 'undefined') return false
+  const stored = localStorage.getItem(PROFILE_COMPLETE_KEY)
+  // Strict validation: only exactly 'true' is valid
+  return stored === 'true'
+}
+
 export function useProfile(userId: string | undefined) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [localProfileComplete, setLocalProfileComplete] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem(PROFILE_COMPLETE_KEY) === 'true'
-    }
-    return false
-  })
+  const [localProfileComplete, setLocalProfileComplete] = useState<boolean>(validateProfileComplete)
 
   // Fetch profile
   useEffect(() => {

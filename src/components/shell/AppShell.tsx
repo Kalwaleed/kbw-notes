@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import { Bell } from 'lucide-react'
 import { MainNav } from './MainNav'
 import { UserMenu, type User } from './UserMenu'
+import { useUnreadCount } from '../../hooks/useNotifications'
 
 export interface NavigationItem {
   label: string
@@ -23,9 +25,9 @@ export function AppShell({
   user,
   onNavigate,
   onLogout,
-  onSignIn,
 }: AppShellProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const { count: unreadCount } = useUnreadCount()
 
   const handleLogoClick = () => {
     onNavigate?.('/')
@@ -34,6 +36,10 @@ export function AppShell({
   const handleMobileNavigate = (href: string) => {
     setMobileMenuOpen(false)
     onNavigate?.(href)
+  }
+
+  const handleNotificationsClick = () => {
+    onNavigate?.('/notifications')
   }
 
   return (
@@ -58,14 +64,29 @@ export function AppShell({
                 <MainNav items={navigationItems} onNavigate={onNavigate} />
               </div>
 
-              {/* User Menu or Sign In */}
+              {/* Notification Bell */}
+              {user && (
+                <button
+                  onClick={handleNotificationsClick}
+                  className="relative p-2 text-slate-600 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
+                  aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
+                >
+                  <Bell className="w-5 h-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-xs font-bold text-white bg-violet-500 rounded-full">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
+                </button>
+              )}
+
+              {/* User Menu or Sign In button */}
               {user ? (
                 <UserMenu user={user} onNavigate={onNavigate} onLogout={onLogout} />
               ) : (
                 <button
-                  onClick={onSignIn}
-                  className="px-4 py-2 text-sm font-medium text-white bg-violet-600 hover:bg-violet-500 rounded-lg transition-colors shadow-sm shadow-violet-500/20"
-                  style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                  onClick={() => onNavigate?.('/login')}
+                  className="px-4 py-2 text-sm font-medium rounded-lg bg-violet-600 text-white hover:bg-violet-700 transition-colors"
                 >
                   Sign In
                 </button>
@@ -125,18 +146,6 @@ export function AppShell({
                   {item.label}
                 </button>
               ))}
-              {!user && (
-                <button
-                  onClick={() => {
-                    setMobileMenuOpen(false)
-                    onSignIn?.()
-                  }}
-                  className="block w-full text-center px-3 py-2.5 mt-2 rounded-lg text-sm font-medium bg-violet-600 text-white hover:bg-violet-500 transition-colors"
-                  style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                >
-                  Sign In
-                </button>
-              )}
             </div>
           </div>
         )}

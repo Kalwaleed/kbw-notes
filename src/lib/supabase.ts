@@ -3,13 +3,13 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
+// Fail fast if credentials are missing - don't silently use placeholders
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn(
-    'Supabase environment variables not set. Please create a .env file with VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.'
+  throw new Error(
+    'FATAL: Supabase credentials not configured. ' +
+    'Create .env.local with VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY. ' +
+    'See .env.example for template.'
   )
 }
 
-export const supabase = createClient(
-  supabaseUrl || 'https://placeholder.supabase.co',
-  supabaseAnonKey || 'placeholder-key'
-)
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)

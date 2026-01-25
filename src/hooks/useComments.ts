@@ -64,16 +64,12 @@ export function useComments(postId: string): UseCommentsResult {
   // Add a new top-level comment via AI moderation
   const addComment = useCallback(
     async (content: string) => {
-      console.log('[useComments] addComment called', { postId, content: content.substring(0, 20) })
-
       // Clear any previous moderation error
       setModerationError(null)
 
       try {
-        console.log('[useComments] Calling submitCommentForModeration...')
         // Submit to Edge Function for AI moderation + insert
         const commentId = await submitCommentForModeration(postId, content, null)
-        console.log('[useComments] Comment created with ID:', commentId)
 
         // Fetch the newly created comment to add to state
         const newComment = await fetchCommentById(commentId)

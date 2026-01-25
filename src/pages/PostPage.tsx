@@ -37,7 +37,7 @@ export function PostPage() {
     try {
       await navigator.clipboard.writeText(window.location.href)
     } catch {
-      console.log('Could not copy link')
+      // Silently fail - clipboard may not be available
     }
   }
 
@@ -54,13 +54,11 @@ export function PostPage() {
     await deleteComment(commentId)
   }
 
-  const handleReact = (commentId: string) => {
-    console.log('React to comment:', commentId)
+  const handleReact = (_commentId: string) => {
     // TODO: Implement reactions table
   }
 
-  const handleReport = (commentId: string) => {
-    console.log('Report comment:', commentId)
+  const handleReport = (_commentId: string) => {
     // TODO: Implement reports table
   }
 

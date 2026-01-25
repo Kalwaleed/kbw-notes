@@ -37,8 +37,6 @@ export function CommentForm({
   moderationError,
   onClearModerationError,
 }: CommentFormProps) {
-  console.log('[CommentForm] Render with props:', { hasOnSubmit: !!onSubmit, isReply, externalIsSubmitting })
-
   const [content, setContent] = useState('')
   const [isFocused, setIsFocused] = useState(false)
   const [internalIsSubmitting, setInternalIsSubmitting] = useState(false)
@@ -78,24 +76,18 @@ export function CommentForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    console.log('[CommentForm] handleSubmit called', { isEmpty, isOverLimit, isSubmitting, content: content.substring(0, 20) })
-
     if (isEmpty || isOverLimit || isSubmitting) {
-      console.log('[CommentForm] Early return:', { isEmpty, isOverLimit, isSubmitting })
       return
     }
 
     setInternalIsSubmitting(true)
     try {
-      console.log('[CommentForm] Calling onSubmit...')
       await onSubmit?.(content.trim())
-      console.log('[CommentForm] onSubmit completed successfully')
       setContent('')
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto'
       }
-    } catch (err) {
-      console.error('[CommentForm] Error in onSubmit:', err)
+    } catch {
       // Error handling is done in the hook - moderation errors are shown via moderationError prop
     } finally {
       setInternalIsSubmitting(false)
@@ -106,7 +98,6 @@ export function CommentForm({
     // Submit on Enter or Cmd/Ctrl + Enter
     if (e.key === 'Enter' && !e.shiftKey && !isEmpty && !isOverLimit && !isSubmitting) {
       e.preventDefault() // Prevent newline
-      console.log('[CommentForm] Enter key pressed, submitting')
       handleSubmit(e)
     }
     // Cancel on Escape in reply mode
@@ -196,10 +187,6 @@ export function CommentForm({
           <button
             type="submit"
             disabled={isEmpty || isOverLimit || isSubmitting}
-            onClick={() => {
-              console.log('[CommentForm] Button clicked directly')
-              // Form onSubmit should handle this, but adding as fallback
-            }}
             className={`
               p-2 rounded-lg transition-all
               ${isEmpty || isOverLimit || isSubmitting

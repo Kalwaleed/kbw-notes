@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { Comment } from './types'
-import { Heart, MessageCircle, Flag, ShieldCheck, Clock, Trash2, X, Check } from 'lucide-react'
+import { Heart, MessageCircle, Flag, ShieldCheck, Clock, Trash2 } from 'lucide-react'
 import { CommentForm } from './CommentForm'
 
 interface CommentThreadProps {
@@ -45,13 +45,14 @@ export function CommentThread({
   const maxDepth = 3
   const isNested = depth > 0
   const canNestFurther = depth < maxDepth
-  const isOwnComment = currentUserId === comment.commenter.id
   const isDeleted = comment.content === '[This comment has been deleted]'
-  const isPendingReview = !comment.isModerated && isOwnComment
+  const isPendingReview = !comment.isModerated
+  const isOwnComment = currentUserId && comment.commenter.id === currentUserId
+  const hasUserAvatar = comment.commenter.avatar && comment.commenter.avatar.length > 0
 
   const [isReplying, setIsReplying] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const handleReplySubmit = async (content: string) => {
     setIsSubmitting(true)
@@ -64,12 +65,12 @@ export function CommentThread({
   }
 
   const handleDelete = async () => {
-    setIsSubmitting(true)
+    if (!window.confirm('Are you sure you want to delete this comment?')) return
+    setIsDeleting(true)
     try {
       await onDelete?.(comment.id)
-      setShowDeleteConfirm(false)
     } finally {
-      setIsSubmitting(false)
+      setIsDeleting(false)
     }
   }
 
@@ -83,14 +84,15 @@ export function CommentThread({
       <div className="py-4">
         {/* Comment header */}
         <div className="flex items-start gap-3">
-          {comment.commenter.avatar ? (
+          {/* User avatar or anonymous fallback */}
+          {hasUserAvatar ? (
             <img
               src={comment.commenter.avatar}
               alt={comment.commenter.name}
-              className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-200 dark:bg-slate-700 shrink-0 object-cover"
+              className="w-8 h-8 sm:w-10 sm:h-10 rounded-full shrink-0 object-cover"
             />
           ) : (
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-violet-400 to-indigo-500 shrink-0 flex items-center justify-center">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-slate-400 to-slate-500 shrink-0 flex items-center justify-center">
               <span className="text-white font-medium text-sm">
                 {comment.commenter.name.charAt(0).toUpperCase()}
               </span>
@@ -101,6 +103,11 @@ export function CommentThread({
               <span className="font-bold text-slate-900 dark:text-white text-sm sm:text-base">
                 {comment.commenter.name}
               </span>
+              {isOwnComment && (
+                <span className="px-1.5 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 text-xs font-medium">
+                  You
+                </span>
+              )}
               <span className="text-slate-400 dark:text-slate-500 text-xs sm:text-sm">
                 {formatRelativeTime(comment.createdAt)}
               </span>
@@ -114,11 +121,6 @@ export function CommentThread({
                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs">
                   <Clock className="w-3 h-3" strokeWidth={2} />
                   <span className="hidden sm:inline">Pending Review</span>
-                </span>
-              )}
-              {isOwnComment && !isDeleted && (
-                <span className="px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 text-xs">
-                  You
                 </span>
               )}
             </div>
@@ -170,47 +172,27 @@ export function CommentThread({
                   </button>
                 )}
 
+                {/* Delete button - only for own comments */}
                 {isOwnComment && (
-                  showDeleteConfirm ? (
-                    <div className="inline-flex items-center gap-1 ml-auto">
-                      <span className="text-xs text-slate-500 dark:text-slate-400 mr-1">Delete?</span>
-                      <button
-                        onClick={handleDelete}
-                        disabled={isSubmitting}
-                        className="p-1.5 rounded-full text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                        aria-label="Confirm delete"
-                      >
-                        <Check className="w-4 h-4" strokeWidth={1.5} />
-                      </button>
-                      <button
-                        onClick={() => setShowDeleteConfirm(false)}
-                        className="p-1.5 rounded-full text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                        aria-label="Cancel delete"
-                      >
-                        <X className="w-4 h-4" strokeWidth={1.5} />
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => setShowDeleteConfirm(true)}
-                      className="inline-flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-full text-xs sm:text-sm text-slate-400 dark:text-slate-500 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 dark:hover:text-red-400 transition-colors"
-                      aria-label="Delete comment"
-                    >
-                      <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" strokeWidth={1.5} />
-                      <span className="hidden sm:inline">Delete</span>
-                    </button>
-                  )
-                )}
-
-                {!isOwnComment && (
                   <button
-                    onClick={() => onReport?.(comment.id)}
-                    className="inline-flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-full text-xs sm:text-sm text-slate-400 dark:text-slate-500 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 dark:hover:text-red-400 transition-colors ml-auto"
-                    aria-label="Report comment"
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                    className="inline-flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-full text-xs sm:text-sm text-slate-400 dark:text-slate-500 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 dark:hover:text-red-400 transition-colors disabled:opacity-50"
+                    aria-label="Delete comment"
                   >
-                    <Flag className="w-3.5 h-3.5 sm:w-4 sm:h-4" strokeWidth={1.5} />
+                    <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" strokeWidth={1.5} />
+                    <span className="hidden sm:inline">Delete</span>
                   </button>
                 )}
+
+                {/* Report button - available to all */}
+                <button
+                  onClick={() => onReport?.(comment.id)}
+                  className="inline-flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-full text-xs sm:text-sm text-slate-400 dark:text-slate-500 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 dark:hover:text-red-400 transition-colors ml-auto"
+                  aria-label="Report comment"
+                >
+                  <Flag className="w-3.5 h-3.5 sm:w-4 sm:h-4" strokeWidth={1.5} />
+                </button>
               </div>
             )}
 
@@ -218,7 +200,7 @@ export function CommentThread({
             {isReplying && (
               <div className="mt-4">
                 <CommentForm
-                  placeholder={`Reply to ${comment.commenter.name}...`}
+                  placeholder="Write a reply..."
                   isReply
                   isSubmitting={isSubmitting}
                   autoFocus

@@ -2,12 +2,31 @@ import { useState, useEffect } from 'react'
 
 type Theme = 'light' | 'dark'
 
+const VALID_THEMES: Theme[] = ['light', 'dark']
+
+/**
+ * Validate theme value from localStorage
+ * Only accepts 'light' or 'dark', falls back to system preference
+ */
+function validateTheme(value: unknown): Theme | null {
+  if (typeof value === 'string' && VALID_THEMES.includes(value as Theme)) {
+    return value as Theme
+  }
+  return null
+}
+
 export function useTheme() {
   const [theme, setTheme] = useState<Theme>(() => {
-    // Check localStorage first
+    // Check localStorage first with validation
     if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('theme') as Theme | null
-      if (stored) return stored
+      const stored = localStorage.getItem('theme')
+      const validated = validateTheme(stored)
+      if (validated) return validated
+
+      // Invalid value stored - clear it
+      if (stored !== null) {
+        localStorage.removeItem('theme')
+      }
 
       // Fall back to system preference
       if (window.matchMedia('(prefers-color-scheme: dark)').matches) {

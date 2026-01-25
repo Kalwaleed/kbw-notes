@@ -1,12 +1,30 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts'
 
-// Types
-interface ModerationRequest {
-  postId: string
-  content: string
-  parentId?: string | null
-}
+// Request validation schema
+const ModerationRequestSchema = z.object({
+  postId: z.string().uuid(),
+  content: z.string().min(1).max(2000),
+  parentId: z.string().uuid().nullable().optional(),
+})
+
+// Response validation schema for Claude API
+const ModerationResultSchema = z.object({
+  approved: z.boolean(),
+  category: z.enum([
+    'approved',
+    'hate_speech',
+    'harassment',
+    'profanity',
+    'explicit',
+    'spam',
+    'misinformation',
+    'illegal',
+    'error',
+  ]),
+  reason: z.string().nullable(),
+})
 
 interface ModerationResponse {
   approved: boolean
@@ -15,10 +33,25 @@ interface ModerationResponse {
   category?: string
 }
 
-// CORS headers for browser requests
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+// Allowed origins for CORS
+const ALLOWED_ORIGINS = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'https://kbw-notes.com',
+  'https://www.kbw-notes.com',
+]
+
+// Get CORS headers based on request origin
+function getCorsHeaders(req: Request): Record<string, string> {
+  const origin = req.headers.get('origin') || ''
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ''
+
+  return {
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Headers':
+      'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Credentials': 'true',
+  }
 }
 
 // The moderation system prompt
@@ -49,31 +82,12 @@ Respond ONLY with a JSON object in this exact format:
 
 Be STRICT but FAIR. When in doubt about borderline cases, lean toward rejection for safety.`
 
-// Simple in-memory rate limiting (by IP for anonymous users)
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
-const RATE_LIMIT = 10  // comments per minute
-const RATE_WINDOW = 60 * 1000  // 1 minute
+// Rate limit configuration
+const RATE_LIMIT = 10 // comments per minute
+const RATE_WINDOW_MS = 60 * 1000 // 1 minute
 
-function checkRateLimit(identifier: string): boolean {
-  const now = Date.now()
-  const limit = rateLimitMap.get(identifier)
-
-  if (!limit || now > limit.resetAt) {
-    rateLimitMap.set(identifier, { count: 1, resetAt: now + RATE_WINDOW })
-    return true
-  }
-
-  if (limit.count >= RATE_LIMIT) {
-    return false
-  }
-
-  limit.count++
-  return true
-}
-
-// Get client IP for rate limiting anonymous users
+// Get client IP for rate limiting
 function getClientIP(req: Request): string {
-  // Check various headers for the real IP (when behind proxy/CDN)
   const forwarded = req.headers.get('x-forwarded-for')
   if (forwarded) {
     return forwarded.split(',')[0].trim()
@@ -82,53 +96,222 @@ function getClientIP(req: Request): string {
   if (realIP) {
     return realIP
   }
-  // Fallback
   return 'unknown'
 }
 
+// Normalize Unicode and sanitize input
+function sanitizeContent(content: string): string {
+  return (
+    content
+      .trim()
+      .normalize('NFKC') // Unicode normalization
+      // eslint-disable-next-line no-control-regex
+      .replace(/[\x00-\x1F\x7F-\x9F]/g, '') // Strip control characters
+      .replace(/\s+/g, ' ')
+  ) // Normalize whitespace
+}
+
+// Check rate limit using database (persistent across function instances)
+async function checkRateLimit(
+  supabaseAdmin: ReturnType<typeof createClient>,
+  identifier: string
+): Promise<boolean> {
+  const now = new Date()
+  const windowStart = new Date(now.getTime() - RATE_WINDOW_MS)
+
+  // Check existing rate limit record
+  const { data: existing } = await supabaseAdmin
+    .from('rate_limits')
+    .select('*')
+    .eq('identifier', identifier)
+    .single()
+
+  if (!existing) {
+    // Create new record
+    await supabaseAdmin.from('rate_limits').insert({
+      identifier,
+      count: 1,
+      window_start: now.toISOString(),
+    })
+    return true
+  }
+
+  const windowStartTime = new Date(existing.window_start)
+  if (windowStartTime < windowStart) {
+    // Window expired, reset
+    await supabaseAdmin
+      .from('rate_limits')
+      .update({
+        count: 1,
+        window_start: now.toISOString(),
+      })
+      .eq('identifier', identifier)
+    return true
+  }
+
+  if (existing.count >= RATE_LIMIT) {
+    return false
+  }
+
+  // Increment count
+  await supabaseAdmin
+    .from('rate_limits')
+    .update({ count: existing.count + 1 })
+    .eq('identifier', identifier)
+
+  return true
+}
+
 serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req)
+
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
+  // Reject requests from unauthorized origins
+  const origin = req.headers.get('origin') || ''
+  if (origin && !ALLOWED_ORIGINS.includes(origin)) {
+    return new Response(JSON.stringify({ error: 'Unauthorized origin' }), {
+      status: 403,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+  }
+
+  // CSRF Protection: Require application/json Content-Type
+  // This forces a preflight request, preventing simple CSRF attacks via HTML forms
+  const contentType = req.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    return new Response(
+      JSON.stringify({ error: 'Content-Type must be application/json' }),
+      {
+        status: 415, // Unsupported Media Type
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    )
+  }
+
   try {
+    // Initialize Supabase admin client
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
+
     // Get client IP for rate limiting
     const clientIP = getClientIP(req)
 
-    // Check rate limit by IP
-    if (!checkRateLimit(clientIP)) {
+    // Check rate limit (using persistent database storage)
+    const allowed = await checkRateLimit(supabaseAdmin, clientIP)
+    if (!allowed) {
       return new Response(
-        JSON.stringify({ error: 'Too many comments. Please wait a moment before trying again.' }),
-        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({
+          error: 'Too many comments. Please wait a moment before trying again.',
+        }),
+        {
+          status: 429,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
       )
     }
 
-    // Parse request body
-    const { postId, content, parentId }: ModerationRequest = await req.json()
+    // Parse and validate request body
+    const rawBody = await req.json()
+    const parseResult = ModerationRequestSchema.safeParse(rawBody)
 
-    // Validate input
-    if (!postId || !content?.trim()) {
+    if (!parseResult.success) {
       return new Response(
-        JSON.stringify({ error: 'postId and content are required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({
+          error: 'Invalid request format',
+          details: parseResult.error.format(),
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
       )
     }
 
-    if (content.length > 2000) {
+    const { postId, content, parentId } = parseResult.data
+
+    // Sanitize content (Unicode normalization, control char removal)
+    const sanitizedContent = sanitizeContent(content)
+
+    if (sanitizedContent.length === 0) {
       return new Response(
-        JSON.stringify({ error: 'Comment exceeds maximum length of 2000 characters' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Comment content cannot be empty' }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
       )
+    }
+
+    // Validate post exists
+    const { data: post, error: postError } = await supabaseAdmin
+      .from('blog_posts')
+      .select('id')
+      .eq('id', postId)
+      .single()
+
+    if (postError || !post) {
+      return new Response(JSON.stringify({ error: 'Post not found' }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    // Validate parent comment if provided
+    if (parentId) {
+      const { data: parentComment, error: parentError } = await supabaseAdmin
+        .from('comments')
+        .select('id, post_id')
+        .eq('id', parentId)
+        .single()
+
+      if (parentError || !parentComment) {
+        return new Response(
+          JSON.stringify({ error: 'Parent comment not found' }),
+          {
+            status: 404,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        )
+      }
+
+      // Ensure parent belongs to the same post
+      if (parentComment.post_id !== postId) {
+        return new Response(
+          JSON.stringify({ error: 'Parent comment does not belong to this post' }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        )
+      }
+    }
+
+    // Get user from auth header (optional - allows anonymous comments)
+    let userId: string | null = null
+    const authHeader = req.headers.get('authorization')
+    if (authHeader) {
+      const token = authHeader.replace('Bearer ', '')
+      const {
+        data: { user },
+      } = await supabaseAdmin.auth.getUser(token)
+      userId = user?.id ?? null
     }
 
     // Call Anthropic API for moderation
-    const anthropicApiKey = Deno.env.get('ClaudeCode')
+    const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY') || Deno.env.get('ClaudeCode')
     if (!anthropicApiKey) {
-      console.error('ClaudeCode API key not configured')
       return new Response(
         JSON.stringify({ error: 'Moderation service unavailable' }),
-        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        {
+          status: 503,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
       )
     }
 
@@ -146,34 +329,56 @@ serve(async (req) => {
         messages: [
           {
             role: 'user',
-            content: `Evaluate this comment for a tech blog:\n\n"${content.trim()}"`
-          }
-        ]
-      })
+            content: `Evaluate this comment for a tech blog:\n\n"${sanitizedContent}"`,
+          },
+        ],
+      }),
     })
 
     if (!anthropicResponse.ok) {
-      console.error('Anthropic API error:', await anthropicResponse.text())
+      // Log status only, not response body (to avoid leaking sensitive data)
+      console.error('Anthropic API error:', {
+        status: anthropicResponse.status,
+        statusText: anthropicResponse.statusText,
+      })
       return new Response(
-        JSON.stringify({ error: 'Moderation service error. Please try again.' }),
-        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({
+          error: 'Moderation service error. Please try again.',
+        }),
+        {
+          status: 503,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
       )
     }
 
     const anthropicData = await anthropicResponse.json()
     const moderationText = anthropicData.content[0].text
 
-    // Parse moderation result
-    let moderationResult: { approved: boolean; category: string; reason: string | null }
+    // Parse and validate moderation result with Zod
+    let moderationResult: z.infer<typeof ModerationResultSchema>
     try {
-      moderationResult = JSON.parse(moderationText)
+      const parsed = JSON.parse(moderationText)
+      const validated = ModerationResultSchema.safeParse(parsed)
+
+      if (!validated.success) {
+        // Log validation error (not the full response)
+        console.error('Invalid moderation response schema')
+        moderationResult = {
+          approved: false,
+          category: 'error',
+          reason:
+            'Unable to verify content. Please try again or contact support.',
+        }
+      } else {
+        moderationResult = validated.data
+      }
     } catch {
-      console.error('Failed to parse moderation response:', moderationText)
-      // Default to rejection if we can't parse
       moderationResult = {
         approved: false,
         category: 'error',
-        reason: 'Unable to verify content. Please try again or contact support.'
+        reason:
+          'Unable to verify content. Please try again or contact support.',
       }
     }
 
@@ -181,56 +386,60 @@ serve(async (req) => {
     if (!moderationResult.approved) {
       const response: ModerationResponse = {
         approved: false,
-        rejectionReason: moderationResult.reason || 'Your comment was rejected for violating community guidelines.',
-        category: moderationResult.category
+        rejectionReason:
+          moderationResult.reason ||
+          'Your comment was rejected for violating community guidelines.',
+        category: moderationResult.category,
       }
-      return new Response(
-        JSON.stringify(response),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      return new Response(JSON.stringify(response), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
     }
 
-    // If approved, insert the comment using service role for reliability
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
-
+    // If approved, insert the comment
     const { data: comment, error: insertError } = await supabaseAdmin
       .from('comments')
       .insert({
         post_id: postId,
-        user_id: null,  // Anonymous comment
-        content: content.trim(),
+        user_id: userId, // Can be null for anonymous
+        content: sanitizedContent,
         parent_id: parentId || null,
-        is_moderated: true  // Passed AI moderation
+        is_moderated: true,
       })
       .select('id')
       .single()
 
     if (insertError) {
-      console.error('Insert error:', insertError)
+      console.error('Insert error:', { code: insertError.code })
       return new Response(
         JSON.stringify({ error: 'Failed to save comment. Please try again.' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
       )
     }
 
     const response: ModerationResponse = {
       approved: true,
-      commentId: comment.id
+      commentId: comment.id,
     }
 
-    return new Response(
-      JSON.stringify(response),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
-
+    return new Response(JSON.stringify(response), {
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
   } catch (error) {
-    console.error('Unexpected error:', error)
+    console.error('Unexpected error:', { type: error instanceof Error ? error.name : 'unknown' })
     return new Response(
-      JSON.stringify({ error: 'An unexpected error occurred. Please try again.' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({
+        error: 'An unexpected error occurred. Please try again.',
+      }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
     )
   }
 })

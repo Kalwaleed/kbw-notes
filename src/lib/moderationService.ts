@@ -1,3 +1,5 @@
+import { supabase } from './supabase'
+
 export interface ModerationResult {
   approved: boolean
   commentId?: string
@@ -30,38 +32,31 @@ export async function submitCommentForModeration(
   content: string,
   parentId?: string | null
 ): Promise<string> {
-  console.log('[moderationService] submitCommentForModeration called', { postId, parentId })
+  const { data, error } = await supabase.functions.invoke('moderate-comment', {
+    body: { postId, content, parentId: parentId || null }
+  })
 
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-  console.log('[moderationService] Supabase URL:', supabaseUrl ? 'configured' : 'missing')
-  if (!supabaseUrl) {
-    throw new Error('Supabase URL not configured')
-  }
-
-  console.log('[moderationService] Fetching Edge Function...')
-  const response = await fetch(
-    `${supabaseUrl}/functions/v1/moderate-comment`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ postId, content, parentId: parentId || null })
+  // Handle errors from function invocation
+  if (error) {
+    // Try to read the error response body
+    let errorMessage = error.message || 'Failed to submit comment'
+    try {
+      if (error.context && typeof error.context.json === 'function') {
+        const errorBody = await error.context.json()
+        errorMessage = errorBody.error || errorMessage
+      }
+    } catch {
+      // Could not parse error body, use default message
     }
-  )
 
-  // Handle non-200 responses
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}))
-
-    if (response.status === 429) {
+    if (errorMessage.includes('429') || errorMessage.includes('rate')) {
       throw new Error('Too many comments. Please wait a moment before trying again.')
     }
 
-    throw new Error(errorData.error || 'Failed to submit comment')
+    throw new Error(errorMessage)
   }
 
-  const result: ModerationResult = await response.json()
+  const result: ModerationResult = data
 
   // If rejected, throw ModerationError with the reason
   if (!result.approved) {

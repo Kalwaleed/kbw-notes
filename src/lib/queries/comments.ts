@@ -254,8 +254,32 @@ export async function addReply(
 
 /**
  * Delete a comment (soft delete by replacing content)
+ * Only the comment owner can delete their own comments
  */
 export async function deleteComment(commentId: string): Promise<void> {
+  // Get the current user
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    throw new Error('You must be logged in to delete comments')
+  }
+
+  // Verify ownership before deleting
+  const { data: comment, error: fetchError } = await supabase
+    .from('comments')
+    .select('user_id')
+    .eq('id', commentId)
+    .single()
+
+  if (fetchError || !comment) {
+    throw new Error('Comment not found')
+  }
+
+  if (comment.user_id !== user.id) {
+    throw new Error('You can only delete your own comments')
+  }
+
+  // Perform soft delete
   const { error } = await supabase
     .from('comments')
     .update({

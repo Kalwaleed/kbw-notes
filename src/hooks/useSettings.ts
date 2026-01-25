@@ -16,15 +16,75 @@ import {
 const APPEARANCE_STORAGE_KEY = 'kbw-appearance-settings'
 const READING_STORAGE_KEY = 'kbw-reading-settings'
 
-function loadFromStorage<T>(key: string, defaultValue: T): T {
+// Valid values for settings validation
+const VALID_THEMES: Theme[] = ['light', 'dark', 'system']
+const VALID_FONT_SIZES: FontSize[] = ['small', 'medium', 'large']
+const VALID_DENSITIES: Density[] = ['compact', 'comfortable', 'spacious']
+const VALID_SORT_ORDERS: SortOrder[] = ['newest', 'oldest', 'popular']
+const VALID_POSTS_PER_PAGE: PostsPerPage[] = [6, 12, 24]
+
+/**
+ * Validate and sanitize appearance settings from localStorage
+ * Returns only valid values, falling back to defaults for invalid data
+ */
+function validateAppearanceSettings(data: unknown, defaults: AppearanceSettings): AppearanceSettings {
+  if (typeof data !== 'object' || data === null) {
+    return defaults
+  }
+
+  const raw = data as Record<string, unknown>
+
+  return {
+    theme: VALID_THEMES.includes(raw.theme as Theme) ? (raw.theme as Theme) : defaults.theme,
+    fontSize: VALID_FONT_SIZES.includes(raw.fontSize as FontSize) ? (raw.fontSize as FontSize) : defaults.fontSize,
+    density: VALID_DENSITIES.includes(raw.density as Density) ? (raw.density as Density) : defaults.density,
+  }
+}
+
+/**
+ * Validate and sanitize reading settings from localStorage
+ * Returns only valid values, falling back to defaults for invalid data
+ */
+function validateReadingSettings(data: unknown, defaults: ReadingSettings): ReadingSettings {
+  if (typeof data !== 'object' || data === null) {
+    return defaults
+  }
+
+  const raw = data as Record<string, unknown>
+
+  return {
+    defaultSort: VALID_SORT_ORDERS.includes(raw.defaultSort as SortOrder) ? (raw.defaultSort as SortOrder) : defaults.defaultSort,
+    postsPerPage: VALID_POSTS_PER_PAGE.includes(raw.postsPerPage as PostsPerPage) ? (raw.postsPerPage as PostsPerPage) : defaults.postsPerPage,
+    autoExpandComments: typeof raw.autoExpandComments === 'boolean' ? raw.autoExpandComments : defaults.autoExpandComments,
+  }
+}
+
+function loadAppearanceFromStorage(key: string, defaultValue: AppearanceSettings): AppearanceSettings {
   if (typeof window === 'undefined') return defaultValue
   try {
     const stored = localStorage.getItem(key)
     if (stored) {
-      return { ...defaultValue, ...JSON.parse(stored) }
+      const parsed = JSON.parse(stored)
+      return validateAppearanceSettings(parsed, defaultValue)
     }
-  } catch (e) {
-    console.error(`Failed to load ${key} from localStorage:`, e)
+  } catch {
+    // Invalid JSON or storage error - use defaults
+    localStorage.removeItem(key)
+  }
+  return defaultValue
+}
+
+function loadReadingFromStorage(key: string, defaultValue: ReadingSettings): ReadingSettings {
+  if (typeof window === 'undefined') return defaultValue
+  try {
+    const stored = localStorage.getItem(key)
+    if (stored) {
+      const parsed = JSON.parse(stored)
+      return validateReadingSettings(parsed, defaultValue)
+    }
+  } catch {
+    // Invalid JSON or storage error - use defaults
+    localStorage.removeItem(key)
   }
   return defaultValue
 }
@@ -33,18 +93,18 @@ function saveToStorage<T>(key: string, value: T): void {
   if (typeof window === 'undefined') return
   try {
     localStorage.setItem(key, JSON.stringify(value))
-  } catch (e) {
-    console.error(`Failed to save ${key} to localStorage:`, e)
+  } catch {
+    // Storage error - silently fail
   }
 }
 
 export function useSettings() {
   const [appearance, setAppearanceState] = useState<AppearanceSettings>(() =>
-    loadFromStorage(APPEARANCE_STORAGE_KEY, defaultAppearanceSettings)
+    loadAppearanceFromStorage(APPEARANCE_STORAGE_KEY, defaultAppearanceSettings)
   )
 
   const [reading, setReadingState] = useState<ReadingSettings>(() =>
-    loadFromStorage(READING_STORAGE_KEY, defaultReadingSettings)
+    loadReadingFromStorage(READING_STORAGE_KEY, defaultReadingSettings)
   )
 
   // Apply theme to document
