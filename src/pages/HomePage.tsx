@@ -37,7 +37,7 @@ export function HomePage() {
   }
 
   const handleSignIn = () => {
-    navigate('/login', { state: { from: location.pathname } })
+    navigate('/', { state: { from: location.pathname } })
   }
 
   const handleViewPost = (id: string) => {
@@ -46,7 +46,7 @@ export function HomePage() {
 
   const handleLike = (id: string) => {
     if (!user) {
-      navigate('/login', { state: { from: location.pathname } })
+      navigate('/', { state: { from: location.pathname } })
       return
     }
 
@@ -70,7 +70,7 @@ export function HomePage() {
 
   const handleBookmark = (id: string) => {
     if (!user) {
-      navigate('/login', { state: { from: location.pathname } })
+      navigate('/', { state: { from: location.pathname } })
       return
     }
 

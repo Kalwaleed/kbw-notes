@@ -26,7 +26,7 @@ export function SettingsPage() {
   } = useSettings()
 
   const navigationItems = [
-    { label: 'Home', href: '/', isActive: false },
+    { label: 'Home', href: '/home', isActive: false },
     { label: 'Settings', href: '/settings', isActive: location.pathname === '/settings' },
   ]
 
@@ -40,7 +40,7 @@ export function SettingsPage() {
   }
 
   const handleSignIn = () => {
-    navigate('/login', { state: { from: location.pathname } })
+    navigate('/', { state: { from: location.pathname } })
   }
 
   // User display info
@@ -61,7 +61,7 @@ export function SettingsPage() {
     >
       <div className="space-y-6">
         <button
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/home')}
           className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />

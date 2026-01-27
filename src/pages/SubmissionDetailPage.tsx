@@ -38,7 +38,7 @@ export function SubmissionDetailPage() {
   const [showPreview, setShowPreview] = useState(false)
 
   const navigationItems = [
-    { label: 'Home', href: '/', isActive: false },
+    { label: 'Home', href: '/home', isActive: false },
     {
       label: 'Submissions',
       href: '/submissions',
@@ -56,7 +56,7 @@ export function SubmissionDetailPage() {
   }
 
   const handleSignIn = () => {
-    navigate('/login', { state: { from: location.pathname } })
+    navigate('/', { state: { from: location.pathname } })
   }
 
   // Initial form data from submission

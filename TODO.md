@@ -44,6 +44,15 @@
 
 ---
 
+## Future Tasks
+
+### Google OAuth Login (Future - Public Release)
+- Enable Google OAuth for public access
+- Keep @kbw.vc magic link as primary for internal users
+- Add OAuth provider selection when both methods are available
+
+---
+
 ## Completed
 
 - [x] Remove sign-in UI and make all comments display as "Anonymous" (2025-01-13)

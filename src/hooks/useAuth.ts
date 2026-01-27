@@ -1,13 +1,21 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
-import type { User, Session, Provider } from '@supabase/supabase-js'
+import type { User, Session } from '@supabase/supabase-js'
+
+const ALLOWED_DOMAIN = 'kbw.vc'
+
+interface SignInResult {
+  success: boolean
+  error?: string
+}
 
 interface UseAuthReturn {
   user: User | null
   session: Session | null
   isLoading: boolean
   error: Error | null
-  signInWithOAuth: (provider: Provider) => Promise<void>
+  signInWithEmail: (email: string) => Promise<SignInResult>
+  isEmailAllowed: (email: string) => boolean
   signOut: () => Promise<void>
 }
 
@@ -38,24 +46,37 @@ export function useAuth(): UseAuthReturn {
     return () => subscription.unsubscribe()
   }, [])
 
-  // Sign in with OAuth provider
-  const signInWithOAuth = useCallback(async (provider: Provider) => {
+  // Check if email domain is allowed
+  const isEmailAllowed = useCallback((email: string): boolean => {
+    const normalizedEmail = email.toLowerCase().trim()
+    return normalizedEmail.endsWith(`@${ALLOWED_DOMAIN}`)
+  }, [])
+
+  // Sign in with email magic link
+  const signInWithEmail = useCallback(async (email: string): Promise<SignInResult> => {
     setError(null)
+    const normalizedEmail = email.toLowerCase().trim()
+
+    if (!isEmailAllowed(normalizedEmail)) {
+      return { success: false, error: 'access not allowed, Bro' }
+    }
 
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider,
+      const { error } = await supabase.auth.signInWithOtp({
+        email: normalizedEmail,
         options: {
-          redirectTo: `${window.location.origin}/`,
+          emailRedirectTo: `${window.location.origin}/home`,
         },
       })
 
       if (error) throw error
+      return { success: true }
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to sign in'))
-      throw err
+      const errorMessage = err instanceof Error ? err.message : 'Failed to send magic link'
+      setError(err instanceof Error ? err : new Error(errorMessage))
+      return { success: false, error: errorMessage }
     }
-  }, [])
+  }, [isEmailAllowed])
 
   // Sign out
   const signOut = useCallback(async () => {
@@ -75,7 +96,8 @@ export function useAuth(): UseAuthReturn {
     session,
     isLoading,
     error,
-    signInWithOAuth,
+    signInWithEmail,
+    isEmailAllowed,
     signOut,
   }
 }

@@ -34,7 +34,7 @@ export function ProfileSetupPage() {
   // Redirect if not authenticated
   useEffect(() => {
     if (!authLoading && !user) {
-      navigate('/login', { state: { from: '/profile/setup' } })
+      navigate('/', { state: { from: '/profile/setup' } })
     }
   }, [authLoading, user, navigate])
 
@@ -74,7 +74,7 @@ export function ProfileSetupPage() {
       setError(result.error)
     } else {
       // Go back to profile if editing, otherwise go home
-      const redirectTo = location.state?.from === '/profile' ? '/profile' : '/'
+      const redirectTo = location.state?.from === '/profile' ? '/profile' : '/home'
       navigate(redirectTo)
     }
   }

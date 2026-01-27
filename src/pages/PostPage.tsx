@@ -67,7 +67,7 @@ export function PostPage() {
   }
 
   const handleLoginClick = () => {
-    navigate('/login', { state: { from: location.pathname } })
+    navigate('/', { state: { from: location.pathname } })
   }
 
   return (

@@ -11,7 +11,7 @@ export function SubmissionsPage() {
   const { submissions, isLoading, error, create, remove } = useSubmissions()
 
   const navigationItems = [
-    { label: 'Home', href: '/', isActive: false },
+    { label: 'Home', href: '/home', isActive: false },
     { label: 'Submissions', href: '/submissions', isActive: location.pathname.startsWith('/submissions') },
   ]
 
@@ -25,7 +25,7 @@ export function SubmissionsPage() {
   }
 
   const handleSignIn = () => {
-    navigate('/login', { state: { from: location.pathname } })
+    navigate('/', { state: { from: location.pathname } })
   }
 
   const handleNewSubmission = async () => {

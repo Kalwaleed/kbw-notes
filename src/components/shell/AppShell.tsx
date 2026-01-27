@@ -30,7 +30,7 @@ export function AppShell({
   const { count: unreadCount } = useUnreadCount()
 
   const handleLogoClick = () => {
-    onNavigate?.('/')
+    onNavigate?.('/home')
   }
 
   const handleMobileNavigate = (href: string) => {
@@ -85,7 +85,7 @@ export function AppShell({
                 <UserMenu user={user} onNavigate={onNavigate} onLogout={onLogout} />
               ) : (
                 <button
-                  onClick={() => onNavigate?.('/login')}
+                  onClick={() => onNavigate?.('/')}
                   className="px-4 py-2 text-sm font-medium rounded-lg bg-violet-600 text-white hover:bg-violet-700 transition-colors"
                 >
                   Sign In

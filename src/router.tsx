@@ -9,46 +9,83 @@ import { SubmissionsPage } from './pages/SubmissionsPage'
 import { NewSubmissionPage } from './pages/NewSubmissionPage'
 import { SubmissionDetailPage } from './pages/SubmissionDetailPage'
 import { NotificationsPage } from './pages/NotificationsPage'
+import { ProtectedRoute } from './components/auth'
 
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <HomePage />,
-  },
-  {
-    path: '/post/:id',
-    element: <PostPage />,
-  },
-  {
-    path: '/login',
     element: <LoginPage />,
   },
   {
+    path: '/home',
+    element: (
+      <ProtectedRoute>
+        <HomePage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/post/:id',
+    element: (
+      <ProtectedRoute>
+        <PostPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
     path: '/profile',
-    element: <ProfilePage />,
+    element: (
+      <ProtectedRoute>
+        <ProfilePage />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/profile/setup',
-    element: <ProfileSetupPage />,
+    element: (
+      <ProtectedRoute>
+        <ProfileSetupPage />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/settings',
-    element: <SettingsPage />,
+    element: (
+      <ProtectedRoute>
+        <SettingsPage />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/submissions',
-    element: <SubmissionsPage />,
+    element: (
+      <ProtectedRoute>
+        <SubmissionsPage />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/submissions/new',
-    element: <NewSubmissionPage />,
+    element: (
+      <ProtectedRoute>
+        <NewSubmissionPage />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/submissions/:id',
-    element: <SubmissionDetailPage />,
+    element: (
+      <ProtectedRoute>
+        <SubmissionDetailPage />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/notifications',
-    element: <NotificationsPage />,
+    element: (
+      <ProtectedRoute>
+        <NotificationsPage />
+      </ProtectedRoute>
+    ),
   },
 ])

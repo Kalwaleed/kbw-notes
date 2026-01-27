@@ -24,12 +24,12 @@ export function ProfilePage() {
   }
 
   const handleSignIn = () => {
-    navigate('/login', { state: { from: location.pathname } })
+    navigate('/', { state: { from: location.pathname } })
   }
 
   // Redirect to login if not authenticated
   if (!authLoading && !user) {
-    navigate('/login', { state: { from: location.pathname } })
+    navigate('/', { state: { from: location.pathname } })
     return null
   }
 

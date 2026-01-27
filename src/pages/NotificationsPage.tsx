@@ -19,7 +19,7 @@ export function NotificationsPage() {
   } = useNotifications()
 
   const navigationItems = [
-    { label: 'Home', href: '/', isActive: false },
+    { label: 'Home', href: '/home', isActive: false },
     { label: 'Notifications', href: '/notifications', isActive: location.pathname === '/notifications' },
   ]
 
@@ -33,7 +33,7 @@ export function NotificationsPage() {
   }
 
   const handleSignIn = () => {
-    navigate('/login', { state: { from: location.pathname } })
+    navigate('/', { state: { from: location.pathname } })
   }
 
   // User display info

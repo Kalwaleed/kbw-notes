@@ -12,7 +12,7 @@ export function NewSubmissionPage() {
   const { create } = useSubmissions()
 
   const navigationItems = [
-    { label: 'Home', href: '/', isActive: false },
+    { label: 'Home', href: '/home', isActive: false },
     { label: 'Submissions', href: '/submissions', isActive: location.pathname.startsWith('/submissions') },
   ]
 
@@ -26,7 +26,7 @@ export function NewSubmissionPage() {
   }
 
   const handleSignIn = () => {
-    navigate('/login', { state: { from: location.pathname } })
+    navigate('/', { state: { from: location.pathname } })
   }
 
   // User display info
