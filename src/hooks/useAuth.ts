@@ -48,8 +48,18 @@ export function useAuth(): UseAuthReturn {
 
   // Check if email domain is allowed
   const isEmailAllowed = useCallback((email: string): boolean => {
-    const normalizedEmail = email.toLowerCase().trim()
-    return normalizedEmail.endsWith(`@${ALLOWED_DOMAIN}`)
+    const normalizedEmail = email.toLowerCase().trim().normalize('NFC')
+    const parts = normalizedEmail.split('@')
+
+    // Must have exactly one @ symbol (local@domain format)
+    if (parts.length !== 2) {
+      return false
+    }
+
+    const [localPart, domain] = parts
+
+    // Validate local part exists and domain matches exactly
+    return localPart.length > 0 && domain === ALLOWED_DOMAIN
   }, [])
 
   // Sign in with email magic link
