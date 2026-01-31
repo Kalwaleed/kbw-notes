@@ -4,7 +4,7 @@ import type { User, Session } from '@supabase/supabase-js'
 
 const ALLOWED_DOMAIN = 'kbw.vc'
 
-interface SignInResult {
+interface AuthResult {
   success: boolean
   error?: string
 }
@@ -14,7 +14,9 @@ interface UseAuthReturn {
   session: Session | null
   isLoading: boolean
   error: Error | null
-  signInWithEmail: (email: string) => Promise<SignInResult>
+  signUp: (email: string, password: string) => Promise<AuthResult>
+  signInWithPassword: (email: string, password: string) => Promise<AuthResult>
+  resetPassword: (email: string) => Promise<AuthResult>
   isEmailAllowed: (email: string) => boolean
   signOut: () => Promise<void>
 }
@@ -62,27 +64,76 @@ export function useAuth(): UseAuthReturn {
     return localPart.length > 0 && domain === ALLOWED_DOMAIN
   }, [])
 
-  // Sign in with email magic link
-  const signInWithEmail = useCallback(async (email: string): Promise<SignInResult> => {
+  // Sign up with email and password
+  const signUp = useCallback(async (email: string, password: string): Promise<AuthResult> => {
     setError(null)
     const normalizedEmail = email.toLowerCase().trim()
 
     if (!isEmailAllowed(normalizedEmail)) {
-      return { success: false, error: 'access not allowed, Bro' }
+      return { success: false, error: 'Only @kbw.vc emails are allowed' }
+    }
+
+    if (password.length < 8) {
+      return { success: false, error: 'Password must be at least 8 characters' }
     }
 
     try {
-      const { error } = await supabase.auth.signInWithOtp({
+      const { error } = await supabase.auth.signUp({
         email: normalizedEmail,
-        options: {
-          emailRedirectTo: `${window.location.origin}/home`,
-        },
+        password,
       })
 
       if (error) throw error
       return { success: true }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to send magic link'
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create account'
+      setError(err instanceof Error ? err : new Error(errorMessage))
+      return { success: false, error: errorMessage }
+    }
+  }, [isEmailAllowed])
+
+  // Sign in with email and password
+  const signInWithPassword = useCallback(async (email: string, password: string): Promise<AuthResult> => {
+    setError(null)
+    const normalizedEmail = email.toLowerCase().trim()
+
+    if (!isEmailAllowed(normalizedEmail)) {
+      return { success: false, error: 'Only @kbw.vc emails are allowed' }
+    }
+
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: normalizedEmail,
+        password,
+      })
+
+      if (error) throw error
+      return { success: true }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to sign in'
+      setError(err instanceof Error ? err : new Error(errorMessage))
+      return { success: false, error: errorMessage }
+    }
+  }, [isEmailAllowed])
+
+  // Request password reset email
+  const resetPassword = useCallback(async (email: string): Promise<AuthResult> => {
+    setError(null)
+    const normalizedEmail = email.toLowerCase().trim()
+
+    if (!isEmailAllowed(normalizedEmail)) {
+      return { success: false, error: 'Only @kbw.vc emails are allowed' }
+    }
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      })
+
+      if (error) throw error
+      return { success: true }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to send reset email'
       setError(err instanceof Error ? err : new Error(errorMessage))
       return { success: false, error: errorMessage }
     }
@@ -106,7 +157,9 @@ export function useAuth(): UseAuthReturn {
     session,
     isLoading,
     error,
-    signInWithEmail,
+    signUp,
+    signInWithPassword,
+    resetPassword,
     isEmailAllowed,
     signOut,
   }
