@@ -12,8 +12,8 @@ export function NewSubmissionPage() {
   const { create } = useSubmissions()
 
   const navigationItems = [
-    { label: 'Home', href: '/home', isActive: false },
-    { label: 'Submissions', href: '/submissions', isActive: location.pathname.startsWith('/submissions') },
+    { label: 'Home', href: '/kbw-notes/home', isActive: false },
+    { label: 'Submissions', href: '/kbw-notes/submissions', isActive: location.pathname.startsWith('/kbw-notes/submissions') },
   ]
 
   const handleNavigate = (href: string) => {
@@ -44,9 +44,9 @@ export function NewSubmissionPage() {
     const createAndRedirect = async () => {
       const submission = await create()
       if (submission) {
-        navigate(`/submissions/${submission.id}`, { replace: true })
+        navigate(`/kbw-notes/submissions/${submission.id}`, { replace: true })
       } else {
-        navigate('/submissions', { replace: true })
+        navigate('/kbw-notes/submissions', { replace: true })
       }
     }
 

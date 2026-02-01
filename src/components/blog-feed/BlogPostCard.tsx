@@ -126,8 +126,8 @@ export function BlogPostCard({
             }}
             className={`p-2 rounded-full transition-all duration-200 ${
               post.isLiked
-                ? 'text-rose-500 bg-rose-50 dark:bg-rose-950/30'
-                : 'text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30'
+                ? 'text-violet-600 bg-violet-50 dark:bg-violet-950/30 dark:text-violet-400'
+                : 'text-slate-400 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-950/30 dark:hover:text-violet-400'
             }`}
             aria-label={post.isLiked ? 'Unlike' : 'Like'}
           >

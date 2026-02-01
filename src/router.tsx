@@ -12,12 +12,14 @@ import { NotificationsPage } from './pages/NotificationsPage'
 import { ProtectedRoute } from './components/auth'
 
 export const router = createBrowserRouter([
+  // Login page at root
   {
     path: '/',
     element: <LoginPage />,
   },
+  // Authenticated app under /kbw-notes
   {
-    path: '/home',
+    path: '/kbw-notes/home',
     element: (
       <ProtectedRoute>
         <HomePage />
@@ -25,7 +27,7 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: '/post/:id',
+    path: '/kbw-notes/post/:id',
     element: (
       <ProtectedRoute>
         <PostPage />
@@ -33,7 +35,7 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: '/profile',
+    path: '/kbw-notes/profile',
     element: (
       <ProtectedRoute>
         <ProfilePage />
@@ -41,7 +43,7 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: '/profile/setup',
+    path: '/kbw-notes/profile/setup',
     element: (
       <ProtectedRoute>
         <ProfileSetupPage />
@@ -49,7 +51,7 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: '/settings',
+    path: '/kbw-notes/settings',
     element: (
       <ProtectedRoute>
         <SettingsPage />
@@ -57,7 +59,7 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: '/submissions',
+    path: '/kbw-notes/submissions',
     element: (
       <ProtectedRoute>
         <SubmissionsPage />
@@ -65,7 +67,7 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: '/submissions/new',
+    path: '/kbw-notes/submissions/new',
     element: (
       <ProtectedRoute>
         <NewSubmissionPage />
@@ -73,7 +75,7 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: '/submissions/:id',
+    path: '/kbw-notes/submissions/:id',
     element: (
       <ProtectedRoute>
         <SubmissionDetailPage />
@@ -81,7 +83,7 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: '/notifications',
+    path: '/kbw-notes/notifications',
     element: (
       <ProtectedRoute>
         <NotificationsPage />

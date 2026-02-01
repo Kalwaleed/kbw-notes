@@ -34,13 +34,13 @@ export function ProfileSetupPage() {
   // Redirect if not authenticated
   useEffect(() => {
     if (!authLoading && !user) {
-      navigate('/', { state: { from: '/profile/setup' } })
+      navigate('/', { state: { from: '/kbw-notes/profile/setup' } })
     }
   }, [authLoading, user, navigate])
 
   // Only redirect if this is a fresh login (not intentional edit)
   // Check if user came from /profile (intentional edit) vs login flow
-  const isIntentionalEdit = location.state?.from === '/profile' || document.referrer.includes('/profile')
+  const isIntentionalEdit = location.state?.from === '/kbw-notes/profile' || document.referrer.includes('/kbw-notes/profile')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -74,7 +74,7 @@ export function ProfileSetupPage() {
       setError(result.error)
     } else {
       // Go back to profile if editing, otherwise go home
-      const redirectTo = location.state?.from === '/profile' ? '/profile' : '/home'
+      const redirectTo = location.state?.from === '/kbw-notes/profile' ? '/kbw-notes/profile' : '/kbw-notes/home'
       navigate(redirectTo)
     }
   }

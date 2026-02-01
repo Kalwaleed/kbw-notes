@@ -141,7 +141,7 @@ export function CommentThread({
                   onClick={() => onReact?.(comment.id)}
                   className={`inline-flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-full text-xs sm:text-sm transition-colors ${
                     hasReacted
-                      ? 'text-red-500 bg-red-50 dark:bg-red-900/20'
+                      ? 'text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/20'
                       : 'text-slate-500 dark:text-slate-400 hover:bg-violet-50 dark:hover:bg-violet-900/20 hover:text-violet-600 dark:hover:text-violet-400'
                   }`}
                   aria-label={hasReacted ? 'Unlike comment' : 'Like comment'}

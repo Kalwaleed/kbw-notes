@@ -11,8 +11,8 @@ export function SubmissionsPage() {
   const { submissions, isLoading, error, create, remove } = useSubmissions()
 
   const navigationItems = [
-    { label: 'Home', href: '/home', isActive: false },
-    { label: 'Submissions', href: '/submissions', isActive: location.pathname.startsWith('/submissions') },
+    { label: 'Home', href: '/kbw-notes/home', isActive: false },
+    { label: 'Submissions', href: '/kbw-notes/submissions', isActive: location.pathname.startsWith('/kbw-notes/submissions') },
   ]
 
   const handleNavigate = (href: string) => {
@@ -31,17 +31,17 @@ export function SubmissionsPage() {
   const handleNewSubmission = async () => {
     const submission = await create()
     if (submission) {
-      navigate(`/submissions/${submission.id}`)
+      navigate(`/kbw-notes/submissions/${submission.id}`)
     }
   }
 
   const handleEditSubmission = (id: string) => {
-    navigate(`/submissions/${id}`)
+    navigate(`/kbw-notes/submissions/${id}`)
   }
 
   const handleViewSubmission = (id: string) => {
     // TODO: Navigate to public post view when slug is available
-    navigate(`/submissions/${id}`)
+    navigate(`/kbw-notes/submissions/${id}`)
   }
 
   const handleDeleteSubmission = async (id: string) => {

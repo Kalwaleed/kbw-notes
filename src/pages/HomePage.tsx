@@ -16,15 +16,15 @@ export function HomePage() {
   // Redirect to profile setup if user is logged in but profile is incomplete
   useEffect(() => {
     if (!authLoading && !profileLoading && user && !profileComplete) {
-      navigate('/profile/setup')
+      navigate('/kbw-notes/profile/setup')
     }
   }, [authLoading, profileLoading, user, profileComplete, navigate])
   const { toggleLike, toggleBookmark } = usePostEngagement()
 
   const navigationItems = [
-    { label: 'Submissions', href: '/submissions', isActive: location.pathname === '/submissions' },
-    { label: 'Notifications', href: '/notifications', isActive: location.pathname === '/notifications' },
-    { label: 'Settings', href: '/settings', isActive: location.pathname === '/settings' },
+    { label: 'Submissions', href: '/kbw-notes/submissions', isActive: location.pathname === '/kbw-notes/submissions' },
+    { label: 'Notifications', href: '/kbw-notes/notifications', isActive: location.pathname === '/kbw-notes/notifications' },
+    { label: 'Settings', href: '/kbw-notes/settings', isActive: location.pathname === '/kbw-notes/settings' },
   ]
 
   const handleNavigate = (href: string) => {
@@ -41,7 +41,7 @@ export function HomePage() {
   }
 
   const handleViewPost = (id: string) => {
-    navigate(`/post/${id}`)
+    navigate(`/kbw-notes/post/${id}`)
   }
 
   const handleLike = (id: string) => {
@@ -149,7 +149,7 @@ export function HomePage() {
               {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
             </button>
             <button
-              onClick={() => navigate('/settings')}
+              onClick={() => navigate('/kbw-notes/settings')}
               className="p-2 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors"
               aria-label="Settings"
             >

@@ -19,8 +19,8 @@ export function NotificationsPage() {
   } = useNotifications()
 
   const navigationItems = [
-    { label: 'Home', href: '/home', isActive: false },
-    { label: 'Notifications', href: '/notifications', isActive: location.pathname === '/notifications' },
+    { label: 'Home', href: '/kbw-notes/home', isActive: false },
+    { label: 'Notifications', href: '/kbw-notes/notifications', isActive: location.pathname === '/kbw-notes/notifications' },
   ]
 
   const handleNavigate = (href: string) => {

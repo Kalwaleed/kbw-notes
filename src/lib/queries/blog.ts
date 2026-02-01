@@ -15,15 +15,16 @@ export interface FetchPostsResult {
 
 /**
  * Fetch blog posts with cursor-based pagination
+ * Reads from submissions table where status='published'
  */
 export async function fetchBlogPosts({
   limit = 6,
   cursor,
   userId,
 }: FetchPostsOptions = {}): Promise<FetchPostsResult> {
-  // Build query for blog posts with author info
+  // Build query for published submissions with author info
   let query = supabase
-    .from('blog_posts')
+    .from('submissions')
     .select(
       `
       id,
@@ -38,6 +39,7 @@ export async function fetchBlogPosts({
       )
     `
     )
+    .eq('status', 'published')
     .not('published_at', 'is', null)
     .lte('published_at', new Date().toISOString())
     .order('published_at', { ascending: false })
@@ -65,7 +67,7 @@ export async function fetchBlogPosts({
   // Get post IDs for likes and comments counts
   const postIds = posts.map((p) => p.id)
 
-  // Fetch like counts
+  // Fetch like counts (from submission_likes if exists, otherwise empty)
   const { data: likeCounts } = await supabase
     .from('post_likes')
     .select('post_id')
@@ -170,6 +172,67 @@ export async function toggleLike(postId: string, userId: string): Promise<boolea
 
     if (error) throw new Error(`Failed to like: ${error.message}`)
     return true // Now liked
+  }
+}
+
+/**
+ * Fetch a single blog post by ID (from submissions table)
+ */
+export async function fetchBlogPost(postId: string): Promise<{
+  id: string
+  title: string
+  excerpt: string
+  content: string
+  publishedAt: string
+  tags: string[]
+  author: {
+    id: string
+    name: string
+    avatarUrl: string | null
+  }
+} | null> {
+  const { data, error } = await supabase
+    .from('submissions')
+    .select(
+      `
+      id,
+      title,
+      excerpt,
+      content,
+      published_at,
+      tags,
+      author:profiles!author_id (
+        id,
+        display_name,
+        avatar_url
+      )
+    `
+    )
+    .eq('id', postId)
+    .eq('status', 'published')
+    .single()
+
+  if (error) {
+    if (error.code === 'PGRST116') {
+      return null // Not found
+    }
+    throw new Error(`Failed to fetch post: ${error.message}`)
+  }
+
+  const author = Array.isArray(data.author) ? data.author[0] : data.author
+
+  return {
+    id: data.id,
+    title: data.title,
+    excerpt: data.excerpt,
+    content: data.content,
+    publishedAt: data.published_at!,
+    tags: data.tags ?? [],
+    author: {
+      id: author?.id ?? '',
+      name: author?.display_name ?? 'Anonymous',
+      avatarUrl: author?.avatar_url ?? null,
+    },
   }
 }
 

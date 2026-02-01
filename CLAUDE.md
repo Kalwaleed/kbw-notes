@@ -77,6 +77,14 @@ supabase/
 
 ### Key Data Flows
 
+**Authentication Flow:**
+1. User visits `/login` → `LoginPage` with Sign In / Sign Up tabs
+2. Email validated client-side: must be `@kbw.vc` domain
+3. Sign Up: `useAuth.signUp()` → `supabase.auth.signUp()` creates account
+4. Sign In: `useAuth.signInWithPassword()` → `supabase.auth.signInWithPassword()`
+5. Password Reset: `useAuth.resetPassword()` → sends reset email
+6. On success, `onAuthStateChange` listener updates state, triggers redirect
+
 **Comment Moderation Flow:**
 1. User submits comment via `CommentForm`
 2. `useComments` hook calls `moderationService.submitCommentForModeration()`
@@ -123,6 +131,7 @@ Client-side security:
 - **Image Validation**: Magic number checks prevent malicious file uploads
 - **localStorage Validation**: Settings validated with allowlists before use
 - **Authorization**: `deleteComment` verifies ownership before soft-delete
+- **Auth Domain Lock**: Only `@kbw.vc` emails can register/sign in
 
 ### Settings Persistence
 

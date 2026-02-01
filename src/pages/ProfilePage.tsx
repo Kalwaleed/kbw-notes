@@ -10,8 +10,8 @@ export function ProfilePage() {
   const { profile, isLoading: profileLoading } = useProfile(user?.id)
 
   const navigationItems = [
-    { label: 'Submissions', href: '/submissions', isActive: false },
-    { label: 'Notifications', href: '/notifications', isActive: false },
+    { label: 'Submissions', href: '/kbw-notes/submissions', isActive: false },
+    { label: 'Notifications', href: '/kbw-notes/notifications', isActive: false },
   ]
 
   const handleNavigate = (href: string) => {
@@ -109,7 +109,7 @@ export function ProfilePage() {
                 </p>
               </div>
               <button
-                onClick={() => navigate('/profile/setup', { state: { from: '/profile' } })}
+                onClick={() => navigate('/kbw-notes/profile/setup', { state: { from: '/kbw-notes/profile' } })}
                 className="px-4 py-2 text-sm font-medium rounded-lg bg-violet-600 text-white hover:bg-violet-700 transition-colors"
               >
                 Edit Profile

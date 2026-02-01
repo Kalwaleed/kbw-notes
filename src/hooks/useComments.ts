@@ -4,7 +4,9 @@ import {
   fetchCommentsForPost,
   fetchCommentById,
   deleteComment as deleteCommentQuery,
+  toggleCommentLike,
 } from '../lib/queries/comments'
+import { supabase } from '../lib/supabase'
 import { submitCommentForModeration, ModerationError } from '../lib/moderationService'
 
 interface ModerationErrorState {
@@ -17,10 +19,12 @@ interface UseCommentsResult {
   isLoading: boolean
   error: string | null
   moderationError: ModerationErrorState | null
+  userLikedComments: Set<string>
   clearModerationError: () => void
   addComment: (content: string) => Promise<void>
   addReply: (parentId: string, content: string) => Promise<void>
   deleteComment: (commentId: string) => Promise<void>
+  likeComment: (commentId: string) => Promise<void>
   refresh: () => Promise<void>
 }
 
@@ -34,6 +38,7 @@ export function useComments(postId: string): UseCommentsResult {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [moderationError, setModerationError] = useState<ModerationErrorState | null>(null)
+  const [userLikedComments, setUserLikedComments] = useState<Set<string>>(new Set())
 
   // Fetch comments on mount and when postId changes
   const fetchComments = useCallback(async () => {
@@ -162,15 +167,103 @@ export function useComments(postId: string): UseCommentsResult {
     setComments((prev) => updateInTree(prev))
   }, [])
 
+  // Like/unlike a comment with optimistic updates
+  const likeComment = useCallback(async (commentId: string) => {
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      throw new Error('You must be logged in to like comments')
+    }
+
+    // Find the current comment to get its reaction count
+    const findComment = (comments: Comment[]): Comment | null => {
+      for (const comment of comments) {
+        if (comment.id === commentId) return comment
+        if (comment.replies.length > 0) {
+          const found = findComment(comment.replies)
+          if (found) return found
+        }
+      }
+      return null
+    }
+
+    const currentComment = findComment(comments)
+    const currentCount = currentComment?.reactions ?? 0
+
+    const updateReactionsInTree = (comments: Comment[], newCount: number): Comment[] => {
+      return comments.map((comment) => {
+        if (comment.id === commentId) {
+          return { ...comment, reactions: newCount }
+        }
+        if (comment.replies.length > 0) {
+          return {
+            ...comment,
+            replies: updateReactionsInTree(comment.replies, newCount),
+          }
+        }
+        return comment
+      })
+    }
+
+    // Check if user already liked this comment
+    const alreadyLiked = userLikedComments.has(commentId)
+    const optimisticCount = alreadyLiked ? currentCount - 1 : currentCount + 1
+
+    // Optimistic update - update count and liked state immediately
+    setComments((prev) => updateReactionsInTree(prev, optimisticCount))
+    setUserLikedComments((prev) => {
+      const newSet = new Set(prev)
+      if (alreadyLiked) {
+        newSet.delete(commentId)
+      } else {
+        newSet.add(commentId)
+      }
+      return newSet
+    })
+
+    try {
+      // Toggle the like on server - returns true if now liked, false if unliked
+      const isNowLiked = await toggleCommentLike(commentId, user.id)
+
+      // Correct the count and liked state based on actual result
+      const actualCount = isNowLiked ? currentCount + 1 : currentCount - 1
+      setComments((prev) => updateReactionsInTree(prev, Math.max(0, actualCount)))
+      setUserLikedComments((prev) => {
+        const newSet = new Set(prev)
+        if (isNowLiked) {
+          newSet.add(commentId)
+        } else {
+          newSet.delete(commentId)
+        }
+        return newSet
+      })
+    } catch (error) {
+      // Revert on error
+      setComments((prev) => updateReactionsInTree(prev, currentCount))
+      setUserLikedComments((prev) => {
+        const newSet = new Set(prev)
+        if (alreadyLiked) {
+          newSet.add(commentId)
+        } else {
+          newSet.delete(commentId)
+        }
+        return newSet
+      })
+      throw error
+    }
+  }, [comments, userLikedComments])
+
   return {
     comments,
     isLoading,
     error,
     moderationError,
+    userLikedComments,
     clearModerationError,
     addComment,
     addReply,
     deleteComment,
+    likeComment,
     refresh: fetchComments,
   }
 }

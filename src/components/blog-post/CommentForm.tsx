@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Send, X, AlertCircle } from 'lucide-react'
 
-const MAX_COMMENT_LENGTH = 2000
+const MAX_COMMENT_LENGTH = 500 // ~1 paragraph limit
 
 interface ModerationErrorState {
   message: string

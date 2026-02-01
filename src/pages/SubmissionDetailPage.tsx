@@ -38,11 +38,11 @@ export function SubmissionDetailPage() {
   const [showPreview, setShowPreview] = useState(false)
 
   const navigationItems = [
-    { label: 'Home', href: '/home', isActive: false },
+    { label: 'Home', href: '/kbw-notes/home', isActive: false },
     {
       label: 'Submissions',
-      href: '/submissions',
-      isActive: location.pathname.startsWith('/submissions'),
+      href: '/kbw-notes/submissions',
+      isActive: location.pathname.startsWith('/kbw-notes/submissions'),
     },
   ]
 
@@ -126,7 +126,7 @@ export function SubmissionDetailPage() {
     )
     if (confirmed) {
       await remove()
-      navigate('/submissions')
+      navigate('/kbw-notes/submissions')
     }
   }
 
@@ -213,7 +213,7 @@ export function SubmissionDetailPage() {
             {error?.message ?? "This submission doesn't exist or you don't have access to it."}
           </p>
           <button
-            onClick={() => navigate('/submissions')}
+            onClick={() => navigate('/kbw-notes/submissions')}
             className="px-4 py-2 text-sm font-medium rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors"
           >
             Back to Submissions
@@ -236,7 +236,7 @@ export function SubmissionDetailPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-3">
             <button
-              onClick={() => navigate('/submissions')}
+              onClick={() => navigate('/kbw-notes/submissions')}
               className="p-2 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:text-slate-300 dark:hover:bg-slate-800 transition-colors"
               aria-label="Back to submissions"
             >

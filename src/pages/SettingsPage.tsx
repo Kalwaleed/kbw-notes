@@ -26,8 +26,8 @@ export function SettingsPage() {
   } = useSettings()
 
   const navigationItems = [
-    { label: 'Home', href: '/home', isActive: false },
-    { label: 'Settings', href: '/settings', isActive: location.pathname === '/settings' },
+    { label: 'Home', href: '/kbw-notes/home', isActive: false },
+    { label: 'Settings', href: '/kbw-notes/settings', isActive: location.pathname === '/kbw-notes/settings' },
   ]
 
   const handleNavigate = (href: string) => {
@@ -61,7 +61,7 @@ export function SettingsPage() {
     >
       <div className="space-y-6">
         <button
-          onClick={() => navigate('/home')}
+          onClick={() => navigate('/kbw-notes/home')}
           className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />

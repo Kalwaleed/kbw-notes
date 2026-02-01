@@ -5,7 +5,7 @@ import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts'
 // Request validation schema
 const ModerationRequestSchema = z.object({
   postId: z.string().uuid(),
-  content: z.string().min(1).max(2000),
+  content: z.string().min(1).max(500), // ~1 paragraph limit
   parentId: z.string().uuid().nullable().optional(),
 })
 
@@ -39,6 +39,8 @@ const ALLOWED_ORIGINS = [
   'http://localhost:3000',
   'https://kbw-notes.com',
   'https://www.kbw-notes.com',
+  'https://kalwaleed.com',
+  'https://www.kalwaleed.com',
 ]
 
 // Get CORS headers based on request origin
@@ -248,11 +250,12 @@ serve(async (req) => {
       )
     }
 
-    // Validate post exists
+    // Validate post exists (check submissions table for published posts)
     const { data: post, error: postError } = await supabaseAdmin
-      .from('blog_posts')
+      .from('submissions')
       .select('id')
       .eq('id', postId)
+      .eq('status', 'published')
       .single()
 
     if (postError || !post) {
