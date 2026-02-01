@@ -255,6 +255,9 @@ export async function addReply(
 /**
  * Delete a comment (soft delete by replacing content)
  * Only the comment owner can delete their own comments
+ *
+ * Security: Uses atomic operation with ownership check in UPDATE query
+ * to prevent TOCTOU (Time-of-Check to Time-of-Use) race conditions
  */
 export async function deleteComment(commentId: string): Promise<void> {
   // Get the current user
@@ -264,32 +267,25 @@ export async function deleteComment(commentId: string): Promise<void> {
     throw new Error('You must be logged in to delete comments')
   }
 
-  // Verify ownership before deleting
-  const { data: comment, error: fetchError } = await supabase
-    .from('comments')
-    .select('user_id')
-    .eq('id', commentId)
-    .single()
-
-  if (fetchError || !comment) {
-    throw new Error('Comment not found')
-  }
-
-  if (comment.user_id !== user.id) {
-    throw new Error('You can only delete your own comments')
-  }
-
-  // Perform soft delete
-  const { error } = await supabase
+  // Atomic operation: verify ownership AND update in single query
+  // This prevents TOCTOU race conditions where ownership could change between check and update
+  const { data, error } = await supabase
     .from('comments')
     .update({
       content: '[This comment has been deleted]',
       updated_at: new Date().toISOString(),
     })
     .eq('id', commentId)
+    .eq('user_id', user.id)  // Ownership check in the query itself
+    .select('id')
 
   if (error) {
-    throw new Error(`Failed to delete comment: ${error.message}`)
+    throw new Error('Failed to delete comment')
+  }
+
+  // If no rows were updated, either comment doesn't exist or user doesn't own it
+  if (!data || data.length === 0) {
+    throw new Error('Comment not found or you do not have permission to delete it')
   }
 }
 

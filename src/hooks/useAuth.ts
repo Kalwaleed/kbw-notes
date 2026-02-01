@@ -49,16 +49,31 @@ export function useAuth(): UseAuthReturn {
   }, [])
 
   // Check if email domain is allowed
+  // Security: Uses NFKC normalization and strict validation to prevent bypass attacks
   const isEmailAllowed = useCallback((email: string): boolean => {
-    const normalizedEmail = email.toLowerCase().trim().normalize('NFC')
-    const parts = normalizedEmail.split('@')
+    // NFKC normalization is more aggressive than NFC - handles compatibility characters
+    // Also strip zero-width and invisible characters that could be used for spoofing
+    const normalizedEmail = email
+      .normalize('NFKC')
+      .toLowerCase()
+      .trim()
+      .replace(/\u200B|\u200C|\u200D|\u200E|\u200F|\uFEFF|\u00AD|\u034F|\u061C|\u115F|\u1160|\u17B4|\u17B5|\u180B|\u180C|\u180D|[\u2060-\u206F]/g, '')
 
-    // Must have exactly one @ symbol (local@domain format)
-    if (parts.length !== 2) {
+    // Strict regex: only alphanumeric, dots, hyphens, underscores, plus in local part
+    // Domain must be exactly kbw.vc (escaped dot)
+    const strictEmailRegex = /^[a-z0-9._%+-]+@kbw\.vc$/
+
+    if (!strictEmailRegex.test(normalizedEmail)) {
       return false
     }
 
-    const [localPart, domain] = parts
+    // Additional check: must have exactly one @ symbol (prevents attacker@evil.com@kbw.vc)
+    const atCount = (normalizedEmail.match(/@/g) || []).length
+    if (atCount !== 1) {
+      return false
+    }
+
+    const [localPart, domain] = normalizedEmail.split('@')
 
     // Validate local part exists and domain matches exactly
     return localPart.length > 0 && domain === ALLOWED_DOMAIN
