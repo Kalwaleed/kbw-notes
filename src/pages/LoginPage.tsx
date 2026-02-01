@@ -71,10 +71,11 @@ export function LoginPage() {
     }
 
     if (result.success) {
-      if (mode === 'forgot') {
+      if (mode === 'forgot' || mode === 'signup') {
+        // Both forgot password and signup require email action
         setFormState('success')
       }
-      // For signin/signup, the auth state change will trigger redirect
+      // For signin, the auth state change will trigger redirect
     } else {
       setFormState('error')
       setErrorMessage(result.error ?? 'An error occurred')
@@ -128,8 +129,8 @@ export function LoginPage() {
 
         {/* Login Card */}
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-8">
-          {/* Password Reset Success */}
-          {mode === 'forgot' && formState === 'success' ? (
+          {/* Email Confirmation Success (for signup and forgot password) */}
+          {(mode === 'forgot' || mode === 'signup') && formState === 'success' ? (
             <div className="text-center space-y-4">
               <div className="w-16 h-16 mx-auto bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
                 <Mail className="w-8 h-8 text-green-600 dark:text-green-400" />
@@ -139,7 +140,10 @@ export function LoginPage() {
                   Check your email
                 </h2>
                 <p className="mt-2 text-slate-600 dark:text-slate-400">
-                  We sent a password reset link to <strong>{normalizedEmail}</strong>
+                  {mode === 'signup'
+                    ? <>We sent a confirmation link to <strong>{normalizedEmail}</strong>. Please verify your email to complete registration.</>
+                    : <>We sent a password reset link to <strong>{normalizedEmail}</strong></>
+                  }
                 </p>
               </div>
               <button
