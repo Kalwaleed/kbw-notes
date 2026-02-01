@@ -71,9 +71,18 @@ src/
 supabase/
 ├── functions/
 │   └── moderate-comment/   # AI moderation Edge Function (Deno)
-├── migrations/             # Database migrations (001-010)
+├── migrations/             # Database migrations (001-012)
 └── seed.sql                # Sample data
 ```
+
+### Routing
+
+All authenticated routes are under `/kbw-notes/*` prefix:
+- `/` - Login page (unauthenticated)
+- `/kbw-notes/home` - Blog feed (reads from `submissions` table)
+- `/kbw-notes/post/:id` - Single post view with comments
+- `/kbw-notes/submissions/*` - Draft management
+- `/kbw-notes/profile`, `/kbw-notes/settings`, `/kbw-notes/notifications`
 
 ### Key Data Flows
 
@@ -109,10 +118,11 @@ supabase/
 ### Database Tables
 
 - `profiles` - User profiles (extends Supabase auth.users)
-- `blog_posts` - Blog content with author, tags, timestamps
+- `blog_posts` - Legacy blog content (not used by home page)
+- `submissions` - User-authored blog drafts and published posts (home page reads from here)
 - `comments` - Nested comments with `parent_id` for replies, `is_moderated` flag
+- `comment_likes` - User likes on comments (unique per user/comment)
 - `post_likes` / `post_bookmarks` - User engagement tracking
-- `submissions` - User-authored blog drafts and published posts
 - `notifications` - User notifications with realtime support
 - `rate_limits` - Persistent rate limiting for Edge Functions
 
