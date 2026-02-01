@@ -31,23 +31,28 @@ export function PostPage() {
   useEffect(() => {
     if (!postId) return
 
-    setPostLoading(true)
-    setPostError(null)
+    let cancelled = false
+    const id = postId // Capture for closure with narrowed type
 
-    fetchBlogPost(postId)
-      .then((data) => {
+    async function loadPost() {
+      try {
+        const data = await fetchBlogPost(id)
+        if (cancelled) return
         if (data) {
           setPost(data)
         } else {
           setPostError('Post not found')
         }
-      })
-      .catch((err) => {
-        setPostError(err.message)
-      })
-      .finally(() => {
-        setPostLoading(false)
-      })
+      } catch (err) {
+        if (cancelled) return
+        setPostError(err instanceof Error ? err.message : 'Failed to load post')
+      } finally {
+        if (!cancelled) setPostLoading(false)
+      }
+    }
+
+    loadPost()
+    return () => { cancelled = true }
   }, [postId])
 
   // Use real comments from Supabase with AI moderation
@@ -111,7 +116,7 @@ export function PostPage() {
     }
   }
 
-  const handleReport = (_commentId: string) => {
+  const handleReport = () => {
     // TODO: Implement reports table
   }
 

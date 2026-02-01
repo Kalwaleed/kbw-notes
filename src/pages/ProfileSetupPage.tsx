@@ -2,44 +2,36 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTheme, useAuth, useProfile } from '../hooks'
 
-export function ProfileSetupPage() {
+// Inner component that receives pre-loaded data
+function ProfileSetupForm({
+  initialDisplayName,
+  initialBio,
+  initialWebsite,
+  avatarUrl,
+  profile,
+  updateProfile,
+  createProfile,
+}: {
+  initialDisplayName: string
+  initialBio: string
+  initialWebsite: string
+  avatarUrl: string | null
+  profile: ReturnType<typeof useProfile>['profile']
+  updateProfile: ReturnType<typeof useProfile>['updateProfile']
+  createProfile: ReturnType<typeof useProfile>['createProfile']
+}) {
   const navigate = useNavigate()
   const location = useLocation()
   const { theme, toggleTheme } = useTheme()
-  const { user, isLoading: authLoading } = useAuth()
-  const { profile, isLoading: profileLoading, updateProfile, createProfile } = useProfile(user?.id)
 
-  // Form state
-  const [displayName, setDisplayName] = useState('')
-  const [bio, setBio] = useState('')
-  const [website, setWebsite] = useState('')
+  // Form state - initialized with values from parent
+  const [displayName, setDisplayName] = useState(initialDisplayName)
+  const [bio, setBio] = useState(initialBio)
+  const [website, setWebsite] = useState(initialWebsite)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Get avatar from Google OAuth
-  const avatarUrl = user?.user_metadata?.avatar_url || null
-
-  // Pre-fill form with Google data or existing profile
-  useEffect(() => {
-    if (profile) {
-      setDisplayName(profile.display_name || '')
-      setBio(profile.bio || '')
-      setWebsite(profile.website || '')
-    } else if (user) {
-      // Pre-fill from OAuth metadata for new users
-      setDisplayName(user.user_metadata?.full_name || user.user_metadata?.name || '')
-    }
-  }, [profile, user])
-
-  // Redirect if not authenticated
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate('/', { state: { from: '/kbw-notes/profile/setup' } })
-    }
-  }, [authLoading, user, navigate])
-
   // Only redirect if this is a fresh login (not intentional edit)
-  // Check if user came from /profile (intentional edit) vs login flow
   const isIntentionalEdit = location.state?.from === '/kbw-notes/profile' || document.referrer.includes('/kbw-notes/profile')
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -77,16 +69,6 @@ export function ProfileSetupPage() {
       const redirectTo = location.state?.from === '/kbw-notes/profile' ? '/kbw-notes/profile' : '/kbw-notes/home'
       navigate(redirectTo)
     }
-  }
-
-  const isLoading = authLoading || profileLoading
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
-        <div className="text-slate-500 dark:text-slate-400">Loading...</div>
-      </div>
-    )
   }
 
   const bioLength = bio.length
@@ -256,5 +238,49 @@ export function ProfileSetupPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export function ProfileSetupPage() {
+  const navigate = useNavigate()
+  const { user, isLoading: authLoading } = useAuth()
+  const { profile, isLoading: profileLoading, updateProfile, createProfile } = useProfile(user?.id)
+
+  // Get avatar from Google OAuth
+  const avatarUrl = user?.user_metadata?.avatar_url || null
+
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate('/', { state: { from: '/kbw-notes/profile/setup' } })
+    }
+  }, [authLoading, user, navigate])
+
+  const isLoading = authLoading || profileLoading
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
+        <div className="text-slate-500 dark:text-slate-400">Loading...</div>
+      </div>
+    )
+  }
+
+  // Compute initial values for form (only computed once when loading finishes)
+  const initialDisplayName = profile?.display_name || user?.user_metadata?.full_name || user?.user_metadata?.name || ''
+  const initialBio = profile?.bio || ''
+  const initialWebsite = profile?.website || ''
+
+  return (
+    <ProfileSetupForm
+      key={profile?.id || user?.id || 'new'}
+      initialDisplayName={initialDisplayName}
+      initialBio={initialBio}
+      initialWebsite={initialWebsite}
+      avatarUrl={avatarUrl}
+      profile={profile}
+      updateProfile={updateProfile}
+      createProfile={createProfile}
+    />
   )
 }

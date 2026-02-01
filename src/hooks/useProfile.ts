@@ -24,17 +24,17 @@ function validateProfileComplete(): boolean {
 
 export function useProfile(userId: string | undefined) {
   const [profile, setProfile] = useState<Profile | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(!!userId)
   const [error, setError] = useState<string | null>(null)
   const [localProfileComplete, setLocalProfileComplete] = useState<boolean>(validateProfileComplete)
 
   // Fetch profile
   useEffect(() => {
     if (!userId) {
-      setProfile(null)
-      setIsLoading(false)
       return
     }
+
+    let cancelled = false
 
     async function fetchProfile() {
       setIsLoading(true)
@@ -45,6 +45,8 @@ export function useProfile(userId: string | undefined) {
         .select('*')
         .eq('id', userId)
         .single()
+
+      if (cancelled) return
 
       if (fetchError) {
         // Profile doesn't exist yet - this is expected for new users
@@ -61,6 +63,7 @@ export function useProfile(userId: string | undefined) {
     }
 
     fetchProfile()
+    return () => { cancelled = true }
   }, [userId])
 
   // Update profile
