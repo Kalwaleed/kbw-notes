@@ -39,6 +39,7 @@ npx playwright test tests/example.spec.ts                              # Single 
 - **Backend**: Supabase (PostgreSQL, Auth, Edge Functions, Storage)
 - **Testing**: Vitest + React Testing Library, Playwright (e2e)
 - **Icons**: Lucide React
+- **Rich Text Editor**: TipTap (for submission content editing)
 
 ### Design System
 
@@ -81,8 +82,13 @@ All authenticated routes are under `/kbw-notes/*` prefix:
 - `/` - Login page (unauthenticated)
 - `/kbw-notes/home` - Blog feed (reads from `submissions` table)
 - `/kbw-notes/post/:id` - Single post view with comments
-- `/kbw-notes/submissions/*` - Draft management
-- `/kbw-notes/profile`, `/kbw-notes/settings`, `/kbw-notes/notifications`
+- `/kbw-notes/submissions` - Draft listing
+- `/kbw-notes/submissions/new` - Create new submission
+- `/kbw-notes/submissions/:id` - Edit existing submission
+- `/kbw-notes/profile` - User profile
+- `/kbw-notes/profile/setup` - Profile setup (first-time users)
+- `/kbw-notes/settings` - User settings
+- `/kbw-notes/notifications` - Notifications
 
 ### Key Data Flows
 
