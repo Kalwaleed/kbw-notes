@@ -1,3 +1,4 @@
+import DOMPurify from 'dompurify'
 import { supabase } from '../supabase'
 import type { Submission, SubmissionFormData, SubmissionStatus } from '../../types/submission'
 
@@ -87,7 +88,7 @@ export async function updateSubmission(
 
   if (data.title !== undefined) updateData.title = data.title
   if (data.excerpt !== undefined) updateData.excerpt = data.excerpt
-  if (data.content !== undefined) updateData.content = data.content
+  if (data.content !== undefined) updateData.content = DOMPurify.sanitize(data.content)
   if (data.coverImageUrl !== undefined) updateData.cover_image_url = data.coverImageUrl
   if (data.tags !== undefined) updateData.tags = data.tags
 

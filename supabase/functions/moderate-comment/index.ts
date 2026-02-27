@@ -1,6 +1,5 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
-import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.4'
+import { z } from 'https://deno.land/x/zod@v3.24.1/mod.ts'
 
 // Request validation schema
 const ModerationRequestSchema = z.object({
@@ -90,13 +89,13 @@ const RATE_WINDOW_MS = 60 * 1000 // 1 minute
 
 // Get client IP for rate limiting
 function getClientIP(req: Request): string {
-  const forwarded = req.headers.get('x-forwarded-for')
-  if (forwarded) {
-    return forwarded.split(',')[0].trim()
-  }
   const realIP = req.headers.get('x-real-ip')
   if (realIP) {
     return realIP
+  }
+  const forwarded = req.headers.get('x-forwarded-for')
+  if (forwarded) {
+    return forwarded.split(',')[0].trim()
   }
   return 'unknown'
 }
@@ -164,7 +163,7 @@ async function checkRateLimit(
   return true
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   const corsHeaders = getCorsHeaders(req)
 
   // Handle CORS preflight
