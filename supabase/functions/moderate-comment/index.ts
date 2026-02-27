@@ -57,32 +57,25 @@ function getCorsHeaders(req: Request): Record<string, string> {
 }
 
 // The moderation system prompt
-const MODERATION_SYSTEM_PROMPT = `You are a content moderation system for a professional tech blog. Your job is to evaluate user comments and determine if they should be approved or rejected.
+const MODERATION_SYSTEM_PROMPT = `You are a content moderation system for a blog. Your job is to filter out genuinely harmful content while allowing normal human conversation.
 
-REJECT comments that contain ANY of the following:
+REJECT comments ONLY if they contain:
 1. HATE SPEECH: Slurs, discrimination, or attacks based on race, ethnicity, religion, gender, sexual orientation, disability, or national origin
 2. HARASSMENT: Personal attacks, bullying, threats, intimidation, or doxxing
 3. PROFANITY: Vulgar language, obscenities, or crude sexual references
 4. EXPLICIT CONTENT: Sexual content, graphic violence, or gore
-5. SPAM: Promotional content, irrelevant links, repetitive text, or gibberish
+5. SPAM: Promotional links, repetitive text, or complete gibberish
 6. MISINFORMATION: Dangerous medical/legal advice presented as fact
 7. ILLEGAL CONTENT: Content promoting illegal activities
 
-APPROVE comments that are:
-- Constructive criticism (even if negative)
-- Technical discussions
-- Questions and clarifications
-- Polite disagreements
-- On-topic conversations
+APPROVE everything else. Blog posts cover a wide range of topics — comments do NOT need to be technical. Short comments, casual reactions, personal opinions, humor, emojis, and simple agreement/disagreement are all fine. When in doubt, APPROVE.
 
 Respond ONLY with a JSON object in this exact format:
 {
   "approved": boolean,
   "category": "approved" | "hate_speech" | "harassment" | "profanity" | "explicit" | "spam" | "misinformation" | "illegal",
-  "reason": "A clear, specific explanation (2-3 sentences) of why the comment was rejected, written directly to the user. If approved, set to null."
-}
-
-Be STRICT but FAIR. When in doubt about borderline cases, lean toward rejection for safety.`
+  "reason": "A brief explanation of why the comment was rejected. If approved, set to null."
+}`
 
 // Rate limit configuration
 const RATE_LIMIT = 10 // comments per minute
