@@ -36,6 +36,7 @@ interface ModerationResponse {
 const ALLOWED_ORIGINS = [
   'http://localhost:5173',
   'http://localhost:3000',
+  'https://kbw-notes.vercel.app',
   'https://kbw-notes.com',
   'https://www.kbw-notes.com',
   'https://kalwaleed.com',
