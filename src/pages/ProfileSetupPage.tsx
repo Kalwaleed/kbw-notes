@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useTheme, useAuth, useProfile } from '../hooks'
+import { useAuth, useProfile, useSettings } from '../hooks'
 
 // Inner component that receives pre-loaded data
 function ProfileSetupForm({
@@ -22,7 +22,7 @@ function ProfileSetupForm({
 }) {
   const navigate = useNavigate()
   const location = useLocation()
-  const { theme, toggleTheme } = useTheme()
+  const { resolvedTheme, toggleTheme } = useSettings()
 
   // Form state - initialized with values from parent
   const [displayName, setDisplayName] = useState(initialDisplayName)
@@ -241,7 +241,7 @@ function ProfileSetupForm({
             onClick={toggleTheme}
             className="text-sm text-slate-500 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
           >
-            {theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            {resolvedTheme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           </button>
         </div>
       </div>

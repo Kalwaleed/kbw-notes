@@ -1,12 +1,11 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import { AppShell } from '../components/shell'
 import { SubmissionsList } from '../components/submissions'
-import { useTheme, useAuth, useSubmissions } from '../hooks'
+import { useAuth, useSubmissions } from '../hooks'
 
 export function SubmissionsPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  useTheme()
   const { user, signOut } = useAuth()
   const { submissions, isLoading, error, create, remove } = useSubmissions()
 

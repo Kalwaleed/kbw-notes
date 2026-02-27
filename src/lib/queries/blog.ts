@@ -115,7 +115,7 @@ export async function fetchBlogPosts({
     return {
       id: post.id,
       title: post.title,
-      excerpt: post.excerpt,
+      excerpt: post.excerpt ?? '',
       publishedAt: post.published_at!,
       tags: post.tags ?? [],
       author: {
@@ -224,8 +224,8 @@ export async function fetchBlogPost(postId: string): Promise<{
   return {
     id: data.id,
     title: data.title,
-    excerpt: data.excerpt,
-    content: data.content,
+    excerpt: data.excerpt ?? '',
+    content: data.content ?? '',
     publishedAt: data.published_at!,
     tags: data.tags ?? [],
     author: {

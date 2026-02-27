@@ -1,11 +1,11 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import { AppShell } from '../components/shell'
-import { useTheme, useAuth, useProfile } from '../hooks'
+import { useAuth, useProfile, useSettings } from '../hooks'
 
 export function ProfilePage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { theme, toggleTheme } = useTheme()
+  const { resolvedTheme, toggleTheme } = useSettings()
   const { user, signOut, isLoading: authLoading } = useAuth()
   const { profile, isLoading: profileLoading } = useProfile(user?.id)
 
@@ -76,7 +76,7 @@ export function ProfilePage() {
             onClick={toggleTheme}
             className="px-4 py-2 text-sm font-medium rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors"
           >
-            {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+            {resolvedTheme === 'dark' ? 'Light Mode' : 'Dark Mode'}
           </button>
         </div>
 

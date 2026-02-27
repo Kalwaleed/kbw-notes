@@ -1,4 +1,3 @@
-export { useTheme } from './useTheme'
 export { useAuth } from './useAuth'
 export { useProfile } from './useProfile'
 export { useBlogPosts } from './useBlogPosts'

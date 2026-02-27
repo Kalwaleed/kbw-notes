@@ -1,18 +1,9 @@
 import { supabase } from '../supabase'
 import type { Notification, NotificationCounts } from '../../types/notification'
+import type { NotificationRow } from '../database.types'
 
-interface DbNotification {
-  id: string
-  user_id: string
-  type: string
-  title: string
-  message: string
-  is_read: boolean
-  related_entity_type: string | null
-  related_entity_id: string | null
-  action_url: string | null
-  actor_id: string | null
-  created_at: string
+/** NotificationRow extended with the joined profiles relation */
+type DbNotification = NotificationRow & {
   profiles: {
     id: string
     display_name: string
@@ -27,7 +18,7 @@ function transformNotification(db: DbNotification): Notification {
     type: db.type as Notification['type'],
     title: db.title,
     message: db.message,
-    isRead: db.is_read,
+    isRead: db.is_read ?? false,
     relatedEntityType: db.related_entity_type,
     relatedEntityId: db.related_entity_id,
     actionUrl: db.action_url,
@@ -38,7 +29,7 @@ function transformNotification(db: DbNotification): Notification {
           avatarUrl: db.profiles.avatar_url,
         }
       : null,
-    createdAt: db.created_at,
+    createdAt: db.created_at ?? '',
   }
 }
 

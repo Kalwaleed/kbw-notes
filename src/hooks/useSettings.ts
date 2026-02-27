@@ -15,6 +15,7 @@ import {
 
 const APPEARANCE_STORAGE_KEY = 'kbw-appearance-settings'
 const READING_STORAGE_KEY = 'kbw-reading-settings'
+const LEGACY_THEME_KEY = 'theme'
 
 // Valid values for settings validation
 const VALID_THEMES: Theme[] = ['light', 'dark', 'system']
@@ -59,8 +60,31 @@ function validateReadingSettings(data: unknown, defaults: ReadingSettings): Read
   }
 }
 
+function migrateLegacyTheme(appearanceKey: string, defaultValue: AppearanceSettings): void {
+  if (typeof window === 'undefined') return
+  try {
+    const legacyTheme = localStorage.getItem(LEGACY_THEME_KEY)
+    if (!legacyTheme) return
+
+    // Only migrate if no appearance settings exist yet
+    const existing = localStorage.getItem(appearanceKey)
+    if (!existing) {
+      const theme = (legacyTheme === 'dark' ? 'dark' : 'light') as Theme
+      const migrated: AppearanceSettings = { ...defaultValue, theme }
+      localStorage.setItem(appearanceKey, JSON.stringify(migrated))
+    }
+    localStorage.removeItem(LEGACY_THEME_KEY)
+  } catch {
+    // Storage error - silently fail
+  }
+}
+
 function loadAppearanceFromStorage(key: string, defaultValue: AppearanceSettings): AppearanceSettings {
   if (typeof window === 'undefined') return defaultValue
+
+  // One-time migration from legacy useTheme localStorage key
+  migrateLegacyTheme(key, defaultValue)
+
   try {
     const stored = localStorage.getItem(key)
     if (stored) {
@@ -165,9 +189,23 @@ export function useSettings() {
     saveToStorage(READING_STORAGE_KEY, reading)
   }, [reading])
 
+  // Resolve effective theme (handles 'system' → actual value)
+  const resolvedTheme = appearance.theme === 'system'
+    ? (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+    : appearance.theme
+
   // Appearance setters
   const setTheme = useCallback((theme: Theme) => {
     setAppearanceState((prev) => ({ ...prev, theme }))
+  }, [])
+
+  const toggleTheme = useCallback(() => {
+    setAppearanceState((prev) => ({
+      ...prev,
+      theme: prev.theme === 'dark' || (prev.theme === 'system' && typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+        ? 'light'
+        : 'dark',
+    }))
   }, [])
 
   const setFontSize = useCallback((fontSize: FontSize) => {
@@ -194,7 +232,9 @@ export function useSettings() {
   return {
     // Appearance
     appearance,
+    resolvedTheme,
     setTheme,
+    toggleTheme,
     setFontSize,
     setDensity,
     // Reading

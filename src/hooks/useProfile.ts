@@ -34,6 +34,7 @@ export function useProfile(userId: string | undefined) {
       return
     }
 
+    const currentUserId = userId
     let cancelled = false
 
     async function fetchProfile() {
@@ -43,7 +44,7 @@ export function useProfile(userId: string | undefined) {
       const { data, error: fetchError } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', userId)
+        .eq('id', currentUserId)
         .single()
 
       if (cancelled) return
@@ -76,7 +77,8 @@ export function useProfile(userId: string | undefined) {
       setError(null)
 
       // Use raw SQL to bypass schema cache issue with profile_complete column
-      const { error: updateError } = await supabase.rpc('update_profile', {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: updateError } = await (supabase.rpc as any)('update_profile', {
         user_id: userId,
         new_display_name: updates.display_name,
         new_bio: updates.bio ?? null,
@@ -175,6 +177,6 @@ export function useProfile(userId: string | undefined) {
     error,
     updateProfile,
     createProfile,
-    profileComplete: localProfileComplete || (profile?.profile_complete ?? false),
+    profileComplete: localProfileComplete,
   }
 }

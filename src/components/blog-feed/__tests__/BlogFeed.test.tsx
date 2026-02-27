@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { BlogFeed } from '../BlogFeed'
 import type { BlogPost } from '../types'
 
@@ -101,30 +102,51 @@ describe('BlogFeed', () => {
   })
 
   describe('Callbacks', () => {
-    it('passes onViewPost to cards and receives post id', () => {
+    it('calls onViewPost with post id when card is clicked', async () => {
+      const user = userEvent.setup()
       const onViewPost = vi.fn()
       render(<BlogFeed blogPosts={mockBlogPosts} onViewPost={onViewPost} />)
 
-      // The BlogPostCard should pass id to parent callback
-      // This tests integration between BlogFeed and BlogPostCard
+      // Click the first card's button area (the title is inside a button)
+      const buttons = screen.getAllByRole('button', { name: undefined })
+      // The first wide button in each card is the view button
+      const cardButtons = buttons.filter((btn) => btn.classList.contains('w-full'))
+      await user.click(cardButtons[0])
+
+      expect(onViewPost).toHaveBeenCalledWith('post-001')
     })
 
-    it('passes onLike to cards', () => {
+    it('calls onLike with post id when like button is clicked', async () => {
+      const user = userEvent.setup()
       const onLike = vi.fn()
       render(<BlogFeed blogPosts={mockBlogPosts} onLike={onLike} />)
-      // Callback prop is passed - full interaction tested in BlogPostCard tests
+
+      const likeButtons = screen.getAllByRole('button', { name: /like/i })
+      await user.click(likeButtons[0])
+
+      expect(onLike).toHaveBeenCalledWith('post-001')
     })
 
-    it('passes onBookmark to cards', () => {
+    it('calls onBookmark with post id when bookmark button is clicked', async () => {
+      const user = userEvent.setup()
       const onBookmark = vi.fn()
       render(<BlogFeed blogPosts={mockBlogPosts} onBookmark={onBookmark} />)
-      // Callback prop is passed - full interaction tested in BlogPostCard tests
+
+      const bookmarkButtons = screen.getAllByRole('button', { name: /bookmark/i })
+      await user.click(bookmarkButtons[0])
+
+      expect(onBookmark).toHaveBeenCalledWith('post-001')
     })
 
-    it('passes onShare to cards', () => {
+    it('calls onShare with post id when share button is clicked', async () => {
+      const user = userEvent.setup()
       const onShare = vi.fn()
       render(<BlogFeed blogPosts={mockBlogPosts} onShare={onShare} />)
-      // Callback prop is passed - full interaction tested in BlogPostCard tests
+
+      const shareButtons = screen.getAllByRole('button', { name: /share/i })
+      await user.click(shareButtons[0])
+
+      expect(onShare).toHaveBeenCalledWith('post-001')
     })
   })
 

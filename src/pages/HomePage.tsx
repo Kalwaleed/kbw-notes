@@ -3,12 +3,12 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { Settings } from 'lucide-react'
 import { AppShell } from '../components/shell'
 import { BlogFeed } from '../components/blog-feed'
-import { useTheme, useAuth, useProfile, useBlogPosts, usePostEngagement } from '../hooks'
+import { useAuth, useProfile, useBlogPosts, usePostEngagement, useSettings } from '../hooks'
 
 export function HomePage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { theme, toggleTheme } = useTheme()
+  const { resolvedTheme, toggleTheme } = useSettings()
   const { user, signOut, isLoading: authLoading } = useAuth()
   const { profileComplete, isLoading: profileLoading } = useProfile(user?.id)
   const { posts, isLoading, hasMore, loadMore, updatePost } = useBlogPosts({ limit: 6 })
@@ -146,7 +146,7 @@ export function HomePage() {
               onClick={toggleTheme}
               className="px-4 py-2 text-sm font-medium rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors"
             >
-              {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+              {resolvedTheme === 'dark' ? 'Light Mode' : 'Dark Mode'}
             </button>
             <button
               onClick={() => navigate('/kbw-notes/settings')}

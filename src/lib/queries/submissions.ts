@@ -1,6 +1,7 @@
 import DOMPurify from 'dompurify'
 import { supabase } from '../supabase'
 import type { Submission, SubmissionFormData, SubmissionStatus } from '../../types/submission'
+import type { SubmissionRow, TablesUpdate } from '../database.types'
 
 interface FetchSubmissionsOptions {
   authorId: string
@@ -84,7 +85,7 @@ export async function updateSubmission(
   id: string,
   data: Partial<SubmissionFormData>
 ): Promise<Submission> {
-  const updateData: Record<string, unknown> = {}
+  const updateData: TablesUpdate<'submissions'> = {}
 
   if (data.title !== undefined) updateData.title = data.title
   if (data.excerpt !== undefined) updateData.excerpt = data.excerpt
@@ -182,19 +183,19 @@ export async function fetchAllTags(): Promise<string[]> {
 }
 
 // Transform database row to Submission type
-function transformSubmission(row: Record<string, unknown>): Submission {
+function transformSubmission(row: SubmissionRow): Submission {
   return {
-    id: row.id as string,
-    authorId: row.author_id as string,
-    title: row.title as string,
-    slug: row.slug as string | null,
-    excerpt: row.excerpt as string,
-    content: row.content as string,
-    coverImageUrl: row.cover_image_url as string | null,
-    tags: (row.tags as string[]) ?? [],
-    status: row.status as SubmissionStatus,
-    publishedAt: row.published_at as string | null,
-    createdAt: row.created_at as string,
-    updatedAt: row.updated_at as string,
+    id: row.id,
+    authorId: row.author_id,
+    title: row.title,
+    slug: row.slug,
+    excerpt: row.excerpt ?? '',
+    content: row.content ?? '',
+    coverImageUrl: row.cover_image_url,
+    tags: row.tags ?? [],
+    status: (row.status ?? 'draft') as SubmissionStatus,
+    publishedAt: row.published_at,
+    createdAt: row.created_at ?? '',
+    updatedAt: row.updated_at ?? '',
   }
 }

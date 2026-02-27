@@ -2,12 +2,11 @@ import { useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 import { AppShell } from '../components/shell'
-import { useTheme, useAuth, useSubmissions } from '../hooks'
+import { useAuth, useSubmissions } from '../hooks'
 
 export function NewSubmissionPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  useTheme()
   const { user, signOut } = useAuth()
   const { create } = useSubmissions()
 

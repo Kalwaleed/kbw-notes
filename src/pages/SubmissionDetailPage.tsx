@@ -20,14 +20,13 @@ import {
   ImageUploader,
   StatusBadge,
 } from '../components/submissions'
-import { useTheme, useAuth, useSubmission, useSubmissionDraft } from '../hooks'
+import { useAuth, useSubmission, useSubmissionDraft } from '../hooks'
 import type { SubmissionFormData } from '../types/submission'
 
 export function SubmissionDetailPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { id } = useParams<{ id: string }>()
-  useTheme()
   const { user, signOut } = useAuth()
   const { submission, isLoading, error, publish, unpublish, remove } =
     useSubmission(id)

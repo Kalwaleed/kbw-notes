@@ -1,15 +1,9 @@
 import { supabase } from '../supabase'
 import type { Comment } from '../../types/blog'
+import type { CommentRow } from '../database.types'
 
-interface DbComment {
-  id: string
-  post_id: string
-  user_id: string | null  // null for anonymous comments
-  content: string
-  parent_id: string | null
-  is_moderated: boolean
-  created_at: string
-  updated_at: string
+/** CommentRow extended with the joined profiles relation */
+type DbComment = CommentRow & {
   profiles: {
     id: string
     display_name: string
@@ -34,9 +28,9 @@ function buildCommentTree(flatComments: DbComment[]): Comment[] {
         name: dbComment.profiles?.display_name ?? 'Anonymous',
         avatarUrl: dbComment.profiles?.avatar_url ?? null,
       },
-      createdAt: dbComment.created_at,
+      createdAt: dbComment.created_at ?? '',
       reactions: 0,
-      isModerated: dbComment.is_moderated,
+      isModerated: dbComment.is_moderated ?? false,
       replies: [],
     }
     commentMap.set(dbComment.id, comment)
@@ -131,9 +125,9 @@ export async function fetchCommentById(commentId: string): Promise<Comment | nul
       name: dbComment.profiles?.display_name ?? 'Anonymous',
       avatarUrl: dbComment.profiles?.avatar_url ?? null,
     },
-    createdAt: dbComment.created_at,
+    createdAt: dbComment.created_at ?? '',
     reactions: 0,
-    isModerated: dbComment.is_moderated,
+    isModerated: dbComment.is_moderated ?? false,
     replies: [],
   }
 }
@@ -187,9 +181,9 @@ export async function addComment(
       name: dbComment.profiles?.display_name ?? 'Anonymous',
       avatarUrl: dbComment.profiles?.avatar_url ?? null,
     },
-    createdAt: dbComment.created_at,
+    createdAt: dbComment.created_at ?? '',
     reactions: 0,
-    isModerated: dbComment.is_moderated,
+    isModerated: dbComment.is_moderated ?? false,
     replies: [],
   }
 }
@@ -245,9 +239,9 @@ export async function addReply(
       name: dbComment.profiles?.display_name ?? 'Anonymous',
       avatarUrl: dbComment.profiles?.avatar_url ?? null,
     },
-    createdAt: dbComment.created_at,
+    createdAt: dbComment.created_at ?? '',
     reactions: 0,
-    isModerated: dbComment.is_moderated,
+    isModerated: dbComment.is_moderated ?? false,
     replies: [],
   }
 }

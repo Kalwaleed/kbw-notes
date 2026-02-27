@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useTheme, useAuth } from '../hooks'
+import { useAuth, useSettings } from '../hooks'
 import { useEffect, useState } from 'react'
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react'
 
@@ -9,7 +9,7 @@ type FormState = 'idle' | 'submitting' | 'success' | 'error'
 export function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { theme, toggleTheme } = useTheme()
+  const { resolvedTheme, toggleTheme } = useSettings()
   const { user, signUp, signInWithPassword, resetPassword, isEmailAllowed, isLoading } = useAuth()
 
   const [mode, setMode] = useState<AuthMode>('signin')
@@ -373,7 +373,7 @@ export function LoginPage() {
             onClick={toggleTheme}
             className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
           >
-            {theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            {resolvedTheme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           </button>
         </div>
 
