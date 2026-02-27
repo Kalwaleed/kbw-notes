@@ -361,17 +361,18 @@ Deno.serve(async (req) => {
     }
 
     const anthropicData = await anthropicResponse.json()
-    const moderationText = anthropicData.content[0].text
+    const moderationText = anthropicData.content?.[0]?.text ?? ''
 
     // Parse and validate moderation result with Zod
     let moderationResult: z.infer<typeof ModerationResultSchema>
     try {
-      const parsed = JSON.parse(moderationText)
+      // Strip markdown code fences if present (e.g. ```json ... ```)
+      const cleanedText = moderationText.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '').trim()
+      const parsed = JSON.parse(cleanedText)
       const validated = ModerationResultSchema.safeParse(parsed)
 
       if (!validated.success) {
-        // Log validation error (not the full response)
-        console.error('Invalid moderation response schema')
+        console.error('Invalid moderation response schema:', JSON.stringify(validated.error.format()))
         moderationResult = {
           approved: false,
           category: 'error',
@@ -381,7 +382,8 @@ Deno.serve(async (req) => {
       } else {
         moderationResult = validated.data
       }
-    } catch {
+    } catch (parseErr) {
+      console.error('Failed to parse moderation response:', moderationText.substring(0, 200))
       moderationResult = {
         approved: false,
         category: 'error',
