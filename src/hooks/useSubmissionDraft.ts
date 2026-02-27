@@ -17,7 +17,7 @@ interface UseSubmissionDraftReturn {
   isDirty: boolean
   isSaving: boolean
   lastSaved: Date | null
-  saveNow: () => Promise<void>
+  saveNow: () => Promise<Error | null>
   error: Error | null
 }
 
@@ -56,14 +56,15 @@ export function useSubmissionDraft({
     setIsDirty(currentDataStr !== lastSavedDataRef.current)
   }, [formData])
 
-  // Save function
-  const saveNow = useCallback(async () => {
-    if (isSaving) return
+  // Save function — returns the error (or null on success) so callers
+  // can check synchronously without relying on stale React state.
+  const saveNow = useCallback(async (): Promise<Error | null> => {
+    if (isSaving) return null
 
     const currentDataStr = JSON.stringify(formData)
     if (currentDataStr === lastSavedDataRef.current) {
       // No changes to save
-      return
+      return null
     }
 
     setIsSaving(true)
@@ -75,10 +76,12 @@ export function useSubmissionDraft({
       setLastSaved(new Date())
       setIsDirty(false)
       onSave?.(formData)
+      return null
     } catch (err) {
-      const error = err instanceof Error ? err : new Error('Failed to save draft')
-      setError(error)
-      onError?.(error)
+      const saveErr = err instanceof Error ? err : new Error('Failed to save draft')
+      setError(saveErr)
+      onError?.(saveErr)
+      return saveErr
     } finally {
       setIsSaving(false)
     }

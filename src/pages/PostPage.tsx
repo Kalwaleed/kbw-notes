@@ -168,7 +168,7 @@ export function PostPage() {
       avatar: post.author.avatarUrl ?? '',
     },
     publishedAt: post.publishedAt,
-    readingTime: Math.ceil(post.content.length / 1000),
+    readingTime: Math.ceil(post.content.replace(/<[^>]*>/g, '').split(/\s+/).filter(Boolean).length / 200),
     tags: post.tags,
   }
 

@@ -102,14 +102,21 @@ export function SubmissionDetailPage() {
     setIsPublishing(true)
     setPublishError(null)
 
-    // Save any pending changes first
-    await saveNow()
+    try {
+      // Save any pending changes first — check the returned error directly
+      // (not React state, which would be stale until next render)
+      const saveErr = await saveNow()
+      if (saveErr) {
+        setPublishError('Failed to save changes before publishing. Please try again.')
+        return
+      }
 
-    const result = await publish()
-    setIsPublishing(false)
-
-    if (!result) {
-      setPublishError('Failed to publish. Please try again.')
+      const result = await publish()
+      if (!result) {
+        setPublishError('Failed to publish. Please try again.')
+      }
+    } finally {
+      setIsPublishing(false)
     }
   }
 

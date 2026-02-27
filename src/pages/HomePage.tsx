@@ -91,7 +91,7 @@ export function HomePage() {
 
   const handleShare = async (id: string) => {
     const post = posts.find((p) => p.id === id)
-    const url = `${window.location.origin}/post/${id}`
+    const url = `${window.location.origin}/kbw-notes/post/${id}`
 
     if (navigator.share) {
       try {

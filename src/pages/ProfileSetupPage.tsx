@@ -45,10 +45,18 @@ function ProfileSetupForm({
 
     setIsSubmitting(true)
 
+    // Validate website URL protocol to prevent javascript: XSS
+    const trimmedWebsite = website.trim()
+    if (trimmedWebsite && !/^https?:\/\//i.test(trimmedWebsite)) {
+      setError('Website must start with http:// or https://')
+      setIsSubmitting(false)
+      return
+    }
+
     const profileData = {
       display_name: displayName.trim(),
       bio: bio.trim() || null,
-      website: website.trim() || null,
+      website: trimmedWebsite || null,
       avatar_url: avatarUrl,
     }
 

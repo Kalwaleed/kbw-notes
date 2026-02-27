@@ -150,12 +150,19 @@ export async function fetchNotificationCounts(): Promise<NotificationCounts> {
 
 /**
  * Mark a notification as read
+ * Requires authentication - uses explicit user_id filter for defense-in-depth
  */
 export async function markAsRead(notificationId: string): Promise<void> {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    throw new Error('Must be logged in to mark notifications as read')
+  }
+
   const { error } = await supabase
     .from('notifications')
     .update({ is_read: true })
     .eq('id', notificationId)
+    .eq('user_id', user.id)
 
   if (error) {
     throw new Error(`Failed to mark notification as read: ${error.message}`)
@@ -166,9 +173,15 @@ export async function markAsRead(notificationId: string): Promise<void> {
  * Mark all notifications as read for the current user
  */
 export async function markAllAsRead(): Promise<void> {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    throw new Error('Must be logged in to mark notifications as read')
+  }
+
   const { error } = await supabase
     .from('notifications')
     .update({ is_read: true })
+    .eq('user_id', user.id)
     .eq('is_read', false)
 
   if (error) {
@@ -178,12 +191,19 @@ export async function markAllAsRead(): Promise<void> {
 
 /**
  * Delete a notification
+ * Requires authentication - uses explicit user_id filter for defense-in-depth
  */
 export async function deleteNotification(notificationId: string): Promise<void> {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    throw new Error('Must be logged in to delete notifications')
+  }
+
   const { error } = await supabase
     .from('notifications')
     .delete()
     .eq('id', notificationId)
+    .eq('user_id', user.id)
 
   if (error) {
     throw new Error(`Failed to delete notification: ${error.message}`)

@@ -127,7 +127,7 @@ export function ProfilePage() {
             )}
 
             {/* Website Section */}
-            {website && (
+            {website && /^https?:\/\//i.test(website) && (
               <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
                 <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">
                   Website

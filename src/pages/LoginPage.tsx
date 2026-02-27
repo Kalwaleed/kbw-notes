@@ -21,7 +21,18 @@ export function LoginPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   // Get the redirect path from state, or default to home
-  const from = (location.state as { from?: string })?.from ?? '/kbw-notes/home'
+  // Validate and normalize redirect path to prevent open redirect and path traversal
+  const rawFrom = (location.state as { from?: string })?.from
+  const from = (() => {
+    if (!rawFrom) return '/kbw-notes/home'
+    try {
+      // Use URL to normalize path traversal sequences (e.g., /kbw-notes/../admin)
+      const normalized = new URL(rawFrom, window.location.origin).pathname
+      return normalized.startsWith('/kbw-notes/') ? normalized : '/kbw-notes/home'
+    } catch {
+      return '/kbw-notes/home'
+    }
+  })()
 
   // Redirect if already logged in
   useEffect(() => {
