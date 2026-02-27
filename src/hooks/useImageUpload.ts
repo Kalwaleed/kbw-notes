@@ -99,8 +99,14 @@ export function useImageUpload({
       setError(null)
 
       try {
-        // Generate unique filename
-        const fileExt = file.name.split('.').pop()
+        // Derive extension from validated MIME type (not user-controlled filename)
+        const mimeExtMap: Record<string, string> = {
+          'image/jpeg': 'jpg',
+          'image/png': 'png',
+          'image/gif': 'gif',
+          'image/webp': 'webp',
+        }
+        const fileExt = mimeExtMap[file.type] ?? file.name.split('.').pop()
         const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`
 
         // Upload to Supabase Storage

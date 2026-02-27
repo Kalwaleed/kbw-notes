@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { AppShell } from '../components/shell'
 import { useAuth, useProfile, useSettings } from '../hooks'
@@ -28,8 +29,13 @@ export function ProfilePage() {
   }
 
   // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate('/', { replace: true, state: { from: location.pathname } })
+    }
+  }, [authLoading, user, navigate, location.pathname])
+
   if (!authLoading && !user) {
-    navigate('/', { state: { from: location.pathname } })
     return null
   }
 

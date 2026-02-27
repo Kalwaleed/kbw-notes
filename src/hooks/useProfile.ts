@@ -76,36 +76,27 @@ export function useProfile(userId: string | undefined) {
 
       setError(null)
 
-      // Use raw SQL to bypass schema cache issue with profile_complete column
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error: updateError } = await (supabase.rpc as any)('update_profile', {
-        user_id: userId,
-        new_display_name: updates.display_name,
-        new_bio: updates.bio ?? null,
-        new_website: updates.website ?? null,
-      })
+      // Verify the authenticated user matches the userId to prevent unauthorized updates
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+      if (!authUser || authUser.id !== userId) {
+        const msg = 'Not authorized to update this profile'
+        setError(msg)
+        return { error: msg }
+      }
+
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          display_name: updates.display_name,
+          bio: updates.bio,
+          website: updates.website,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', userId)
 
       if (updateError) {
-        // Only fallback to direct update when RPC function doesn't exist
-        if (updateError.code === 'PGRST202' || updateError.code === '42883') {
-          const { error: fallbackError } = await supabase
-            .from('profiles')
-            .update({
-              display_name: updates.display_name,
-              bio: updates.bio,
-              website: updates.website,
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', userId)
-
-          if (fallbackError) {
-            setError(fallbackError.message)
-            return { error: fallbackError.message }
-          }
-        } else {
-          setError(updateError.message)
-          return { error: updateError.message }
-        }
+        setError(updateError.message)
+        return { error: updateError.message }
       }
 
       // Refetch profile after update

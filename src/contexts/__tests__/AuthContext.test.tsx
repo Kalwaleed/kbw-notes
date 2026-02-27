@@ -175,6 +175,9 @@ describe('AuthContext', () => {
       expect(mockSupabase.auth.signUp).toHaveBeenCalledWith({
         email: 'user@kbw.vc',
         password: 'password123',
+        options: {
+          emailRedirectTo: 'http://localhost:3000/kbw-notes/home',
+        },
       })
     })
 
@@ -254,7 +257,7 @@ describe('AuthContext', () => {
       expect(result?.success).toBe(true)
       expect(mockSupabase.auth.resetPasswordForEmail).toHaveBeenCalledWith(
         'user@kbw.vc',
-        expect.objectContaining({ redirectTo: expect.stringContaining('/reset-password') })
+        expect.objectContaining({ redirectTo: expect.stringContaining('/kbw-notes/home') })
       )
     })
   })

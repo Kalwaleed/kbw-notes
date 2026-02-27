@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { useAuth, useComments } from '../hooks'
 import { BlogPostView } from '../components/blog-post'
-import { fetchBlogPost } from '../lib/queries/blog'
+import { fetchBlogPost, getPostLikeCount } from '../lib/queries/blog'
 
 type PostData = NonNullable<Awaited<ReturnType<typeof fetchBlogPost>>>
 
@@ -14,6 +14,7 @@ export function PostPage() {
   const [post, setPost] = useState<PostData | null>(null)
   const [postLoading, setPostLoading] = useState(true)
   const [postError, setPostError] = useState<string | null>(null)
+  const [likeCount, setLikeCount] = useState(0)
 
   // Fetch the post data
   useEffect(() => {
@@ -24,10 +25,14 @@ export function PostPage() {
 
     async function loadPost() {
       try {
-        const data = await fetchBlogPost(id)
+        const [data, likes] = await Promise.all([
+          fetchBlogPost(id),
+          getPostLikeCount(id),
+        ])
         if (cancelled) return
         if (data) {
           setPost(data)
+          setLikeCount(likes)
         } else {
           setPostError('Post not found')
         }
@@ -147,7 +152,7 @@ export function PostPage() {
   const blogPostData = {
     ...post,
     readingTime: Math.ceil(post.content.replace(/<[^>]*>/g, '').split(/\s+/).filter(Boolean).length / 200),
-    likeCount: 0,
+    likeCount,
     commentCount: comments.length,
   }
 
@@ -155,7 +160,7 @@ export function PostPage() {
     <BlogPostView
       blogPost={blogPostData}
       comments={comments}
-      isAuthenticated={true}
+      isAuthenticated={!!user}
       currentUserId={user?.id}
       userReactions={userLikedComments}
       isLoading={isLoading}

@@ -30,7 +30,7 @@ export function AppShell({
   const { count: unreadCount } = useUnreadCount()
 
   const handleLogoClick = () => {
-    onNavigate?.('/home')
+    onNavigate?.('/kbw-notes/home')
   }
 
   const handleMobileNavigate = (href: string) => {
@@ -39,7 +39,7 @@ export function AppShell({
   }
 
   const handleNotificationsClick = () => {
-    onNavigate?.('/notifications')
+    onNavigate?.('/kbw-notes/notifications')
   }
 
   return (

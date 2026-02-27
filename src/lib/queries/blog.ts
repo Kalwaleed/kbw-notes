@@ -151,7 +151,7 @@ export async function toggleLike(postId: string, userId: string): Promise<boolea
     .select('id')
     .eq('post_id', postId)
     .eq('user_id', userId)
-    .single()
+    .maybeSingle()
 
   if (existing) {
     // Unlike
@@ -239,6 +239,19 @@ export async function fetchBlogPost(postId: string): Promise<{
 /**
  * Toggle bookmark on a post
  */
+/**
+ * Get like count for a post
+ */
+export async function getPostLikeCount(postId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from('post_likes')
+    .select('*', { count: 'exact', head: true })
+    .eq('post_id', postId)
+
+  if (error) return 0
+  return count ?? 0
+}
+
 export async function toggleBookmark(postId: string, userId: string): Promise<boolean> {
   // Check if already bookmarked
   const { data: existing } = await supabase
@@ -246,7 +259,7 @@ export async function toggleBookmark(postId: string, userId: string): Promise<bo
     .select('id')
     .eq('post_id', postId)
     .eq('user_id', userId)
-    .single()
+    .maybeSingle()
 
   if (existing) {
     // Remove bookmark

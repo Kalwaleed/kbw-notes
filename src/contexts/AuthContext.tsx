@@ -88,6 +88,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { error } = await supabase.auth.signUp({
         email: normalizedEmail,
         password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/kbw-notes/home`,
+        },
       })
 
       if (error) throw error
@@ -132,7 +135,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: `${window.location.origin}/kbw-notes/home`,
       })
 
       if (error) throw error

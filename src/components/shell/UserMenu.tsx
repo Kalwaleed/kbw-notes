@@ -74,7 +74,7 @@ export function UserMenu({ user, onNavigate, onLogout }: UserMenuProps) {
           <button
             onClick={() => {
               setIsOpen(false)
-              onNavigate?.('/profile')
+              onNavigate?.('/kbw-notes/profile')
             }}
             className="w-full text-left px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
             style={{ fontFamily: 'var(--font-body)' }}
@@ -84,7 +84,7 @@ export function UserMenu({ user, onNavigate, onLogout }: UserMenuProps) {
           <button
             onClick={() => {
               setIsOpen(false)
-              onNavigate?.('/settings')
+              onNavigate?.('/kbw-notes/settings')
             }}
             className="w-full text-left px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
             style={{ fontFamily: 'var(--font-body)' }}

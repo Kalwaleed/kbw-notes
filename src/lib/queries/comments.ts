@@ -74,6 +74,7 @@ export async function fetchCommentsForPost(postId: string): Promise<Comment[]> {
       )
     `)
     .eq('post_id', postId)
+    .eq('is_moderated', true)
     .order('created_at', { ascending: true })
 
   if (error) {
@@ -346,7 +347,7 @@ export async function hasUserLikedComment(commentId: string, userId: string): Pr
     .select('id')
     .eq('comment_id', commentId)
     .eq('user_id', userId)
-    .single()
+    .maybeSingle()
 
   return !!data
 }

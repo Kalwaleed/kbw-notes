@@ -88,7 +88,12 @@ const RATE_LIMIT = 10 // comments per minute
 const RATE_WINDOW_MS = 60 * 1000 // 1 minute
 
 // Get client IP for rate limiting
+// Prefer cf-connecting-ip (Cloudflare-verified, not spoofable) over user-controllable headers
 function getClientIP(req: Request): string {
+  const cfIP = req.headers.get('cf-connecting-ip')
+  if (cfIP) {
+    return cfIP
+  }
   const realIP = req.headers.get('x-real-ip')
   if (realIP) {
     return realIP

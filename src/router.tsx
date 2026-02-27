@@ -1,4 +1,4 @@
-import { createBrowserRouter, Outlet } from 'react-router-dom'
+import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom'
 import { HomePage } from './pages/HomePage'
 import { PostPage } from './pages/PostPage'
 import { LoginPage } from './pages/LoginPage'
@@ -29,6 +29,7 @@ export const router = createBrowserRouter([
         path: '/kbw-notes',
         element: <KbwNotesLayout />,
         children: [
+          { index: true, element: <Navigate to="home" replace /> },
           { path: 'home', element: <HomePage /> },
           { path: 'post/:id', element: <PostPage /> },
           { path: 'profile', element: <ProfilePage /> },
