@@ -52,7 +52,7 @@ export function AppShell({
             <button
               onClick={handleLogoClick}
               className="font-bold text-xl tracking-tight text-slate-900 dark:text-white hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
-              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+              style={{ fontFamily: 'var(--font-heading)' }}
             >
               kbw Notes
             </button>
@@ -141,7 +141,7 @@ export function AppShell({
                         : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
                     }
                   `}
-                  style={{ fontFamily: "'Optima', 'Segoe UI', sans-serif" }}
+                  style={{ fontFamily: 'var(--font-body)' }}
                 >
                   {item.label}
                 </button>

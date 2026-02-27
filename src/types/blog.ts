@@ -1,4 +1,4 @@
-// Blog Posts & Comments Types
+// Blog Posts & Comments Types — single source of truth for data types
 
 export interface Author {
   id: string
@@ -9,13 +9,11 @@ export interface Author {
 export interface BlogPost {
   id: string
   title: string
-  headline?: string
-  subheader?: string
   excerpt: string
-  body: string
+  content?: string
   author: Author
   publishedAt: string
-  readingTime: number
+  readingTime?: number
   tags: string[]
   likeCount: number
   commentCount: number

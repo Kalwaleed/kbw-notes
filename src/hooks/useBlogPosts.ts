@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { fetchBlogPosts, type FetchPostsResult } from '../lib/queries/blog'
-import type { BlogPost } from '../components/blog-feed/types'
+import type { BlogPost } from '../types/blog'
+import { useAuth } from './useAuth'
 import { supabase } from '../lib/supabase'
 
 interface UseBlogPostsOptions {
@@ -22,24 +23,10 @@ export function useBlogPosts({ limit = 6 }: UseBlogPostsOptions = {}): UseBlogPo
   const [isLoading, setIsLoading] = useState(true)
   const [hasMore, setHasMore] = useState(true)
   const [error, setError] = useState<Error | null>(null)
-  const [userId, setUserId] = useState<string | null>(null)
+  const { user } = useAuth()
+  const userId = user?.id ?? null
   const cursorRef = useRef<string | null>(null)
   const isLoadingRef = useRef(false)
-
-  // Get current user ID
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUserId(data.user?.id ?? null)
-    })
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_, session) => {
-      setUserId(session?.user?.id ?? null)
-    })
-
-    return () => subscription.unsubscribe()
-  }, [])
 
   // Initial load
   const loadInitial = useCallback(async () => {

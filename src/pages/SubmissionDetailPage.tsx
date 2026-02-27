@@ -162,7 +162,7 @@ export function SubmissionDetailPage() {
         <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
           <h1
             className="text-2xl font-bold text-slate-900 dark:text-white mb-4"
-            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            style={{ fontFamily: 'var(--font-heading)' }}
           >
             Sign in to edit submissions
           </h1>
@@ -212,7 +212,7 @@ export function SubmissionDetailPage() {
           <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
           <h1
             className="text-2xl font-bold text-slate-900 dark:text-white mb-2"
-            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            style={{ fontFamily: 'var(--font-heading)' }}
           >
             Submission not found
           </h1>
@@ -253,7 +253,7 @@ export function SubmissionDetailPage() {
               <div className="flex items-center gap-2">
                 <h1
                   className="text-xl font-bold text-slate-900 dark:text-white"
-                  style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                  style={{ fontFamily: 'var(--font-heading)' }}
                 >
                   {submission.status === 'draft' ? 'Edit Draft' : 'Edit Post'}
                 </h1>
@@ -376,14 +376,14 @@ export function SubmissionDetailPage() {
             )}
             <h1
               className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-4"
-              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+              style={{ fontFamily: 'var(--font-heading)' }}
             >
               {formData.title || 'Untitled'}
             </h1>
             {formData.excerpt && (
               <p
                 className="text-lg text-slate-600 dark:text-slate-400 mb-6"
-                style={{ fontFamily: "'Optima', 'Segoe UI', sans-serif" }}
+                style={{ fontFamily: 'var(--font-body)' }}
               >
                 {formData.excerpt}
               </p>
@@ -435,7 +435,7 @@ export function SubmissionDetailPage() {
                 onChange={(e) => updateField('title', e.target.value)}
                 placeholder="Enter your post title..."
                 className="w-full px-4 py-3 text-lg font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 text-slate-900 dark:text-white placeholder-slate-400"
-                style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                style={{ fontFamily: 'var(--font-heading)' }}
               />
             </div>
 
@@ -457,7 +457,7 @@ export function SubmissionDetailPage() {
                 placeholder="Write a brief summary of your post..."
                 rows={2}
                 className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 text-slate-900 dark:text-white placeholder-slate-400 resize-none"
-                style={{ fontFamily: "'Optima', 'Segoe UI', sans-serif" }}
+                style={{ fontFamily: 'var(--font-body)' }}
               />
             </div>
 

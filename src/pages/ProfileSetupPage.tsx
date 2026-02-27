@@ -90,7 +90,7 @@ function ProfileSetupForm({
         <div className="text-center">
           <h1
             className="text-3xl font-bold text-slate-900 dark:text-white"
-            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            style={{ fontFamily: 'var(--font-heading)' }}
           >
             {isIntentionalEdit ? 'Edit Profile' : 'Complete Your Profile'}
           </h1>

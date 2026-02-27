@@ -36,20 +36,20 @@ export function NotificationsList({
         </div>
         <h3
           className="text-lg font-semibold text-slate-900 dark:text-white mb-2"
-          style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+          style={{ fontFamily: 'var(--font-heading)' }}
         >
           Sign in to view notifications
         </h3>
         <p
           className="text-slate-600 dark:text-slate-400 mb-4"
-          style={{ fontFamily: "'Optima', 'Segoe UI', sans-serif" }}
+          style={{ fontFamily: 'var(--font-body)' }}
         >
           Get notified when someone replies to your comments or interacts with your content.
         </p>
         <button
           onClick={onSignIn}
           className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white font-medium rounded-lg transition-colors"
-          style={{ fontFamily: "'Optima', 'Segoe UI', sans-serif" }}
+          style={{ fontFamily: 'var(--font-body)' }}
         >
           Sign In
         </button>
@@ -64,7 +64,7 @@ export function NotificationsList({
         <Loader2 className="w-8 h-8 mx-auto mb-4 text-violet-500 animate-spin" />
         <p
           className="text-slate-600 dark:text-slate-400"
-          style={{ fontFamily: "'Optima', 'Segoe UI', sans-serif" }}
+          style={{ fontFamily: 'var(--font-body)' }}
         >
           Loading notifications...
         </p>
@@ -76,7 +76,7 @@ export function NotificationsList({
   if (error) {
     return (
       <div className="bg-white dark:bg-slate-900 rounded-xl border border-rose-200 dark:border-rose-800 p-8 text-center">
-        <p className="text-rose-600 dark:text-rose-400" style={{ fontFamily: "'Optima', 'Segoe UI', sans-serif" }}>
+        <p className="text-rose-600 dark:text-rose-400" style={{ fontFamily: 'var(--font-body)' }}>
           {error}
         </p>
       </div>
@@ -92,13 +92,13 @@ export function NotificationsList({
         </div>
         <h3
           className="text-lg font-semibold text-slate-900 dark:text-white mb-2"
-          style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+          style={{ fontFamily: 'var(--font-heading)' }}
         >
           No notifications yet
         </h3>
         <p
           className="text-slate-600 dark:text-slate-400"
-          style={{ fontFamily: "'Optima', 'Segoe UI', sans-serif" }}
+          style={{ fontFamily: 'var(--font-body)' }}
         >
           When someone interacts with your content, you'll see it here.
         </p>
@@ -113,7 +113,7 @@ export function NotificationsList({
         <div className="flex items-center gap-2">
           <span
             className="text-sm font-medium text-slate-700 dark:text-slate-300"
-            style={{ fontFamily: "'Optima', 'Segoe UI', sans-serif" }}
+            style={{ fontFamily: 'var(--font-body)' }}
           >
             {notifications.length} notification{notifications.length !== 1 ? 's' : ''}
           </span>
@@ -127,7 +127,7 @@ export function NotificationsList({
           <button
             onClick={onMarkAllAsRead}
             className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/30 rounded-lg transition-colors"
-            style={{ fontFamily: "'Optima', 'Segoe UI', sans-serif" }}
+            style={{ fontFamily: 'var(--font-body)' }}
           >
             <CheckCheck className="w-4 h-4" />
             Mark all as read

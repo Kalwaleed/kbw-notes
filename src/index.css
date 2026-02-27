@@ -123,7 +123,7 @@
 }
 
 .tiptap p.is-editor-empty:first-child::before {
-  color: #9ca3af;
+  color: var(--color-neutral-400);
   content: attr(data-placeholder);
   float: left;
   height: 0;
@@ -131,9 +131,9 @@
 }
 
 .tiptap pre {
-  background: #1e293b;
+  background: var(--color-neutral-800);
   border-radius: 0.5rem;
-  color: #e2e8f0;
+  color: var(--color-neutral-200);
   font-family: var(--font-mono);
   padding: 0.75rem 1rem;
   overflow-x: auto;
@@ -147,26 +147,26 @@
 }
 
 .tiptap code {
-  background-color: rgba(139, 92, 246, 0.1);
+  background-color: rgba(139, 92, 246, 0.1); /* --color-primary-500 at 10% opacity */
   border-radius: 0.25rem;
-  color: #7c3aed;
+  color: var(--color-primary-600);
   font-size: 0.875em;
   padding: 0.125rem 0.25rem;
 }
 
 .dark .tiptap code {
-  background-color: rgba(139, 92, 246, 0.2);
-  color: #a78bfa;
+  background-color: rgba(139, 92, 246, 0.2); /* --color-primary-500 at 20% opacity */
+  color: var(--color-primary-400);
 }
 
 .tiptap blockquote {
-  border-left: 3px solid #c4b5fd;
+  border-left: 3px solid var(--color-primary-300);
   margin: 1rem 0;
   padding-left: 1rem;
 }
 
 .dark .tiptap blockquote {
-  border-left-color: #6d28d9;
+  border-left-color: var(--color-primary-700);
 }
 
 .tiptap img {
@@ -200,14 +200,14 @@
 }
 
 .prose pre {
-  background: #1e293b;
+  background: var(--color-neutral-800);
   border-radius: 0.5rem;
 }
 
 .prose code {
-  background-color: rgba(139, 92, 246, 0.1);
+  background-color: rgba(139, 92, 246, 0.1); /* --color-primary-500 at 10% opacity */
   border-radius: 0.25rem;
-  color: #7c3aed;
+  color: var(--color-primary-600);
   padding: 0.125rem 0.25rem;
 }
 
@@ -217,6 +217,11 @@
 }
 
 .dark .prose code {
-  background-color: rgba(139, 92, 246, 0.2);
-  color: #a78bfa;
+  background-color: rgba(139, 92, 246, 0.2); /* --color-primary-500 at 20% opacity */
+  color: var(--color-primary-400);
 }
+
+/* Density settings */
+.density-compact { --density-py: 0.75rem; --density-gap: 0.75rem; }
+.density-comfortable { --density-py: 1rem; --density-gap: 1rem; }
+.density-spacious { --density-py: 1.5rem; --density-gap: 1.5rem; }

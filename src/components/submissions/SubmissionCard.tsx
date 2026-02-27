@@ -129,7 +129,7 @@ export function SubmissionCard({
               ? 'text-slate-900 dark:text-white'
               : 'text-slate-400 dark:text-slate-500 italic'
           }`}
-          style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+          style={{ fontFamily: 'var(--font-heading)' }}
         >
           {title}
         </h3>
@@ -141,7 +141,7 @@ export function SubmissionCard({
               ? 'text-slate-600 dark:text-slate-400'
               : 'text-slate-400 dark:text-slate-500 italic'
           }`}
-          style={{ fontFamily: "'Optima', 'Segoe UI', sans-serif" }}
+          style={{ fontFamily: 'var(--font-body)' }}
         >
           {excerpt}
         </p>
@@ -168,7 +168,7 @@ export function SubmissionCard({
         {/* Footer: Date */}
         <div
           className="text-xs text-slate-500 dark:text-slate-500"
-          style={{ fontFamily: "'Optima', 'Segoe UI', sans-serif" }}
+          style={{ fontFamily: 'var(--font-body)' }}
         >
           {submission.status === 'published' && submission.publishedAt ? (
             <span>Published {formatDate(submission.publishedAt)}</span>

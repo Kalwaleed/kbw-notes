@@ -24,7 +24,7 @@ export function MainNav({ items, onNavigate }: MainNavProps) {
                 : 'text-slate-600 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-400'
             }
           `}
-          style={{ fontFamily: "'Optima', 'Segoe UI', sans-serif" }}
+          style={{ fontFamily: 'var(--font-body)' }}
         >
           {item.label}
         </button>

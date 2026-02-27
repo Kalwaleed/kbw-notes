@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import type { Comment } from '../components/blog-post/types'
+import type { Comment } from '../types/blog'
 import {
   fetchCommentsForPost,
   fetchCommentById,

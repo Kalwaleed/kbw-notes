@@ -11,7 +11,7 @@ export function RouterErrorPage() {
       <div className="text-center max-w-md">
         <h1
           className="text-6xl font-bold text-slate-900 dark:text-white mb-4"
-          style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+          style={{ fontFamily: 'var(--font-heading)' }}
         >
           {is404 ? '404' : 'Error'}
         </h1>

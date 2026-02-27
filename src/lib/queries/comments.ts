@@ -1,5 +1,5 @@
 import { supabase } from '../supabase'
-import type { Comment } from '../../components/blog-post/types'
+import type { Comment } from '../../types/blog'
 
 interface DbComment {
   id: string
@@ -32,7 +32,7 @@ function buildCommentTree(flatComments: DbComment[]): Comment[] {
       commenter: {
         id: dbComment.profiles?.id ?? dbComment.user_id ?? `anon-${dbComment.id}`,
         name: dbComment.profiles?.display_name ?? 'Anonymous',
-        avatar: dbComment.profiles?.avatar_url ?? '',
+        avatarUrl: dbComment.profiles?.avatar_url ?? null,
       },
       createdAt: dbComment.created_at,
       reactions: 0,
@@ -129,7 +129,7 @@ export async function fetchCommentById(commentId: string): Promise<Comment | nul
     commenter: {
       id: dbComment.profiles?.id ?? dbComment.user_id ?? `anon-${dbComment.id}`,
       name: dbComment.profiles?.display_name ?? 'Anonymous',
-      avatar: dbComment.profiles?.avatar_url ?? '',
+      avatarUrl: dbComment.profiles?.avatar_url ?? null,
     },
     createdAt: dbComment.created_at,
     reactions: 0,
@@ -185,7 +185,7 @@ export async function addComment(
     commenter: {
       id: dbComment.profiles?.id ?? dbComment.user_id ?? `anon-${dbComment.id}`,
       name: dbComment.profiles?.display_name ?? 'Anonymous',
-      avatar: dbComment.profiles?.avatar_url ?? '',
+      avatarUrl: dbComment.profiles?.avatar_url ?? null,
     },
     createdAt: dbComment.created_at,
     reactions: 0,
@@ -243,7 +243,7 @@ export async function addReply(
     commenter: {
       id: dbComment.profiles?.id ?? dbComment.user_id ?? `anon-${dbComment.id}`,
       name: dbComment.profiles?.display_name ?? 'Anonymous',
-      avatar: dbComment.profiles?.avatar_url ?? '',
+      avatarUrl: dbComment.profiles?.avatar_url ?? null,
     },
     createdAt: dbComment.created_at,
     reactions: 0,

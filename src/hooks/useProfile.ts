@@ -84,20 +84,25 @@ export function useProfile(userId: string | undefined) {
       })
 
       if (updateError) {
-        // Fallback to regular update without profile_complete if RPC doesn't exist
-        const { error: fallbackError } = await supabase
-          .from('profiles')
-          .update({
-            display_name: updates.display_name,
-            bio: updates.bio,
-            website: updates.website,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', userId)
+        // Only fallback to direct update when RPC function doesn't exist
+        if (updateError.code === 'PGRST202' || updateError.code === '42883') {
+          const { error: fallbackError } = await supabase
+            .from('profiles')
+            .update({
+              display_name: updates.display_name,
+              bio: updates.bio,
+              website: updates.website,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', userId)
 
-        if (fallbackError) {
-          setError(fallbackError.message)
-          return { error: fallbackError.message }
+          if (fallbackError) {
+            setError(fallbackError.message)
+            return { error: fallbackError.message }
+          }
+        } else {
+          setError(updateError.message)
+          return { error: updateError.message }
         }
       }
 

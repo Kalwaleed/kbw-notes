@@ -42,7 +42,7 @@ export function BlogFeed({
   return (
     <div className="w-full">
       {/* Feed Grid */}
-      <div className="grid gap-6 md:gap-8">
+      <div className="grid gap-6 md:gap-8" style={{ gap: 'var(--density-gap, 1.5rem)' }}>
         {blogPosts.map((post, index) => (
           <div
             key={post.id}
@@ -80,13 +80,13 @@ export function BlogFeed({
           </div>
           <h3
             className="text-lg font-semibold text-slate-900 dark:text-white mb-2"
-            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            style={{ fontFamily: 'var(--font-heading)' }}
           >
             No posts yet
           </h3>
           <p
             className="text-slate-500 dark:text-slate-400"
-            style={{ fontFamily: "'Optima', 'Segoe UI', sans-serif" }}
+            style={{ fontFamily: 'var(--font-body)' }}
           >
             Check back soon for new content.
           </p>
@@ -103,7 +103,7 @@ export function BlogFeed({
             <Loader2 className="w-5 h-5 animate-spin" />
             <span
               className="text-sm"
-              style={{ fontFamily: "'Optima', 'Segoe UI', sans-serif" }}
+              style={{ fontFamily: 'var(--font-body)' }}
             >
               Loading more posts...
             </span>
@@ -116,7 +116,7 @@ export function BlogFeed({
         <div className="text-center py-8">
           <p
             className="text-sm text-slate-400 dark:text-slate-500"
-            style={{ fontFamily: "'Optima', 'Segoe UI', sans-serif" }}
+            style={{ fontFamily: 'var(--font-body)' }}
           >
             You've reached the end
           </p>

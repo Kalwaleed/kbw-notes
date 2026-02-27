@@ -1,5 +1,5 @@
 import { supabase } from '../supabase'
-import type { BlogPost } from '../../components/blog-feed/types'
+import type { BlogPost } from '../../types/blog'
 
 export interface FetchPostsOptions {
   limit?: number

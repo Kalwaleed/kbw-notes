@@ -29,7 +29,7 @@ export function StatusBadge({ status, size = 'sm' }: StatusBadgeProps) {
   return (
     <span
       className={`inline-flex items-center font-medium rounded-full ${sizeClasses} ${config.bgClass} ${config.textClass}`}
-      style={{ fontFamily: "'Optima', 'Segoe UI', sans-serif" }}
+      style={{ fontFamily: 'var(--font-body)' }}
     >
       {config.label}
     </span>

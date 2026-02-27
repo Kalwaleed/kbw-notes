@@ -48,7 +48,7 @@ export function CommentThread({
   const isDeleted = comment.content === '[This comment has been deleted]'
   const isPendingReview = !comment.isModerated
   const isOwnComment = currentUserId && comment.commenter.id === currentUserId
-  const hasUserAvatar = comment.commenter.avatar && comment.commenter.avatar.length > 0
+  const hasUserAvatar = comment.commenter.avatarUrl && comment.commenter.avatarUrl.length > 0
 
   const [isReplying, setIsReplying] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -81,13 +81,13 @@ export function CommentThread({
 
   return (
     <div className={`${isNested ? 'ml-6 sm:ml-10 border-l-2 border-slate-200 dark:border-slate-700 pl-4 sm:pl-6' : ''}`}>
-      <div className="py-4">
+      <div className="py-4" style={{ padding: 'var(--density-py, 1rem) 0' }}>
         {/* Comment header */}
         <div className="flex items-start gap-3">
           {/* User avatar or anonymous fallback */}
           {hasUserAvatar ? (
             <img
-              src={comment.commenter.avatar}
+              src={comment.commenter.avatarUrl!}
               alt={comment.commenter.name}
               className="w-8 h-8 sm:w-10 sm:h-10 rounded-full shrink-0 object-cover"
             />

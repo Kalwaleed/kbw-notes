@@ -115,7 +115,7 @@ export function TagSelector({
             onKeyDown={handleKeyDown}
             placeholder={selectedTags.length === 0 ? 'Add tags...' : ''}
             className="flex-1 min-w-[100px] bg-transparent border-none outline-none text-sm text-slate-900 dark:text-white placeholder-slate-400"
-            style={{ fontFamily: "'Optima', 'Segoe UI', sans-serif" }}
+            style={{ fontFamily: 'var(--font-body)' }}
           />
         )}
       </div>

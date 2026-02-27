@@ -64,7 +64,7 @@ export function UserMenu({ user, onNavigate, onLogout }: UserMenuProps) {
           <div className="px-4 py-2 border-b border-slate-200 dark:border-slate-700">
             <p
               className="text-sm font-medium text-slate-900 dark:text-white"
-              style={{ fontFamily: "'Optima', 'Segoe UI', sans-serif" }}
+              style={{ fontFamily: 'var(--font-body)' }}
             >
               {user.name}
             </p>
@@ -77,7 +77,7 @@ export function UserMenu({ user, onNavigate, onLogout }: UserMenuProps) {
               onNavigate?.('/profile')
             }}
             className="w-full text-left px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
-            style={{ fontFamily: "'Optima', 'Segoe UI', sans-serif" }}
+            style={{ fontFamily: 'var(--font-body)' }}
           >
             Profile
           </button>
@@ -87,7 +87,7 @@ export function UserMenu({ user, onNavigate, onLogout }: UserMenuProps) {
               onNavigate?.('/settings')
             }}
             className="w-full text-left px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
-            style={{ fontFamily: "'Optima', 'Segoe UI', sans-serif" }}
+            style={{ fontFamily: 'var(--font-body)' }}
           >
             Settings
           </button>
@@ -98,7 +98,7 @@ export function UserMenu({ user, onNavigate, onLogout }: UserMenuProps) {
               onLogout?.()
             }}
             className="w-full text-left px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-red-600 dark:hover:text-red-400 transition-colors"
-            style={{ fontFamily: "'Optima', 'Segoe UI', sans-serif" }}
+            style={{ fontFamily: 'var(--font-body)' }}
           >
             Logout
           </button>

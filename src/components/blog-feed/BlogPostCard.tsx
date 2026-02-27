@@ -39,6 +39,7 @@ export function BlogPostCard({
       <button
         onClick={onView}
         className="w-full text-left p-6 pb-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 rounded-t-2xl"
+        style={{ padding: 'var(--density-py, 1.5rem)' }}
       >
         {/* Tags */}
         <div className="flex flex-wrap gap-2 mb-4">
@@ -46,7 +47,7 @@ export function BlogPostCard({
             <span
               key={tag}
               className="px-2.5 py-0.5 text-xs font-medium bg-indigo-100 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 rounded-full"
-              style={{ fontFamily: "'Optima', 'Segoe UI', sans-serif" }}
+              style={{ fontFamily: 'var(--font-body)' }}
             >
               {tag}
             </span>
@@ -56,7 +57,7 @@ export function BlogPostCard({
         {/* Title */}
         <h2
           className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-3 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors leading-tight"
-          style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+          style={{ fontFamily: 'var(--font-heading)' }}
         >
           {post.title}
         </h2>
@@ -64,7 +65,7 @@ export function BlogPostCard({
         {/* Excerpt */}
         <p
           className="text-slate-600 dark:text-slate-400 leading-relaxed mb-4 line-clamp-2"
-          style={{ fontFamily: "'Optima', 'Segoe UI', sans-serif" }}
+          style={{ fontFamily: 'var(--font-body)' }}
         >
           {post.excerpt}
         </p>
@@ -85,13 +86,13 @@ export function BlogPostCard({
           <div className="flex-1 min-w-0">
             <p
               className="text-sm font-medium text-slate-900 dark:text-white truncate"
-              style={{ fontFamily: "'Optima', 'Segoe UI', sans-serif" }}
+              style={{ fontFamily: 'var(--font-body)' }}
             >
               {post.author.name}
             </p>
             <p
               className="text-xs text-slate-500 dark:text-slate-500"
-              style={{ fontFamily: "'Optima', 'Segoe UI', sans-serif" }}
+              style={{ fontFamily: 'var(--font-body)' }}
             >
               {formattedDate}
             </p>
@@ -105,13 +106,13 @@ export function BlogPostCard({
         <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-500">
           <span className="flex items-center gap-1.5">
             <Heart className="w-4 h-4" />
-            <span style={{ fontFamily: "'Optima', 'Segoe UI', sans-serif" }}>
+            <span style={{ fontFamily: 'var(--font-body)' }}>
               {post.likeCount}
             </span>
           </span>
           <span className="flex items-center gap-1.5">
             <MessageCircle className="w-4 h-4" />
-            <span style={{ fontFamily: "'Optima', 'Segoe UI', sans-serif" }}>
+            <span style={{ fontFamily: 'var(--font-body)' }}>
               {post.commentCount}
             </span>
           </span>

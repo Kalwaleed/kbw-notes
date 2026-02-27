@@ -101,7 +101,7 @@ export function NotificationItem({
       <div className="flex-1 min-w-0">
         <p
           className={`text-sm ${notification.isRead ? 'text-slate-600 dark:text-slate-400' : 'text-slate-900 dark:text-white font-medium'}`}
-          style={{ fontFamily: "'Optima', 'Segoe UI', sans-serif" }}
+          style={{ fontFamily: 'var(--font-body)' }}
         >
           {notification.message}
         </p>
@@ -109,7 +109,7 @@ export function NotificationItem({
           <Icon className={`w-3.5 h-3.5 ${color}`} />
           <span
             className="text-xs text-slate-500 dark:text-slate-500"
-            style={{ fontFamily: "'Optima', 'Segoe UI', sans-serif" }}
+            style={{ fontFamily: 'var(--font-body)' }}
           >
             {formatRelativeTime(notification.createdAt)}
           </span>

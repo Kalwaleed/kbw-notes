@@ -1,39 +1,8 @@
-// =============================================================================
-// Data Types
-// =============================================================================
+import type { BlogPost, Comment } from '../../types/blog'
 
-export interface Author {
-  id: string
-  name: string
-  avatar: string
-}
-
-export interface Commenter {
-  id: string
-  name: string
-  avatar: string
-}
-
-export interface Comment {
-  id: string
-  content: string
-  commenter: Commenter
-  createdAt: string
-  reactions: number
-  isModerated: boolean
-  replies: Comment[]
-}
-
-export interface BlogPost {
-  id: string
-  headline: string
-  subheader: string
-  body: string
-  author: Author
-  publishedAt: string
-  readingTime: number
-  tags: string[]
-}
+// Re-export for convenience
+export type { BlogPost, Comment }
+export type { Author, Commenter } from '../../types/blog'
 
 // =============================================================================
 // Component Props

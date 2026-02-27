@@ -36,6 +36,13 @@ export function useSubmissionDraft({
 
   const lastSavedDataRef = useRef<string>(JSON.stringify(initialData))
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const formDataRef = useRef<SubmissionFormData>(formData)
+  const isSavingRef = useRef(false)
+
+  // Keep formDataRef in sync
+  useEffect(() => {
+    formDataRef.current = formData
+  }, [formData])
 
   // Update form data and mark as dirty
   const updateField = useCallback(<K extends keyof SubmissionFormData>(
@@ -56,26 +63,27 @@ export function useSubmissionDraft({
     setIsDirty(currentDataStr !== lastSavedDataRef.current)
   }, [formData])
 
-  // Save function — returns the error (or null on success) so callers
-  // can check synchronously without relying on stale React state.
-  const saveNow = useCallback(async (): Promise<Error | null> => {
-    if (isSaving) return null
+  // Save function uses refs to avoid dependency on formData
+  const saveNowRef = useRef<() => Promise<Error | null>>(async () => null)
+  saveNowRef.current = async (): Promise<Error | null> => {
+    if (isSavingRef.current) return null
 
-    const currentDataStr = JSON.stringify(formData)
+    const currentData = formDataRef.current
+    const currentDataStr = JSON.stringify(currentData)
     if (currentDataStr === lastSavedDataRef.current) {
-      // No changes to save
       return null
     }
 
+    isSavingRef.current = true
     setIsSaving(true)
     setError(null)
 
     try {
-      await updateSubmission(submissionId, formData)
+      await updateSubmission(submissionId, currentData)
       lastSavedDataRef.current = currentDataStr
       setLastSaved(new Date())
       setIsDirty(false)
-      onSave?.(formData)
+      onSave?.(currentData)
       return null
     } catch (err) {
       const saveErr = err instanceof Error ? err : new Error('Failed to save draft')
@@ -83,22 +91,26 @@ export function useSubmissionDraft({
       onError?.(saveErr)
       return saveErr
     } finally {
+      isSavingRef.current = false
       setIsSaving(false)
     }
-  }, [submissionId, formData, isSaving, onSave, onError])
+  }
 
-  // Auto-save effect
+  // Stable saveNow that delegates to ref
+  const saveNow = useCallback((): Promise<Error | null> => {
+    return saveNowRef.current()
+  }, [])
+
+  // Auto-save effect -- only depends on isDirty and autoSaveInterval
   useEffect(() => {
-    if (!isDirty || isSaving) return
+    if (!isDirty || isSavingRef.current) return
 
-    // Clear any existing timeout
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current)
     }
 
-    // Set new timeout for auto-save
     saveTimeoutRef.current = setTimeout(() => {
-      saveNow()
+      saveNowRef.current()
     }, autoSaveInterval)
 
     return () => {
@@ -106,9 +118,9 @@ export function useSubmissionDraft({
         clearTimeout(saveTimeoutRef.current)
       }
     }
-  }, [isDirty, isSaving, autoSaveInterval, saveNow])
+  }, [isDirty, autoSaveInterval])
 
-  // Save on unmount if dirty
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (saveTimeoutRef.current) {

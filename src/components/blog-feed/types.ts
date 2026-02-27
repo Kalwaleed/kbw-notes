@@ -1,25 +1,7 @@
-// =============================================================================
-// Data Types
-// =============================================================================
+import type { BlogPost } from '../../types/blog'
 
-export interface User {
-  id: string
-  name: string
-  avatarUrl: string | null
-}
-
-export interface BlogPost {
-  id: string
-  title: string
-  excerpt: string
-  publishedAt: string
-  author: User
-  tags: string[]
-  likeCount: number
-  commentCount: number
-  isLiked: boolean
-  isBookmarked: boolean
-}
+// Re-export for convenience
+export type { BlogPost }
 
 // =============================================================================
 // Component Props

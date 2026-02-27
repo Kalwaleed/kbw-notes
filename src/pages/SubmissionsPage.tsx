@@ -69,7 +69,7 @@ export function SubmissionsPage() {
         <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
           <h1
             className="text-2xl font-bold text-slate-900 dark:text-white mb-4"
-            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            style={{ fontFamily: 'var(--font-heading)' }}
           >
             Sign in to view your submissions
           </h1>

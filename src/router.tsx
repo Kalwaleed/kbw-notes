@@ -11,7 +11,7 @@ import { SubmissionDetailPage } from './pages/SubmissionDetailPage'
 import { NotificationsPage } from './pages/NotificationsPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { RouterErrorPage } from './pages/RouterErrorPage'
-import { ProtectedRoute } from './components/auth'
+import { KbwNotesLayout } from './components/auth'
 
 export const router = createBrowserRouter([
   {
@@ -26,76 +26,19 @@ export const router = createBrowserRouter([
       },
       // Authenticated app under /kbw-notes
       {
-        path: '/kbw-notes/home',
-        element: (
-          <ProtectedRoute>
-            <HomePage />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: '/kbw-notes/post/:id',
-        element: (
-          <ProtectedRoute>
-            <PostPage />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: '/kbw-notes/profile',
-        element: (
-          <ProtectedRoute>
-            <ProfilePage />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: '/kbw-notes/profile/setup',
-        element: (
-          <ProtectedRoute>
-            <ProfileSetupPage />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: '/kbw-notes/settings',
-        element: (
-          <ProtectedRoute>
-            <SettingsPage />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: '/kbw-notes/submissions',
-        element: (
-          <ProtectedRoute>
-            <SubmissionsPage />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: '/kbw-notes/submissions/new',
-        element: (
-          <ProtectedRoute>
-            <NewSubmissionPage />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: '/kbw-notes/submissions/:id',
-        element: (
-          <ProtectedRoute>
-            <SubmissionDetailPage />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: '/kbw-notes/notifications',
-        element: (
-          <ProtectedRoute>
-            <NotificationsPage />
-          </ProtectedRoute>
-        ),
+        path: '/kbw-notes',
+        element: <KbwNotesLayout />,
+        children: [
+          { path: 'home', element: <HomePage /> },
+          { path: 'post/:id', element: <PostPage /> },
+          { path: 'profile', element: <ProfilePage /> },
+          { path: 'profile/setup', element: <ProfileSetupPage /> },
+          { path: 'settings', element: <SettingsPage /> },
+          { path: 'submissions', element: <SubmissionsPage /> },
+          { path: 'submissions/new', element: <NewSubmissionPage /> },
+          { path: 'submissions/:id', element: <SubmissionDetailPage /> },
+          { path: 'notifications', element: <NotificationsPage /> },
+        ],
       },
       // Catch-all 404 route
       {

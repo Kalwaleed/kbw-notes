@@ -133,7 +133,7 @@ export function HomePage() {
           <div>
             <h1
               className="text-3xl font-bold text-slate-900 dark:text-white"
-              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+              style={{ fontFamily: 'var(--font-heading)' }}
             >
               kbw Notes
             </h1>

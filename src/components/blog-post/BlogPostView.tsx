@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import DOMPurify from 'dompurify'
 import type { BlogPostCommentsProps, Comment } from './types'
 import { CommentThread } from './CommentThread'
 import { CommentForm } from './CommentForm'
@@ -13,44 +14,6 @@ function formatDate(dateString: string): string {
     month: 'long',
     day: 'numeric'
   })
-}
-
-function parseMarkdownBody(body: string): React.ReactNode[] {
-  const lines = body.split('\n')
-  const elements: React.ReactNode[] = []
-  let currentParagraph: string[] = []
-  let key = 0
-
-  const flushParagraph = () => {
-    if (currentParagraph.length > 0) {
-      elements.push(
-        <p key={key++} className="text-slate-700 dark:text-slate-300 leading-relaxed text-base sm:text-lg">
-          {currentParagraph.join(' ')}
-        </p>
-      )
-      currentParagraph = []
-    }
-  }
-
-  for (const line of lines) {
-    const trimmed = line.trim()
-
-    if (trimmed.startsWith('## ')) {
-      flushParagraph()
-      elements.push(
-        <h2 key={key++} className="text-xl sm:text-2xl font-semibold text-slate-900 dark:text-white mt-8 mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-          {trimmed.slice(3)}
-        </h2>
-      )
-    } else if (trimmed === '') {
-      flushParagraph()
-    } else {
-      currentParagraph.push(trimmed)
-    }
-  }
-
-  flushParagraph()
-  return elements
 }
 
 export function BlogPostView({
@@ -147,14 +110,14 @@ export function BlogPostView({
           {/* Headline */}
           <h1
             className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 dark:text-white leading-tight"
-            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            style={{ fontFamily: 'var(--font-heading)' }}
           >
-            {blogPost.headline}
+            {blogPost.title}
           </h1>
 
           {/* Subheader */}
           <p className="mt-3 sm:mt-4 text-lg sm:text-xl text-slate-600 dark:text-white leading-relaxed">
-            {blogPost.subheader}
+            {blogPost.excerpt}
           </p>
 
           {/* Author and meta info */}
@@ -201,10 +164,11 @@ export function BlogPostView({
             </div>
           </div>
 
-          {/* Article body */}
-          <div className="mt-6 sm:mt-8 space-y-4 sm:space-y-6">
-            {parseMarkdownBody(blogPost.body)}
-          </div>
+          {/* Article body — DOMPurify-sanitized HTML from TipTap editor */}
+          <div
+            className="mt-6 sm:mt-8 tiptap prose prose-slate dark:prose-invert max-w-none"
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(blogPost.content ?? '') }}
+          />
 
           {/* Share CTA at bottom */}
           <div className="mt-10 sm:mt-12 p-4 sm:p-6 rounded-xl bg-gradient-to-r from-violet-50 to-indigo-50 dark:from-violet-900/20 dark:to-indigo-900/20 border border-violet-100 dark:border-violet-800/50">
@@ -245,7 +209,7 @@ export function BlogPostView({
             <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6 text-violet-600 dark:text-violet-400" strokeWidth={1.5} />
             <h2
               className="text-lg sm:text-xl font-semibold text-slate-900 dark:text-white"
-              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+              style={{ fontFamily: 'var(--font-heading)' }}
             >
               Discussion
               <span className="ml-2 text-slate-400 dark:text-slate-500 font-normal text-base">

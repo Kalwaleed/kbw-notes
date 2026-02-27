@@ -71,7 +71,7 @@ export function SettingsPage() {
         <div className="mb-8">
           <h1
             className="text-3xl font-bold text-slate-900 dark:text-white"
-            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            style={{ fontFamily: 'var(--font-heading)' }}
           >
             Settings
           </h1>

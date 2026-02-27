@@ -22,7 +22,7 @@ export function SettingsSection({
         <div className="flex items-center justify-between">
           <h2
             className="text-lg font-semibold text-slate-900 dark:text-white"
-            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            style={{ fontFamily: 'var(--font-heading)' }}
           >
             {title}
           </h2>

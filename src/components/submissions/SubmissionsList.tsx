@@ -58,7 +58,7 @@ export function SubmissionsList({
         <div>
           <h1
             className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white"
-            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            style={{ fontFamily: 'var(--font-heading)' }}
           >
             My Submissions
           </h1>
@@ -173,13 +173,13 @@ function EmptyState({
       </div>
       <h3
         className="text-lg font-semibold text-slate-900 dark:text-white mb-2"
-        style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+        style={{ fontFamily: 'var(--font-heading)' }}
       >
         {title}
       </h3>
       <p
         className="text-slate-600 dark:text-slate-400 mb-6 max-w-sm"
-        style={{ fontFamily: "'Optima', 'Segoe UI', sans-serif" }}
+        style={{ fontFamily: 'var(--font-body)' }}
       >
         {description}
       </p>

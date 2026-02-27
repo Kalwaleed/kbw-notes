@@ -4,19 +4,7 @@ import { useAuth, useComments } from '../hooks'
 import { BlogPostView } from '../components/blog-post'
 import { fetchBlogPost } from '../lib/queries/blog'
 
-interface PostData {
-  id: string
-  title: string
-  excerpt: string
-  content: string
-  publishedAt: string
-  tags: string[]
-  author: {
-    id: string
-    name: string
-    avatarUrl: string | null
-  }
-}
+type PostData = NonNullable<Awaited<ReturnType<typeof fetchBlogPost>>>
 
 export function PostPage() {
   const navigate = useNavigate()
@@ -156,20 +144,11 @@ export function PostPage() {
     )
   }
 
-  // Transform post data to match BlogPostView props
   const blogPostData = {
-    id: post.id,
-    headline: post.title,
-    subheader: post.excerpt,
-    body: post.content,
-    author: {
-      id: post.author.id,
-      name: post.author.name,
-      avatar: post.author.avatarUrl ?? '',
-    },
-    publishedAt: post.publishedAt,
+    ...post,
     readingTime: Math.ceil(post.content.replace(/<[^>]*>/g, '').split(/\s+/).filter(Boolean).length / 200),
-    tags: post.tags,
+    likeCount: 0,
+    commentCount: comments.length,
   }
 
   return (
