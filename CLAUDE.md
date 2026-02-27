@@ -20,6 +20,7 @@ npm run test:e2e:ui  # Playwright with UI
 supabase db push                              # Apply migrations to remote database
 supabase functions deploy moderate-comment    # Deploy Edge Function
 supabase functions serve                      # Run Edge Functions locally
+supabase gen types typescript --project-id <ref> > src/lib/database.types.ts  # Regenerate DB types
 ```
 
 ### Running a Single Test
@@ -41,119 +42,128 @@ npx playwright test tests/example.spec.ts                              # Single 
 - **Icons**: Lucide React
 - **Rich Text Editor**: TipTap (for submission content editing)
 
+### 3-Tier Layer Architecture
+
+```
+lib/queries/   →   hooks/   →   pages/
+(Supabase calls)   (stateful)   (route components)
+```
+
+- **Query layer** (`src/lib/queries/`): Pure Supabase calls. No React state. Returns typed data.
+- **Hook layer** (`src/hooks/`): Stateful React hooks that call query functions. Manage loading/error states, optimistic updates, side effects.
+- **Page layer** (`src/pages/`): Route components that compose hooks and render UI via components.
+
+Components in `src/components/` are presentational — they receive data via props from pages, not directly from hooks or queries.
+
+### Auth Architecture
+
+Auth uses React Context, not scattered hooks:
+
+- `AuthProvider` in `src/contexts/AuthContext.tsx` — wraps the app, maintains a single `onAuthStateChange` subscription shared by all consumers
+- `useAuth` hook (`src/hooks/useAuth.ts`) — thin wrapper that reads from AuthContext
+- `KbwNotesLayout` (`src/components/auth/KbwNotesLayout.tsx`) — wraps all `/kbw-notes/*` routes, contains `ProtectedRoute` which redirects unauthenticated users to `/`
+- Domain lock: only `@kbw.vc` emails can register/sign in (validated via NFKC normalization + strict regex)
+
+### Routing
+
+All authenticated routes are nested under `/kbw-notes` in `src/router.tsx`, wrapped by `KbwNotesLayout`:
+
+- `/` — Login page (unauthenticated)
+- `/kbw-notes` — Redirects to `/kbw-notes/home` (index route)
+- `/kbw-notes/home` — Blog feed (reads from `submissions` table, NOT `blog_posts`)
+- `/kbw-notes/post/:id` — Single post view with comments
+- `/kbw-notes/submissions` — Draft listing
+- `/kbw-notes/submissions/new` — Create new submission
+- `/kbw-notes/submissions/:id` — Edit existing submission
+- `/kbw-notes/profile` — User profile
+- `/kbw-notes/profile/setup` — Profile setup (first-time users)
+- `/kbw-notes/settings` — User settings
+- `/kbw-notes/notifications` — Notifications
+- `*` — 404 catch-all
+
+All navigation paths from `AppShell` and `UserMenu` must use the `/kbw-notes/` prefix.
+
 ### Design System
 
 - **Primary**: Violet palette (`--color-primary-*`)
 - **Secondary**: Indigo palette (`--color-secondary-*`)
 - **Neutral**: Slate palette
-- **Fonts**: Space Grotesk (headings), Optima (body), JetBrains Mono (code)
-- **Dark mode**: Class-based via `.dark` class
-
-### Project Structure
-
-```
-src/
-├── components/
-│   ├── blog-feed/       # Blog listing (BlogFeed, BlogPostCard)
-│   ├── blog-post/       # Post detail + comments (BlogPostView, CommentThread, CommentForm)
-│   ├── notifications/   # Notification components
-│   ├── settings/        # Settings UI (AppearanceSettings, ReadingSettings)
-│   ├── submissions/     # Submission editor (SubmissionEditor, TagSelector, ImageUploader)
-│   └── shell/           # App layout (AppShell, MainNav, UserMenu)
-├── hooks/               # Custom hooks (useAuth, useComments, useSubmissions, useNotifications, etc.)
-├── lib/
-│   ├── queries/         # Supabase query functions (blog.ts, comments.ts, submissions.ts, notifications.ts)
-│   ├── supabase.ts      # Supabase client
-│   └── moderationService.ts  # Comment moderation API
-├── pages/               # Route components
-├── types/               # TypeScript type definitions
-└── router.tsx           # React Router configuration
-
-supabase/
-├── functions/
-│   └── moderate-comment/   # AI moderation Edge Function (Deno)
-├── migrations/             # Database migrations (001-012)
-└── seed.sql                # Sample data
-```
-
-### Routing
-
-All authenticated routes are under `/kbw-notes/*` prefix:
-- `/` - Login page (unauthenticated)
-- `/kbw-notes/home` - Blog feed (reads from `submissions` table)
-- `/kbw-notes/post/:id` - Single post view with comments
-- `/kbw-notes/submissions` - Draft listing
-- `/kbw-notes/submissions/new` - Create new submission
-- `/kbw-notes/submissions/:id` - Edit existing submission
-- `/kbw-notes/profile` - User profile
-- `/kbw-notes/profile/setup` - Profile setup (first-time users)
-- `/kbw-notes/settings` - User settings
-- `/kbw-notes/notifications` - Notifications
+- **Fonts**: Space Grotesk (headings via `var(--font-heading)`), Optima (body via `var(--font-body)`), JetBrains Mono (code)
+- **Dark mode**: Class-based via `.dark` class on `document.documentElement`
+- **Density**: CSS vars `--density-py`/`--density-gap` set by `.density-*` classes
+- **Theme control**: `useSettings` hook is the single source of truth — supports light/dark/system modes, `resolvedTheme` for computed value, `toggleTheme` for switching
 
 ### Key Data Flows
-
-**Authentication Flow:**
-1. User visits `/login` → `LoginPage` with Sign In / Sign Up tabs
-2. Email validated client-side: must be `@kbw.vc` domain
-3. Sign Up: `useAuth.signUp()` → `supabase.auth.signUp()` creates account
-4. Sign In: `useAuth.signInWithPassword()` → `supabase.auth.signInWithPassword()`
-5. Password Reset: `useAuth.resetPassword()` → sends reset email
-6. On success, `onAuthStateChange` listener updates state, triggers redirect
 
 **Comment Moderation Flow:**
 1. User submits comment via `CommentForm`
 2. `useComments` hook calls `moderationService.submitCommentForModeration()`
 3. Request hits Supabase Edge Function `moderate-comment`
-4. Edge Function validates request (CORS, Content-Type, rate limit, post exists)
+4. Edge Function validates (CORS, Content-Type, rate limit via `cf-connecting-ip`, post exists)
 5. Claude API moderates content
-6. If approved, comment is inserted with `is_moderated: true`
-7. Frontend fetches and displays the new comment
+6. If approved, comment inserted with `is_moderated: true`
+7. `fetchCommentsForPost` filters by `is_moderated = true` — unmoderated comments are never shown to other users
 
 **Submission Draft Flow:**
-1. User creates/edits submission in `SubmissionDetailPage`
+1. User creates/edits in `SubmissionDetailPage`
 2. `useSubmissionDraft` hook auto-saves every 30 seconds
 3. Draft persisted to `submissions` table with `status: 'draft'`
 4. On publish, status changes to `'published'`
 
 **Image Upload Flow:**
-1. `ImageUploader` component accepts file
-2. `useImageUpload` hook validates MIME type AND magic numbers (prevents spoofing)
-3. Uploads to Supabase Storage `post-images` bucket
-4. Returns public URL for embedding
+1. `ImageUploader` accepts file
+2. `useImageUpload` validates MIME type AND magic numbers (prevents spoofing)
+3. File extension derived from validated MIME type (not user-controlled filename)
+4. Uploads to Supabase Storage `post-images` bucket
 
-### Database Tables
+### Database
 
-- `profiles` - User profiles (extends Supabase auth.users)
-- `blog_posts` - Legacy blog content (not used by home page)
-- `submissions` - User-authored blog drafts and published posts (home page reads from here)
-- `comments` - Nested comments with `parent_id` for replies, `is_moderated` flag
-- `comment_likes` - User likes on comments (unique per user/comment)
-- `post_likes` / `post_bookmarks` - User engagement tracking
-- `notifications` - User notifications with realtime support
-- `rate_limits` - Persistent rate limiting for Edge Functions
+**Active tables:**
+- `submissions` — Blog drafts and published posts (the home feed reads from here)
+- `comments` — Nested comments with `parent_id` for replies, `is_moderated` flag
+- `comment_likes` — User likes on comments (unique per user/comment)
+- `post_likes` / `post_bookmarks` — User engagement (FK → `submissions` with CASCADE)
+- `profiles` — User profiles (extends Supabase auth.users)
+- `notifications` — User notifications with realtime support
+- `rate_limits` — Persistent rate limiting for Edge Functions
+
+**Legacy (do not use):**
+- `blog_posts` — Superseded by `submissions` table
+
+**Types:** `src/lib/database.types.ts` is auto-generated via `supabase gen types`. Do NOT manually edit. Convenience aliases (`Profile`, `CommentRow`, `SubmissionRow`, `NotificationRow`) are exported from this file.
+
+**Migrations:** `supabase/migrations/` contains migrations 001-015.
 
 ### Security Model
 
-The Edge Function (`moderate-comment`) implements multiple security layers:
-- **CORS**: Restricted to allowed origins only
-- **CSRF**: Requires `Content-Type: application/json`
-- **Rate Limiting**: Database-backed, 10 requests/minute per IP
-- **Input Validation**: Zod schemas for request/response
-- **Unicode Normalization**: NFKC to prevent homograph attacks
-- **Post Validation**: Verifies post exists before inserting comment
+Edge Function (`moderate-comment`):
+- CORS restricted to allowed origins
+- CSRF via `Content-Type: application/json` requirement
+- Rate limiting: database-backed, 10/min per IP (prefers `cf-connecting-ip` over spoofable headers)
+- Input validation: Zod schemas
+- Unicode normalization: NFKC to prevent homograph attacks
 
-Client-side security:
-- **XSS Prevention**: DOMPurify sanitizes HTML in submission preview
-- **Image Validation**: Magic number checks prevent malicious file uploads
-- **localStorage Validation**: Settings validated with allowlists before use
-- **Authorization**: `deleteComment` verifies ownership before soft-delete
-- **Auth Domain Lock**: Only `@kbw.vc` emails can register/sign in
+Client-side:
+- XSS: DOMPurify sanitizes TipTap HTML in submission preview and blog post rendering
+- Image validation: magic number checks
+- localStorage: settings validated with allowlists
+- Comment deletion: atomic ownership check in UPDATE query (prevents TOCTOU)
+- Profile updates: `supabase.auth.getUser()` verified before mutation
 
-### Settings Persistence
+## Testing Patterns
 
-- Appearance settings (theme, font size, density) → `localStorage` key: `kbw-appearance-settings`
-- Reading settings (sort, posts per page) → `localStorage` key: `kbw-reading-settings`
-- Theme also applies `.dark` class to `document.documentElement`
+Vitest mock pattern for Supabase: use `vi.hoisted()` to define mocks, not top-level `const` + `vi.mock`. Example:
+
+```typescript
+const mockSupabase = vi.hoisted(() => ({
+  auth: { getUser: vi.fn(), signUp: vi.fn(), /* ... */ },
+  from: vi.fn(),
+}))
+
+vi.mock('../lib/supabase', () => ({ supabase: mockSupabase }))
+```
+
+Tests live alongside source in `__tests__/` directories. 111 tests across 9 files covering auth validation, hooks, moderation, protected routes, and blog feed.
 
 ## Environment Variables
 
@@ -164,10 +174,4 @@ VITE_SUPABASE_ANON_KEY=<anon-key>
 ```
 
 Edge Function secrets (set via Supabase dashboard):
-- `ANTHROPIC_API_KEY` (or `ClaudeCode`) - Anthropic API key for comment moderation
-
-## Planning Documents
-
-- `ROADMAP.md` - Feature roadmap with planned features across phases
-- `PRD.md` - Comprehensive product requirements document
-- `TODO.md` - Task tracking
+- `ANTHROPIC_API_KEY` — Anthropic API key for comment moderation
