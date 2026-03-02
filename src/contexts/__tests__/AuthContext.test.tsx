@@ -7,10 +7,8 @@ const mockSupabase = vi.hoisted(() => ({
   auth: {
     getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
     getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
-    signUp: vi.fn().mockResolvedValue({ data: {}, error: null }),
-    signInWithPassword: vi.fn().mockResolvedValue({ data: {}, error: null }),
+    signInWithOtp: vi.fn().mockResolvedValue({ data: {}, error: null }),
     signOut: vi.fn().mockResolvedValue({ error: null }),
-    resetPasswordForEmail: vi.fn().mockResolvedValue({ error: null }),
     onAuthStateChange: vi.fn().mockReturnValue({
       data: { subscription: { unsubscribe: vi.fn() } },
     }),
@@ -132,133 +130,53 @@ describe('AuthContext', () => {
     })
   })
 
-  // ── signUp ──────────────────────────────────────────────────────
-  describe('signUp', () => {
+  // ── signInWithOtp ─────────────────────────────────────────────
+  describe('signInWithOtp', () => {
     it('rejects non-kbw.vc email', async () => {
       let result: { success: boolean; error?: string } | undefined
       render(
         <AuthProvider>
-          <AuthConsumer action={async (ctx) => { result = await ctx.signUp('user@gmail.com', 'password123') }} />
+          <AuthConsumer action={async (ctx) => { result = await ctx.signInWithOtp('user@gmail.com') }} />
         </AuthProvider>
       )
       await waitFor(() => expect(screen.getByTestId('loading').textContent).toBe('false'))
       await act(async () => { screen.getByTestId('action').click() })
       expect(result?.success).toBe(false)
       expect(result?.error).toBe('Only @kbw.vc emails are allowed')
-      expect(mockSupabase.auth.signUp).not.toHaveBeenCalled()
+      expect(mockSupabase.auth.signInWithOtp).not.toHaveBeenCalled()
     })
 
-    it('rejects short password', async () => {
+    it('calls supabase.auth.signInWithOtp with correct args', async () => {
+      mockSupabase.auth.signInWithOtp.mockResolvedValue({ data: {}, error: null })
       let result: { success: boolean; error?: string } | undefined
       render(
         <AuthProvider>
-          <AuthConsumer action={async (ctx) => { result = await ctx.signUp('user@kbw.vc', 'short') }} />
-        </AuthProvider>
-      )
-      await waitFor(() => expect(screen.getByTestId('loading').textContent).toBe('false'))
-      await act(async () => { screen.getByTestId('action').click() })
-      expect(result?.success).toBe(false)
-      expect(result?.error).toBe('Password must be at least 8 characters')
-    })
-
-    it('calls supabase.auth.signUp on valid input', async () => {
-      mockSupabase.auth.signUp.mockResolvedValue({ data: {}, error: null })
-      let result: { success: boolean; error?: string } | undefined
-      render(
-        <AuthProvider>
-          <AuthConsumer action={async (ctx) => { result = await ctx.signUp('user@kbw.vc', 'password123') }} />
+          <AuthConsumer action={async (ctx) => { result = await ctx.signInWithOtp('user@kbw.vc') }} />
         </AuthProvider>
       )
       await waitFor(() => expect(screen.getByTestId('loading').textContent).toBe('false'))
       await act(async () => { screen.getByTestId('action').click() })
       expect(result?.success).toBe(true)
-      expect(mockSupabase.auth.signUp).toHaveBeenCalledWith({
+      expect(mockSupabase.auth.signInWithOtp).toHaveBeenCalledWith({
         email: 'user@kbw.vc',
-        password: 'password123',
         options: {
-          emailRedirectTo: 'http://localhost:3000/kbw-notes/home',
+          emailRedirectTo: expect.stringContaining('/kbw-notes/home'),
         },
       })
     })
 
     it('returns error from supabase', async () => {
-      mockSupabase.auth.signUp.mockResolvedValue({ data: null, error: new Error('Email taken') })
+      mockSupabase.auth.signInWithOtp.mockResolvedValue({ data: null, error: new Error('Rate limit exceeded') })
       let result: { success: boolean; error?: string } | undefined
       render(
         <AuthProvider>
-          <AuthConsumer action={async (ctx) => { result = await ctx.signUp('user@kbw.vc', 'password123') }} />
+          <AuthConsumer action={async (ctx) => { result = await ctx.signInWithOtp('user@kbw.vc') }} />
         </AuthProvider>
       )
       await waitFor(() => expect(screen.getByTestId('loading').textContent).toBe('false'))
       await act(async () => { screen.getByTestId('action').click() })
       expect(result?.success).toBe(false)
-      expect(result?.error).toBe('Email taken')
-    })
-  })
-
-  // ── signInWithPassword ──────────────────────────────────────────
-  describe('signInWithPassword', () => {
-    it('rejects non-kbw.vc email', async () => {
-      let result: { success: boolean; error?: string } | undefined
-      render(
-        <AuthProvider>
-          <AuthConsumer action={async (ctx) => { result = await ctx.signInWithPassword('user@other.com', 'pass1234') }} />
-        </AuthProvider>
-      )
-      await waitFor(() => expect(screen.getByTestId('loading').textContent).toBe('false'))
-      await act(async () => { screen.getByTestId('action').click() })
-      expect(result?.success).toBe(false)
-      expect(result?.error).toBe('Only @kbw.vc emails are allowed')
-    })
-
-    it('calls supabase on valid input', async () => {
-      mockSupabase.auth.signInWithPassword.mockResolvedValue({ data: {}, error: null })
-      let result: { success: boolean; error?: string } | undefined
-      render(
-        <AuthProvider>
-          <AuthConsumer action={async (ctx) => { result = await ctx.signInWithPassword('user@kbw.vc', 'pass1234') }} />
-        </AuthProvider>
-      )
-      await waitFor(() => expect(screen.getByTestId('loading').textContent).toBe('false'))
-      await act(async () => { screen.getByTestId('action').click() })
-      expect(result?.success).toBe(true)
-      expect(mockSupabase.auth.signInWithPassword).toHaveBeenCalledWith({
-        email: 'user@kbw.vc',
-        password: 'pass1234',
-      })
-    })
-  })
-
-  // ── resetPassword ───────────────────────────────────────────────
-  describe('resetPassword', () => {
-    it('rejects non-kbw.vc email', async () => {
-      let result: { success: boolean; error?: string } | undefined
-      render(
-        <AuthProvider>
-          <AuthConsumer action={async (ctx) => { result = await ctx.resetPassword('user@other.com') }} />
-        </AuthProvider>
-      )
-      await waitFor(() => expect(screen.getByTestId('loading').textContent).toBe('false'))
-      await act(async () => { screen.getByTestId('action').click() })
-      expect(result?.success).toBe(false)
-      expect(result?.error).toBe('Only @kbw.vc emails are allowed')
-    })
-
-    it('sends reset email for valid kbw.vc address', async () => {
-      mockSupabase.auth.resetPasswordForEmail.mockResolvedValue({ error: null })
-      let result: { success: boolean; error?: string } | undefined
-      render(
-        <AuthProvider>
-          <AuthConsumer action={async (ctx) => { result = await ctx.resetPassword('user@kbw.vc') }} />
-        </AuthProvider>
-      )
-      await waitFor(() => expect(screen.getByTestId('loading').textContent).toBe('false'))
-      await act(async () => { screen.getByTestId('action').click() })
-      expect(result?.success).toBe(true)
-      expect(mockSupabase.auth.resetPasswordForEmail).toHaveBeenCalledWith(
-        'user@kbw.vc',
-        expect.objectContaining({ redirectTo: expect.stringContaining('/kbw-notes/home') })
-      )
+      expect(result?.error).toBe('Rate limit exceeded')
     })
   })
 

@@ -10,6 +10,7 @@ import { NewSubmissionPage } from './pages/NewSubmissionPage'
 import { SubmissionDetailPage } from './pages/SubmissionDetailPage'
 import { NotificationsPage } from './pages/NotificationsPage'
 import { NotFoundPage } from './pages/NotFoundPage'
+import { RejectedPage } from './pages/RejectedPage'
 import { RouterErrorPage } from './pages/RouterErrorPage'
 import { KbwNotesLayout } from './components/auth'
 
@@ -23,6 +24,11 @@ export const router = createBrowserRouter([
       {
         path: '/',
         element: <LoginPage />,
+      },
+      // Rejection page (public)
+      {
+        path: '/rejected',
+        element: <RejectedPage />,
       },
       // Authenticated app under /kbw-notes
       {

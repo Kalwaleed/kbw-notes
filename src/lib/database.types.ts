@@ -149,6 +149,27 @@ export type Database = {
           },
         ]
       }
+      invited_emails: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          invited_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          invited_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          invited_by?: string | null
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           action_url: string | null
@@ -546,9 +567,8 @@ export const Constants = {
   },
 } as const
 
-// Convenience type aliases
+// Convenience aliases for commonly used types
 export type Profile = Tables<'profiles'>
-export type BlogPostRow = Tables<'blog_posts'>
 export type CommentRow = Tables<'comments'>
 export type SubmissionRow = Tables<'submissions'>
 export type NotificationRow = Tables<'notifications'>

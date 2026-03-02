@@ -50,10 +50,8 @@ export function createMockSupabase() {
       data: { user: null },
       error: null,
     }),
-    signUp: vi.fn().mockResolvedValue({ data: {}, error: null }),
-    signInWithPassword: vi.fn().mockResolvedValue({ data: {}, error: null }),
+    signInWithOtp: vi.fn().mockResolvedValue({ data: {}, error: null }),
     signOut: vi.fn().mockResolvedValue({ error: null }),
-    resetPasswordForEmail: vi.fn().mockResolvedValue({ error: null }),
     onAuthStateChange: vi.fn().mockReturnValue({
       data: {
         subscription: { unsubscribe: vi.fn() },

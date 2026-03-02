@@ -221,6 +221,24 @@
   color: var(--color-primary-400);
 }
 
+/* Rejection page animations */
+@keyframes rejected-slam {
+  0% { transform: scale(5); opacity: 0; }
+  60% { transform: scale(0.9); opacity: 1; }
+  80% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+@keyframes rejected-alarm {
+  0%, 100% { background: transparent; }
+  50% { background: radial-gradient(ellipse at center, rgba(239, 68, 68, 0.08) 0%, transparent 70%); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* Density settings */
 .density-compact { --density-py: 0.75rem; --density-gap: 0.75rem; }
 .density-comfortable { --density-py: 1rem; --density-gap: 1rem; }
