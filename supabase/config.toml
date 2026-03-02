@@ -14,3 +14,6 @@ enable_confirmations = true
 [functions.moderate-comment]
 # Allow anonymous access without JWT verification
 verify_jwt = false
+
+[functions.auto-sign-in]
+verify_jwt = false

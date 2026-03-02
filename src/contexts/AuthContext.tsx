@@ -14,6 +14,7 @@ interface AuthContextValue {
   session: Session | null
   isLoading: boolean
   error: Error | null
+  instantSignIn: (email: string) => Promise<AuthResult>
   signInWithOtp: (email: string) => Promise<AuthResult>
   isEmailAllowed: (email: string) => boolean
   signOut: () => Promise<void>
@@ -70,6 +71,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return localPart.length > 0 && domain === ALLOWED_DOMAIN
   }, [])
 
+  const instantSignIn = useCallback(async (email: string): Promise<AuthResult> => {
+    setError(null)
+    const normalizedEmail = email.toLowerCase().trim()
+
+    if (!isEmailAllowed(normalizedEmail)) {
+      return { success: false, error: 'Only @kbw.vc emails are allowed' }
+    }
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auto-sign-in`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: normalizedEmail }),
+        }
+      )
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        if (data.error === 'not_invited') {
+          return { success: false, error: 'not_invited' }
+        }
+        throw new Error(data.error || 'Sign-in failed')
+      }
+
+      const { error: verifyError } = await supabase.auth.verifyOtp({
+        token_hash: data.token_hash,
+        type: 'email',
+      })
+
+      if (verifyError) throw verifyError
+      return { success: true }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Sign-in failed'
+      setError(err instanceof Error ? err : new Error(errorMessage))
+      return { success: false, error: errorMessage }
+    }
+  }, [isEmailAllowed])
+
   const signInWithOtp = useCallback(async (email: string): Promise<AuthResult> => {
     setError(null)
     const normalizedEmail = email.toLowerCase().trim()
@@ -114,6 +156,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session,
         isLoading,
         error,
+        instantSignIn,
         signInWithOtp,
         isEmailAllowed,
         signOut,
