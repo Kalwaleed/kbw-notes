@@ -4,6 +4,13 @@
 [api]
 enabled = true
 
+[auth]
+site_url = "https://kbw-notes.vercel.app"
+additional_redirect_urls = ["http://localhost:5173/**", "https://kbw-notes.vercel.app/**"]
+
+[auth.email]
+enable_confirmations = true
+
 [functions.moderate-comment]
 # Allow anonymous access without JWT verification
 verify_jwt = false
