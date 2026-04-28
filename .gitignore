@@ -34,3 +34,11 @@ test-results/
 .env*.local
 # next-agents-md
 .next-docs/
+
+# Local agent / tool state
+.claude/settings.local.json
+.playwright-mcp/
+
+# Local-only working folders (not part of the production codebase)
+product-plan/
+reviews/
