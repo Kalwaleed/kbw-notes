@@ -26,6 +26,8 @@ dist-ssr
 # Environment
 .env
 .env.local
+supabase/functions/.env
+supabase/functions/**/.env
 
 # Test reports
 playwright-report/
