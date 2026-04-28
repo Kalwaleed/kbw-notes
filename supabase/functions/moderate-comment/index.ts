@@ -366,13 +366,35 @@ Deno.serve(async (req) => {
     const anthropicData = await anthropicResponse.json()
     const moderationText = anthropicData.content?.[0]?.text ?? ''
 
-    // Parse and validate moderation result with Zod
+    // Parse and validate moderation result with Zod. Haiku occasionally
+    // wraps the JSON in a ```json fence and adds trailing commentary; extract
+    // the first balanced {...} block instead of trying to strip fences.
     let moderationResult: z.infer<typeof ModerationResultSchema>
     try {
-      const cleanedText = moderationText.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '').trim()
-      const parsed = JSON.parse(cleanedText)
+      const jsonStart = moderationText.indexOf('{')
+      if (jsonStart < 0) {
+        console.error('No JSON object in moderation response:', moderationText.substring(0, 200))
+        return await insertPendingComment()
+      }
+      let depth = 0
+      let jsonEnd = -1
+      for (let i = jsonStart; i < moderationText.length; i++) {
+        const ch = moderationText[i]
+        if (ch === '{') depth++
+        else if (ch === '}') {
+          depth--
+          if (depth === 0) {
+            jsonEnd = i + 1
+            break
+          }
+        }
+      }
+      if (jsonEnd < 0) {
+        console.error('Unbalanced JSON in moderation response:', moderationText.substring(0, 200))
+        return await insertPendingComment()
+      }
+      const parsed = JSON.parse(moderationText.slice(jsonStart, jsonEnd))
       const validated = ModerationResultSchema.safeParse(parsed)
-
       if (!validated.success) {
         console.error('Invalid moderation response schema:', JSON.stringify(validated.error.format()))
         return await insertPendingComment()

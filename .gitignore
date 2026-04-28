@@ -45,6 +45,10 @@ test-results/
 product-plan/
 reviews/
 
+# Local debug scripts (underscore prefix = scratch)
+scripts/_*.mjs
+scripts/_*.ts
+
 # Supabase CLI local state
 supabase/.temp/
 supabase/.branches/
