@@ -42,3 +42,6 @@ test-results/
 # Local-only working folders (not part of the production codebase)
 product-plan/
 reviews/
+
+# Supabase CLI version cache
+supabase/.temp/
