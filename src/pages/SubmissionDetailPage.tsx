@@ -27,9 +27,13 @@ export function SubmissionDetailPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { id } = useParams<{ id: string }>()
-  const { user, signOut } = useAuth()
+  const { user, isAdmin, signOut } = useAuth()
   const { submission, isLoading, error, publish, unpublish, remove } =
     useSubmission(id)
+
+  const isPublished = submission?.status === 'published'
+  const editsRemaining = submission?.editsRemaining ?? 0
+  const editLocked = !isAdmin && isPublished && editsRemaining <= 0
 
   const [showMenu, setShowMenu] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
@@ -83,6 +87,9 @@ export function SubmissionDetailPage() {
     submissionId: id ?? '',
     initialData,
     autoSaveInterval: 30000, // 30 seconds
+    // For non-admins on published posts, every UPDATE counts toward the 3-edit cap.
+    // Auto-save would burn the cap; require an explicit Save click instead.
+    autoSaveEnabled: !isPublished || isAdmin,
   })
 
   const handlePublish = async () => {
@@ -276,6 +283,13 @@ export function SubmissionDetailPage() {
                   'No changes'
                 )}
               </p>
+              {isPublished && !isAdmin && (
+                <p className={`text-xs mt-0.5 ${editsRemaining === 0 ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                  {editsRemaining === 0
+                    ? 'Edit cap reached. Contact an admin to make further changes.'
+                    : `${editsRemaining} edit${editsRemaining === 1 ? '' : 's'} remaining on this published post`}
+                </p>
+              )}
             </div>
           </div>
 
@@ -283,8 +297,9 @@ export function SubmissionDetailPage() {
           <div className="flex items-center gap-2">
             <button
               onClick={saveNow}
-              disabled={!isDirty || isSaving}
+              disabled={!isDirty || isSaving || editLocked}
               className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title={editLocked ? 'Edit cap reached for this published post' : undefined}
             >
               <Save className="w-4 h-4" />
               <span className="hidden sm:inline">Save</span>
@@ -315,7 +330,7 @@ export function SubmissionDetailPage() {
                 )}
                 Publish
               </button>
-            ) : (
+            ) : isAdmin ? (
               <div className="relative">
                 <button
                   onClick={() => setShowMenu(!showMenu)}
@@ -349,7 +364,7 @@ export function SubmissionDetailPage() {
                   </>
                 )}
               </div>
-            )}
+            ) : null}
           </div>
         </div>
 

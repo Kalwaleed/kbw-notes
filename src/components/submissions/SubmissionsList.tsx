@@ -9,6 +9,7 @@ interface SubmissionsListProps {
   submissions: Submission[]
   isLoading: boolean
   error: Error | null
+  isAdmin?: boolean
   onNewSubmission: () => void
   onEditSubmission: (id: string) => void
   onViewSubmission: (id: string) => void
@@ -19,6 +20,7 @@ export function SubmissionsList({
   submissions,
   isLoading,
   error,
+  isAdmin = false,
   onNewSubmission,
   onEditSubmission,
   onViewSubmission,
@@ -119,7 +121,7 @@ export function SubmissionsList({
                   ? () => onViewSubmission(submission.id)
                   : undefined
               }
-              onDelete={() => handleDelete(submission.id)}
+              onDelete={(isAdmin || submission.status === 'draft') ? () => handleDelete(submission.id) : undefined}
             />
           ))}
         </div>

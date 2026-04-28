@@ -1,7 +1,9 @@
 import DOMPurify from 'dompurify'
 import { supabase } from '../supabase'
-import type { Submission, SubmissionFormData, SubmissionStatus } from '../../types/submission'
+import { PUBLISHED_EDIT_CAP, type Submission, type SubmissionFormData, type SubmissionStatus } from '../../types/submission'
 import type { SubmissionRow, TablesUpdate } from '../database.types'
+
+type SubmissionRowWithEditCount = SubmissionRow & { edit_count?: number | null }
 
 interface FetchSubmissionsOptions {
   authorId: string
@@ -183,7 +185,12 @@ export async function fetchAllTags(): Promise<string[]> {
 }
 
 // Transform database row to Submission type
-function transformSubmission(row: SubmissionRow): Submission {
+function transformSubmission(row: SubmissionRowWithEditCount): Submission {
+  const status = (row.status ?? 'draft') as SubmissionStatus
+  const editCount = row.edit_count ?? 0
+  const editsRemaining = status === 'published'
+    ? Math.max(0, PUBLISHED_EDIT_CAP - editCount)
+    : PUBLISHED_EDIT_CAP
   return {
     id: row.id,
     authorId: row.author_id,
@@ -193,9 +200,11 @@ function transformSubmission(row: SubmissionRow): Submission {
     content: row.content ?? '',
     coverImageUrl: row.cover_image_url,
     tags: row.tags ?? [],
-    status: (row.status ?? 'draft') as SubmissionStatus,
+    status,
     publishedAt: row.published_at,
     createdAt: row.created_at ?? '',
     updatedAt: row.updated_at ?? '',
+    editCount,
+    editsRemaining,
   }
 }

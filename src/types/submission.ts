@@ -15,7 +15,11 @@ export interface Submission {
   publishedAt: string | null
   createdAt: string
   updatedAt: string
+  editCount: number
+  editsRemaining: number
 }
+
+export const PUBLISHED_EDIT_CAP = 3
 
 export interface SubmissionFormData {
   title: string

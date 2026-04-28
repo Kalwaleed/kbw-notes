@@ -6,7 +6,7 @@ import { useAuth, useSubmissions } from '../hooks'
 export function SubmissionsPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { user, signOut } = useAuth()
+  const { user, isAdmin, signOut } = useAuth()
   const { submissions, isLoading, error, create, remove } = useSubmissions()
 
   const navigationItems = [
@@ -98,6 +98,7 @@ export function SubmissionsPage() {
         submissions={submissions}
         isLoading={isLoading}
         error={error}
+        isAdmin={isAdmin}
         onNewSubmission={handleNewSubmission}
         onEditSubmission={handleEditSubmission}
         onViewSubmission={handleViewSubmission}

@@ -6,6 +6,7 @@ interface UseSubmissionDraftOptions {
   submissionId: string
   initialData: SubmissionFormData
   autoSaveInterval?: number // milliseconds, default 30000 (30s)
+  autoSaveEnabled?: boolean // default true; set false for published posts to avoid burning the edit cap
   onSave?: (data: SubmissionFormData) => void
   onError?: (error: Error) => void
 }
@@ -25,6 +26,7 @@ export function useSubmissionDraft({
   submissionId,
   initialData,
   autoSaveInterval = 30000,
+  autoSaveEnabled = true,
   onSave,
   onError,
 }: UseSubmissionDraftOptions): UseSubmissionDraftReturn {
@@ -101,9 +103,9 @@ export function useSubmissionDraft({
     return saveNowRef.current()
   }, [])
 
-  // Auto-save effect -- only depends on isDirty and autoSaveInterval
+  // Auto-save effect -- only depends on isDirty, autoSaveInterval, autoSaveEnabled
   useEffect(() => {
-    if (!isDirty || isSavingRef.current) return
+    if (!autoSaveEnabled || !isDirty || isSavingRef.current) return
 
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current)
@@ -118,7 +120,7 @@ export function useSubmissionDraft({
         clearTimeout(saveTimeoutRef.current)
       }
     }
-  }, [isDirty, autoSaveInterval])
+  }, [isDirty, autoSaveInterval, autoSaveEnabled])
 
   // Cleanup on unmount
   useEffect(() => {
