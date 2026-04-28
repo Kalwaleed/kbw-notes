@@ -81,22 +81,12 @@ Respond ONLY with a JSON object in this exact format:
 const RATE_LIMIT = 10 // comments per minute
 const RATE_WINDOW_MS = 60 * 1000 // 1 minute
 
-// Get client IP for rate limiting
-// Prefer cf-connecting-ip (Cloudflare-verified, not spoofable) over user-controllable headers
-function getClientIP(req: Request): string {
+// Trust only Cloudflare's connecting-ip header. x-real-ip and x-forwarded-for
+// are spoofable when the platform is reached directly. If cf-connecting-ip is
+// missing, return null and refuse the request.
+function getClientIP(req: Request): string | null {
   const cfIP = req.headers.get('cf-connecting-ip')
-  if (cfIP) {
-    return cfIP
-  }
-  const realIP = req.headers.get('x-real-ip')
-  if (realIP) {
-    return realIP
-  }
-  const forwarded = req.headers.get('x-forwarded-for')
-  if (forwarded) {
-    return forwarded.split(',')[0].trim()
-  }
-  return 'unknown'
+  return cfIP && cfIP.length > 0 ? cfIP : null
 }
 
 // Normalize Unicode and sanitize input
@@ -111,55 +101,22 @@ function sanitizeContent(content: string): string {
   ) // Normalize whitespace
 }
 
-// Check rate limit using database (persistent across function instances)
+// Atomic rate limit via the rate_limit_increment RPC (migration 018).
+// Returns true if the increment kept us within the limit, false if it tripped.
 async function checkRateLimit(
   supabaseAdmin: ReturnType<typeof createClient>,
   identifier: string
 ): Promise<boolean> {
-  const now = new Date()
-  const windowStart = new Date(now.getTime() - RATE_WINDOW_MS)
-
-  // Check existing rate limit record
-  const { data: existing } = await supabaseAdmin
-    .from('rate_limits')
-    .select('*')
-    .eq('identifier', identifier)
-    .single()
-
-  if (!existing) {
-    // Create new record
-    await supabaseAdmin.from('rate_limits').insert({
-      identifier,
-      count: 1,
-      window_start: now.toISOString(),
-    })
-    return true
-  }
-
-  const windowStartTime = new Date(existing.window_start)
-  if (windowStartTime < windowStart) {
-    // Window expired, reset
-    await supabaseAdmin
-      .from('rate_limits')
-      .update({
-        count: 1,
-        window_start: now.toISOString(),
-      })
-      .eq('identifier', identifier)
-    return true
-  }
-
-  if (existing.count >= RATE_LIMIT) {
+  const { data, error } = await supabaseAdmin.rpc('rate_limit_increment', {
+    p_identifier: identifier,
+    p_window_ms: RATE_WINDOW_MS,
+  })
+  if (error) {
+    console.error('rate_limit_increment error', { code: error.code })
     return false
   }
-
-  // Increment count
-  await supabaseAdmin
-    .from('rate_limits')
-    .update({ count: existing.count + 1 })
-    .eq('identifier', identifier)
-
-  return true
+  const count = typeof data === 'number' ? data : Number(data ?? 0)
+  return count <= RATE_LIMIT
 }
 
 Deno.serve(async (req) => {
@@ -201,9 +158,18 @@ Deno.serve(async (req) => {
 
     // Get client IP for rate limiting
     const clientIP = getClientIP(req)
+    if (!clientIP) {
+      return new Response(
+        JSON.stringify({ error: 'Origin not trusted' }),
+        {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      )
+    }
 
-    // Check rate limit (using persistent database storage)
-    const allowed = await checkRateLimit(supabaseAdmin, clientIP)
+    // Check rate limit (atomic via Postgres RPC)
+    const allowed = await checkRateLimit(supabaseAdmin, `comment:${clientIP}`)
     if (!allowed) {
       return new Response(
         JSON.stringify({
@@ -304,53 +270,97 @@ Deno.serve(async (req) => {
       userId = user?.id ?? null
     }
 
-    // Call Anthropic API for moderation
+    // Call Anthropic API for moderation. Hard timeout + one retry. On final
+    // failure we degrade gracefully: insert the comment as unmoderated (which
+    // means it stays out of public reads) so user input is not lost and admins
+    // can review the queue.
     const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY') || Deno.env.get('ClaudeCode')
-    if (!anthropicApiKey) {
+
+    const ANTHROPIC_TIMEOUT_MS = 5000
+    const ANTHROPIC_MAX_ATTEMPTS = 2
+
+    async function callAnthropicOnce(): Promise<Response> {
+      const controller = new AbortController()
+      const t = setTimeout(() => controller.abort(), ANTHROPIC_TIMEOUT_MS)
+      try {
+        return await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': anthropicApiKey ?? '',
+            'anthropic-version': '2023-06-01',
+          },
+          body: JSON.stringify({
+            model: 'claude-haiku-4-5-20251001',
+            max_tokens: 256,
+            system: MODERATION_SYSTEM_PROMPT,
+            messages: [
+              {
+                role: 'user',
+                content: `Evaluate this comment for a tech blog:\n\n"${sanitizedContent}"`,
+              },
+            ],
+          }),
+          signal: controller.signal,
+        })
+      } finally {
+        clearTimeout(t)
+      }
+    }
+
+    async function insertPendingComment(): Promise<Response> {
+      const { error: pendingErr } = await supabaseAdmin
+        .from('comments')
+        .insert({
+          post_id: postId,
+          user_id: userId,
+          content: sanitizedContent,
+          parent_id: parentId || null,
+          is_moderated: false,
+        })
+      if (pendingErr) {
+        console.error('Pending insert error', { code: pendingErr.code })
+        return new Response(
+          JSON.stringify({ error: 'Could not queue comment for review.' }),
+          { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
       return new Response(
-        JSON.stringify({ error: 'Moderation service unavailable' }),
-        {
-          status: 503,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
+        JSON.stringify({
+          approved: false,
+          pending: true,
+          rejectionReason: 'Moderation is temporarily unavailable. Your comment has been queued for admin review.',
+        }),
+        { status: 202, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    const anthropicResponse = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': anthropicApiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 256,
-        system: MODERATION_SYSTEM_PROMPT,
-        messages: [
-          {
-            role: 'user',
-            content: `Evaluate this comment for a tech blog:\n\n"${sanitizedContent}"`,
-          },
-        ],
-      }),
-    })
+    if (!anthropicApiKey) {
+      return await insertPendingComment()
+    }
 
-    if (!anthropicResponse.ok) {
-      // Log status only, not response body (to avoid leaking sensitive data)
-      console.error('Anthropic API error:', {
-        status: anthropicResponse.status,
-        statusText: anthropicResponse.statusText,
-      })
-      return new Response(
-        JSON.stringify({
-          error: 'Moderation service error. Please try again.',
-        }),
-        {
-          status: 503,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    let anthropicResponse: Response | null = null
+    let lastError: unknown = null
+    for (let attempt = 1; attempt <= ANTHROPIC_MAX_ATTEMPTS; attempt++) {
+      try {
+        const r = await callAnthropicOnce()
+        if (r.ok) {
+          anthropicResponse = r
+          break
         }
-      )
+        lastError = `status_${r.status}`
+        if (r.status >= 400 && r.status < 500 && r.status !== 429) {
+          // 4xx (other than rate limit) won't recover on retry
+          break
+        }
+      } catch (err) {
+        lastError = err instanceof Error ? err.name : 'fetch_error'
+      }
+    }
+
+    if (!anthropicResponse) {
+      console.error('Anthropic call failed after retries', { lastError })
+      return await insertPendingComment()
     }
 
     const anthropicData = await anthropicResponse.json()
@@ -359,30 +369,18 @@ Deno.serve(async (req) => {
     // Parse and validate moderation result with Zod
     let moderationResult: z.infer<typeof ModerationResultSchema>
     try {
-      // Strip markdown code fences if present (e.g. ```json ... ```)
       const cleanedText = moderationText.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '').trim()
       const parsed = JSON.parse(cleanedText)
       const validated = ModerationResultSchema.safeParse(parsed)
 
       if (!validated.success) {
         console.error('Invalid moderation response schema:', JSON.stringify(validated.error.format()))
-        moderationResult = {
-          approved: false,
-          category: 'error',
-          reason:
-            'Unable to verify content. Please try again or contact support.',
-        }
-      } else {
-        moderationResult = validated.data
+        return await insertPendingComment()
       }
+      moderationResult = validated.data
     } catch (parseErr) {
       console.error('Failed to parse moderation response:', moderationText.substring(0, 200))
-      moderationResult = {
-        approved: false,
-        category: 'error',
-        reason:
-          'Unable to verify content. Please try again or contact support.',
-      }
+      return await insertPendingComment()
     }
 
     // If rejected, return immediately with reason
