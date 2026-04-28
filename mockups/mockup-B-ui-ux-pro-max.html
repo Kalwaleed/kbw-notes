@@ -1,0 +1,2245 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>kbw Notes — Mockup B (Swiss Modernism 2.0)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
+<style>
+  /* =========================================================
+     kbw Notes — Mockup B
+     Style: Swiss Modernism 2.0 (editorial grid, mathematical rhythm)
+     Palette: Editorial Black + Accent Pink
+       Primary  #18181B  (zinc 900)
+       Secondary #3F3F46 (zinc 700)
+       CTA      #EC4899  (pink 500)
+       BG light #FAFAFA  Text light #09090B
+       BG dark  #09090B  Text dark  #FAFAFA
+     Type: Space Grotesk (display) / DM Sans (UI) / Newsreader (long-form prose)
+           JetBrains Mono (code, metadata)
+     ========================================================= */
+  :root {
+    --bg: #FAFAFA;
+    --surface: #FFFFFF;
+    --surface-2: #F4F4F5;
+    --text: #09090B;
+    --text-muted: #52525B;
+    --text-faint: #A1A1AA;
+    --line: #E4E4E7;
+    --line-strong: #D4D4D8;
+    --primary: #18181B;
+    --secondary: #3F3F46;
+    --cta: #EC4899;
+    --cta-ink: #FFFFFF;
+    --cta-soft: #FCE7F3;
+    --warn: #F59E0B;
+    --warn-soft: #FEF3C7;
+    --ok: #10B981;
+    --shadow: 0 1px 0 rgba(9,9,11,0.04), 0 8px 24px -12px rgba(9,9,11,0.08);
+    --radius: 4px;
+    --maxw: 1240px;
+    --gutter: clamp(16px, 2vw, 24px);
+  }
+  .dark {
+    --bg: #09090B;
+    --surface: #131316;
+    --surface-2: #1C1C20;
+    --text: #FAFAFA;
+    --text-muted: #A1A1AA;
+    --text-faint: #71717A;
+    --line: #27272A;
+    --line-strong: #3F3F46;
+    --primary: #FAFAFA;
+    --secondary: #D4D4D8;
+    --cta: #F472B6;
+    --cta-ink: #09090B;
+    --cta-soft: #4A1D3D;
+    --shadow: 0 1px 0 rgba(0,0,0,0.4), 0 12px 32px -12px rgba(0,0,0,0.6);
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+  body {
+    margin: 0;
+    background: #E5E5E5;
+    color: var(--text);
+    font-family: "DM Sans", system-ui, -apple-system, Segoe UI, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+
+  /* =========================================================
+     Page chrome (the meta-mockup wrapper)
+     ========================================================= */
+  .meta-bar {
+    position: sticky; top: 0; z-index: 100;
+    background: #09090B; color: #FAFAFA;
+    border-bottom: 1px solid #27272A;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .meta-bar-inner {
+    max-width: var(--maxw); margin: 0 auto;
+    padding: 10px var(--gutter);
+    display: flex; justify-content: space-between; align-items: center; gap: 16px;
+    flex-wrap: wrap;
+  }
+  .meta-bar .crumbs span { color: #A1A1AA; }
+  .meta-bar .crumbs strong { color: #F472B6; font-weight: 600; }
+  .meta-bar .controls { display: flex; gap: 8px; }
+  .meta-btn {
+    background: transparent; border: 1px solid #3F3F46;
+    color: #FAFAFA; padding: 6px 10px; border-radius: 2px;
+    font: inherit; letter-spacing: inherit; text-transform: inherit;
+    cursor: pointer; transition: all 180ms ease;
+  }
+  .meta-btn:hover { border-color: #F472B6; color: #F472B6; }
+  .meta-btn.active { background: #F472B6; color: #09090B; border-color: #F472B6; }
+
+  .section-divider {
+    max-width: var(--maxw); margin: 0 auto;
+    padding: 28px var(--gutter) 14px;
+    display: grid; grid-template-columns: 80px 1fr; gap: 16px; align-items: end;
+  }
+  .section-divider .num {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px; color: #71717A; letter-spacing: 0.12em;
+  }
+  .section-divider h2 {
+    margin: 0;
+    font-family: "Space Grotesk", sans-serif;
+    font-weight: 700; font-size: clamp(22px, 3vw, 32px);
+    letter-spacing: -0.02em; color: #18181B;
+    border-bottom: 2px solid #18181B; padding-bottom: 8px;
+  }
+  .section-divider p {
+    grid-column: 2; margin: 8px 0 0 0;
+    color: #52525B; font-size: 13px; max-width: 60ch;
+  }
+
+  /* =========================================================
+     The mockup canvas (one per mode side-by-side)
+     ========================================================= */
+  .mode-stack {
+    max-width: var(--maxw); margin: 0 auto 32px;
+    padding: 0 var(--gutter);
+    display: grid; grid-template-columns: 1fr 1fr; gap: 18px;
+  }
+  @media (max-width: 1100px) { .mode-stack { grid-template-columns: 1fr; } }
+
+  .canvas {
+    background: var(--bg); color: var(--text);
+    border: 1px solid #D4D4D8; border-radius: 6px;
+    overflow: hidden;
+    font-family: "DM Sans", sans-serif;
+    box-shadow: 0 30px 60px -30px rgba(0,0,0,0.18);
+  }
+  .canvas .label-bar {
+    background: var(--primary); color: var(--bg);
+    padding: 8px 14px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .canvas .label-bar .dots { display: flex; gap: 6px; }
+  .canvas .label-bar .dots i { width: 10px; height: 10px; border-radius: 50%; background: #52525B; display: inline-block; }
+  .canvas .label-bar .dots i:nth-child(1) { background: #EF4444; }
+  .canvas .label-bar .dots i:nth-child(2) { background: #F59E0B; }
+  .canvas .label-bar .dots i:nth-child(3) { background: #10B981; }
+
+  /* =========================================================
+     App nav
+     ========================================================= */
+  .app {
+    background: var(--bg); color: var(--text);
+    min-height: 100%;
+  }
+  .nav {
+    position: relative;
+    border-bottom: 1px solid var(--line);
+    background: var(--bg);
+  }
+  .nav-inner {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 18px;
+    padding: 16px 22px;
+  }
+  .wordmark {
+    font-family: "Space Grotesk", sans-serif;
+    font-weight: 700; font-size: 22px; letter-spacing: -0.03em;
+    display: inline-flex; align-items: baseline; gap: 1px;
+    text-decoration: none; color: var(--primary);
+  }
+  .wordmark .k { font-style: normal; }
+  .wordmark .bw { letter-spacing: -0.05em; }
+  .wordmark .dot { width: 6px; height: 6px; background: var(--cta); display: inline-block; margin-left: 4px; transform: translateY(-2px); }
+  .wordmark .tag {
+    margin-left: 10px; font-family: "JetBrains Mono", monospace;
+    font-size: 10px; color: var(--text-faint);
+    letter-spacing: 0.12em; text-transform: uppercase;
+    border-left: 1px solid var(--line); padding-left: 10px;
+    align-self: center;
+  }
+
+  .nav-links {
+    display: flex; gap: 4px; justify-content: center;
+    list-style: none; padding: 0; margin: 0;
+  }
+  .nav-links a {
+    text-decoration: none; color: var(--text-muted);
+    padding: 8px 12px; font-size: 14px; font-weight: 500;
+    border-radius: 2px; cursor: pointer;
+    transition: color 180ms ease, background 180ms ease;
+    position: relative;
+  }
+  .nav-links a:hover { color: var(--primary); background: var(--surface-2); }
+  .nav-links a.active { color: var(--primary); }
+  .nav-links a.active::after {
+    content: ""; position: absolute; left: 12px; right: 12px; bottom: -1px;
+    height: 2px; background: var(--cta);
+  }
+
+  .nav-cta {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .icon-btn {
+    appearance: none; border: 1px solid var(--line); background: var(--surface);
+    width: 36px; height: 36px; border-radius: 2px;
+    color: var(--text); cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    position: relative;
+    transition: border-color 180ms ease, color 180ms ease;
+  }
+  .icon-btn:hover { border-color: var(--primary); color: var(--cta); }
+  .icon-btn[aria-current="true"] { border-color: var(--primary); }
+  .icon-btn .badge {
+    position: absolute; top: -6px; right: -6px;
+    background: var(--cta); color: var(--cta-ink);
+    min-width: 18px; height: 18px; border-radius: 9px;
+    font-size: 10px; font-weight: 700;
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 0 5px; font-family: "JetBrains Mono", monospace;
+    border: 2px solid var(--bg);
+  }
+
+  .theme-toggle {
+    display: inline-flex; align-items: center;
+    border: 1px solid var(--line); border-radius: 2px;
+    background: var(--surface); padding: 2px;
+    font-family: "JetBrains Mono", monospace; font-size: 11px;
+  }
+  .theme-toggle button {
+    border: none; background: transparent; color: var(--text-muted);
+    padding: 6px 10px; cursor: pointer; font: inherit;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    border-radius: 2px;
+  }
+  .theme-toggle button.on { background: var(--primary); color: var(--bg); }
+
+  .user-trigger {
+    display: inline-flex; align-items: center; gap: 8px;
+    border: 1px solid var(--line); border-radius: 2px;
+    padding: 4px 10px 4px 4px; background: var(--surface);
+    cursor: pointer; font: inherit; color: var(--text);
+  }
+  .user-trigger:hover { border-color: var(--primary); }
+  .avatar {
+    width: 28px; height: 28px; border-radius: 2px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-family: "Space Grotesk", sans-serif; font-weight: 700;
+    color: var(--cta-ink); font-size: 12px; letter-spacing: -0.02em;
+  }
+  .avatar.lg { width: 40px; height: 40px; font-size: 14px; }
+  .avatar.xl { width: 56px; height: 56px; font-size: 18px; }
+  .av-1 { background: linear-gradient(135deg, #EC4899, #DB2777); }
+  .av-2 { background: linear-gradient(135deg, #18181B, #3F3F46); color: #FAFAFA; }
+  .av-3 { background: linear-gradient(135deg, #F59E0B, #B45309); }
+  .av-4 { background: linear-gradient(135deg, #10B981, #047857); }
+  .av-5 { background: linear-gradient(135deg, #6366F1, #4338CA); }
+  .av-6 { background: linear-gradient(135deg, #06B6D4, #0E7490); }
+  .av-7 { background: linear-gradient(135deg, #EF4444, #991B1B); }
+  .av-8 { background: linear-gradient(135deg, #A855F7, #6B21A8); }
+
+  /* User menu open dropdown */
+  .user-menu-wrap { position: relative; }
+  .user-menu {
+    position: absolute; right: 0; top: calc(100% + 8px);
+    background: var(--surface); border: 1px solid var(--line-strong);
+    border-radius: 4px; min-width: 240px; padding: 8px;
+    box-shadow: var(--shadow); z-index: 60;
+  }
+  .user-menu-head {
+    padding: 10px 10px 12px; border-bottom: 1px solid var(--line); margin-bottom: 6px;
+  }
+  .user-menu-head .name { font-weight: 600; color: var(--primary); font-size: 14px; }
+  .user-menu-head .email { color: var(--text-muted); font-size: 12px; font-family: "JetBrains Mono", monospace; }
+  .user-menu a {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px; font-size: 14px; color: var(--text);
+    text-decoration: none; border-radius: 2px;
+    cursor: pointer;
+  }
+  .user-menu a:hover { background: var(--surface-2); color: var(--cta); }
+  .user-menu a.danger { color: #DC2626; }
+  .dark .user-menu a.danger { color: #FCA5A5; }
+  .user-menu .div { height: 1px; background: var(--line); margin: 6px 0; }
+  .user-menu kbd {
+    margin-left: auto; font-family: "JetBrains Mono", monospace;
+    font-size: 10px; color: var(--text-faint);
+    border: 1px solid var(--line); padding: 1px 5px; border-radius: 2px;
+  }
+
+  /* Hamburger + open mobile nav */
+  .hamburger { display: none; }
+  .mobile-nav-card {
+    margin: 16px 22px 0; padding: 16px;
+    background: var(--surface); border: 1px solid var(--line-strong);
+    border-radius: 4px; position: relative;
+  }
+  .mobile-nav-card::before {
+    content: "MOBILE NAV — OPEN STATE (preview)";
+    position: absolute; top: -10px; left: 14px;
+    background: var(--bg); padding: 0 8px;
+    font-family: "JetBrains Mono", monospace; font-size: 9px;
+    color: var(--text-faint); letter-spacing: 0.16em;
+  }
+  .mobile-nav-card ul { list-style: none; padding: 0; margin: 6px 0 0; }
+  .mobile-nav-card li {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 8px; border-bottom: 1px solid var(--line);
+    font-size: 16px; font-weight: 500;
+  }
+  .mobile-nav-card li:last-child { border-bottom: 0; }
+  .mobile-nav-card .chev { color: var(--text-faint); }
+  .mobile-nav-card .item-badge {
+    background: var(--cta); color: var(--cta-ink);
+    font-family: "JetBrains Mono", monospace; font-size: 10px;
+    padding: 2px 6px; border-radius: 2px;
+  }
+  .mobile-nav-card .ham-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-bottom: 10px; border-bottom: 1px solid var(--line); margin-bottom: 6px;
+  }
+  .mobile-nav-card .ham-row strong {
+    font-family: "Space Grotesk", sans-serif; font-size: 14px;
+    text-transform: uppercase; letter-spacing: 0.12em;
+  }
+  .ham-x {
+    width: 32px; height: 32px; border: 1px solid var(--line);
+    background: var(--bg); border-radius: 2px;
+    display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+  }
+
+  /* =========================================================
+     Hero / page title
+     ========================================================= */
+  .page-head {
+    padding: 56px 22px 36px;
+    border-bottom: 1px solid var(--line);
+    display: grid; grid-template-columns: 1fr auto; gap: 32px; align-items: end;
+  }
+  .page-head .eyebrow {
+    font-family: "JetBrains Mono", monospace; font-size: 11px;
+    color: var(--cta); letter-spacing: 0.18em; text-transform: uppercase;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .page-head .eyebrow::before {
+    content: ""; width: 18px; height: 1px; background: var(--cta);
+  }
+  .page-head h1 {
+    margin: 14px 0 6px;
+    font-family: "Space Grotesk", sans-serif;
+    font-size: clamp(40px, 6vw, 72px);
+    line-height: 0.96; letter-spacing: -0.04em;
+    color: var(--primary); font-weight: 700;
+  }
+  .page-head h1 .accent { color: var(--cta); font-style: italic; font-weight: 500; font-family: "Newsreader", serif; }
+  .page-head .sub {
+    color: var(--text-muted); font-size: 17px; max-width: 60ch;
+  }
+  .page-head .sub .sep { color: var(--text-faint); margin: 0 8px; }
+  .head-meta {
+    text-align: right;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px; color: var(--text-muted);
+    letter-spacing: 0.06em; line-height: 1.7;
+  }
+  .head-meta b { color: var(--primary); font-weight: 600; }
+
+  /* =========================================================
+     Feed grid
+     ========================================================= */
+  .feed-shell {
+    display: grid;
+    grid-template-columns: 220px 1fr 240px;
+    gap: 28px;
+    padding: 32px 22px 48px;
+  }
+  @media (max-width: 1024px) { .feed-shell { grid-template-columns: 1fr; gap: 24px; } .feed-side, .feed-aside { display: none; } }
+
+  .feed-side h4, .feed-aside h4 {
+    margin: 0 0 12px; font-family: "JetBrains Mono", monospace;
+    font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--text-faint);
+    border-top: 2px solid var(--primary); padding-top: 10px;
+  }
+  .topic-list { list-style: none; padding: 0; margin: 0 0 28px; }
+  .topic-list li {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 7px 0; font-size: 14px; color: var(--text);
+    cursor: pointer;
+    border-bottom: 1px dotted var(--line);
+  }
+  .topic-list li:hover { color: var(--cta); }
+  .topic-list li .count {
+    font-family: "JetBrains Mono", monospace; font-size: 11px;
+    color: var(--text-faint);
+  }
+  .topic-list li.on { color: var(--cta); }
+  .topic-list li.on::before { content: "▸ "; color: var(--cta); }
+
+  .filter-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; padding-bottom: 18px;
+    border-bottom: 1px solid var(--line); margin-bottom: 24px;
+  }
+  .pill-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .pill {
+    border: 1px solid var(--line); background: var(--surface);
+    color: var(--text-muted); padding: 6px 12px;
+    border-radius: 999px; font-size: 12px; cursor: pointer;
+    transition: all 180ms ease;
+    font-family: "DM Sans", sans-serif; font-weight: 500;
+  }
+  .pill:hover { color: var(--primary); border-color: var(--primary); }
+  .pill.on { background: var(--primary); color: var(--bg); border-color: var(--primary); }
+  .sort-select {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: "JetBrains Mono", monospace; font-size: 12px;
+    color: var(--text-muted); cursor: pointer;
+  }
+  .sort-select b { color: var(--primary); }
+
+  /* Feed cards: editorial split — featured first then list */
+  .feed-list { display: grid; gap: 0; }
+  .post-card {
+    display: grid;
+    grid-template-columns: 64px 1fr;
+    gap: 22px;
+    padding: 22px 0;
+    border-bottom: 1px solid var(--line);
+    cursor: pointer;
+    position: relative;
+  }
+  .post-card:hover .pc-title { color: var(--cta); }
+  .post-card .pc-num {
+    font-family: "JetBrains Mono", monospace; font-size: 12px;
+    color: var(--text-faint); letter-spacing: 0.06em;
+    border-top: 2px solid var(--primary); padding-top: 8px;
+  }
+  .post-card .pc-tags {
+    display: flex; gap: 6px; flex-wrap: wrap;
+    font-family: "JetBrains Mono", monospace; font-size: 10px;
+    color: var(--cta); letter-spacing: 0.12em; text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .post-card .pc-tags span::before { content: "#"; opacity: 0.6; }
+  .post-card .pc-title {
+    margin: 0 0 10px; font-family: "Space Grotesk", sans-serif;
+    font-size: clamp(20px, 2.4vw, 28px); line-height: 1.15;
+    letter-spacing: -0.02em; font-weight: 600; color: var(--primary);
+    transition: color 180ms ease;
+  }
+  .post-card .pc-excerpt {
+    color: var(--text-muted); font-size: 15px; line-height: 1.55;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden; max-width: 60ch; margin: 0 0 14px;
+  }
+  .post-card .pc-foot {
+    display: flex; align-items: center; gap: 18px;
+    font-size: 13px; color: var(--text-muted);
+    flex-wrap: wrap;
+  }
+  .pc-author { display: inline-flex; align-items: center; gap: 8px; }
+  .pc-author b { color: var(--primary); font-weight: 600; }
+  .pc-date {
+    font-family: "JetBrains Mono", monospace; font-size: 11px;
+    color: var(--text-faint); letter-spacing: 0.06em;
+  }
+  .pc-actions {
+    margin-left: auto; display: flex; gap: 4px;
+  }
+  .act {
+    appearance: none; border: 1px solid transparent;
+    background: transparent; color: var(--text-muted);
+    padding: 6px 10px; border-radius: 2px;
+    cursor: pointer; font: inherit;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: "JetBrains Mono", monospace; font-size: 11px;
+    transition: all 180ms ease;
+  }
+  .act:hover { color: var(--cta); border-color: var(--line); }
+  .act svg { width: 14px; height: 14px; }
+  .act.liked { color: var(--cta); }
+  .act.liked svg { fill: var(--cta); }
+  .act.bookmarked { color: var(--primary); }
+  .act.bookmarked svg { fill: var(--primary); }
+
+  /* Featured first card, taller */
+  .post-card.featured {
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    padding: 28px 0 32px;
+    border-top: 2px solid var(--primary);
+  }
+  .post-card.featured .pc-cover {
+    aspect-ratio: 4/3;
+    background: linear-gradient(135deg, #18181B 0%, #3F3F46 35%, #EC4899 100%);
+    border-radius: 4px;
+    position: relative; overflow: hidden;
+    border: 1px solid var(--line);
+  }
+  .post-card.featured .pc-cover::before {
+    content: ""; position: absolute; inset: 0;
+    background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.06) 0 2px, transparent 2px 18px);
+  }
+  .post-card.featured .pc-cover .badge-feat {
+    position: absolute; top: 14px; left: 14px;
+    background: #FAFAFA; color: #09090B;
+    padding: 4px 8px; font-family: "JetBrains Mono", monospace;
+    font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
+    border-radius: 2px;
+  }
+  .post-card.featured .pc-cover svg.deco {
+    position: absolute; right: -20px; bottom: -20px; width: 160px; opacity: 0.45;
+  }
+  .post-card.featured .pc-title { font-size: clamp(28px, 3.6vw, 42px); line-height: 1.05; }
+  .post-card.featured .pc-excerpt { -webkit-line-clamp: 4; font-size: 16px; }
+
+  /* Loading row */
+  .loading-row {
+    padding: 22px 0; border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; gap: 14px;
+    font-family: "JetBrains Mono", monospace; font-size: 12px;
+    color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .skel-dot {
+    width: 8px; height: 8px; background: var(--cta); border-radius: 50%;
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  .skel-dot:nth-child(2) { animation-delay: 0.15s; }
+  .skel-dot:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.3; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1.1); }
+  }
+  .skel-bar { height: 1px; background: var(--line); flex: 1; }
+
+  .end-row {
+    padding: 28px 0; border-bottom: 1px solid var(--line);
+    text-align: center;
+    font-family: "Space Grotesk", sans-serif; font-size: 14px;
+    color: var(--text-muted); letter-spacing: 0.04em;
+  }
+  .end-row .rule {
+    display: inline-block; width: 40px; height: 1px; background: var(--line-strong);
+    vertical-align: middle; margin: 0 14px;
+  }
+  .end-row .x {
+    display: inline-block; width: 8px; height: 8px;
+    background: var(--primary); transform: rotate(45deg); margin: 0 6px;
+  }
+
+  .empty-card {
+    margin-top: 18px;
+    padding: 32px;
+    border: 1px dashed var(--line-strong);
+    border-radius: 4px;
+    text-align: center;
+    background: var(--surface-2);
+  }
+  .empty-card .ico {
+    width: 48px; height: 48px; margin: 0 auto 14px;
+    border: 1.5px solid var(--text-faint); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-faint);
+  }
+  .empty-card h5 {
+    margin: 0 0 6px; font-family: "Space Grotesk", sans-serif;
+    font-size: 16px; color: var(--primary); letter-spacing: -0.01em;
+  }
+  .empty-card p { margin: 0; color: var(--text-muted); font-size: 14px; }
+
+  /* Aside */
+  .aside-card {
+    border: 1px solid var(--line); padding: 18px;
+    background: var(--surface); border-radius: 4px;
+    margin-bottom: 22px;
+  }
+  .aside-card .lead {
+    font-family: "Newsreader", serif; font-style: italic;
+    font-size: 18px; line-height: 1.4; margin: 0 0 12px;
+    color: var(--primary);
+  }
+  .aside-card .stat-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1px;
+    background: var(--line); margin-top: 10px;
+  }
+  .aside-card .stat {
+    background: var(--surface); padding: 10px;
+  }
+  .aside-card .stat .v { font-family: "Space Grotesk", sans-serif; font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+  .aside-card .stat .l { font-family: "JetBrains Mono", monospace; font-size: 10px; color: var(--text-faint); letter-spacing: 0.1em; text-transform: uppercase; }
+
+  .reader-list { list-style: none; padding: 0; margin: 0; }
+  .reader-list li {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 0; border-bottom: 1px solid var(--line);
+    font-size: 13px;
+  }
+  .reader-list li:last-child { border: 0; }
+  .reader-list li b { font-weight: 600; }
+  .reader-list li .meta { color: var(--text-faint); font-family: "JetBrains Mono", monospace; font-size: 10px; margin-left: auto; }
+
+  /* =========================================================
+     Single Post View
+     ========================================================= */
+  .post-shell { padding: 0 22px 64px; }
+  .post-back {
+    display: inline-flex; align-items: center; gap: 10px;
+    margin: 28px 0 24px;
+    border: none; background: transparent; color: var(--text-muted);
+    cursor: pointer; font: inherit; padding: 0;
+    font-family: "JetBrains Mono", monospace; font-size: 12px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  .post-back:hover { color: var(--cta); }
+  .post-back .arr {
+    width: 28px; height: 1px; background: currentColor; position: relative;
+  }
+  .post-back .arr::before {
+    content: ""; position: absolute; left: 0; top: -3px;
+    width: 8px; height: 8px; border-left: 1px solid currentColor; border-bottom: 1px solid currentColor;
+    transform: rotate(45deg);
+  }
+
+  .post-header {
+    max-width: 760px; margin: 0 auto 40px;
+    border-bottom: 1px solid var(--line); padding-bottom: 28px;
+  }
+  .post-header .pc-tags { margin-bottom: 18px; }
+  .post-header .pc-tags .tag {
+    border: 1px solid var(--line);
+    padding: 4px 10px; border-radius: 999px;
+    font-family: "JetBrains Mono", monospace; font-size: 10px;
+    color: var(--text); letter-spacing: 0.12em; text-transform: uppercase;
+    background: var(--surface);
+  }
+  .post-header .pc-tags .tag.primary {
+    background: var(--primary); color: var(--bg); border-color: var(--primary);
+  }
+  .post-header h1 {
+    margin: 0 0 16px;
+    font-family: "Space Grotesk", sans-serif;
+    font-size: clamp(36px, 5.4vw, 64px);
+    letter-spacing: -0.035em; line-height: 1.02;
+    color: var(--primary); font-weight: 700;
+  }
+  .post-header .lede {
+    font-family: "Newsreader", serif; font-size: 22px; line-height: 1.45;
+    color: var(--text-muted); margin: 0 0 28px;
+    max-width: 56ch;
+  }
+  .post-byline {
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    padding: 14px 0;
+    border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  }
+  .post-byline .who { display: inline-flex; align-items: center; gap: 12px; }
+  .post-byline .who .name {
+    font-family: "Space Grotesk", sans-serif; font-weight: 600;
+    color: var(--primary); font-size: 15px;
+  }
+  .post-byline .who .role {
+    font-family: "JetBrains Mono", monospace; font-size: 11px;
+    color: var(--text-faint); letter-spacing: 0.08em;
+  }
+  .post-byline .meta-pipes {
+    margin-left: auto; display: flex; gap: 18px;
+    font-family: "JetBrains Mono", monospace; font-size: 11px;
+    color: var(--text-muted); letter-spacing: 0.08em;
+  }
+  .post-byline .meta-pipes span b { color: var(--primary); }
+  .share-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-top: 18px;
+    font-family: "JetBrains Mono", monospace; font-size: 11px;
+    color: var(--text-faint); letter-spacing: 0.12em; text-transform: uppercase;
+  }
+  .share-row .btn-share {
+    appearance: none; border: 1px solid var(--line); background: var(--surface);
+    color: var(--text); padding: 7px 12px; border-radius: 2px;
+    cursor: pointer; font: inherit; letter-spacing: 0.08em;
+    display: inline-flex; align-items: center; gap: 6px;
+    transition: border-color 180ms ease, color 180ms ease;
+  }
+  .share-row .btn-share:hover { border-color: var(--cta); color: var(--cta); }
+  .share-row .btn-share svg { width: 12px; height: 12px; }
+
+  /* Article body */
+  article.post-body {
+    max-width: 720px; margin: 0 auto;
+    font-family: "Newsreader", "Optima", Georgia, serif;
+    font-size: 19px; line-height: 1.7; color: var(--text);
+  }
+  article.post-body p { margin: 0 0 1.4em; max-width: 65ch; }
+  article.post-body p.dropcap::first-letter {
+    font-family: "Space Grotesk", sans-serif;
+    float: left; font-size: 64px; line-height: 0.85;
+    font-weight: 700; padding: 8px 12px 0 0;
+    color: var(--cta); letter-spacing: -0.04em;
+  }
+  article.post-body h2 {
+    margin: 2.4em 0 0.6em;
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 30px; letter-spacing: -0.02em; line-height: 1.15;
+    color: var(--primary); font-weight: 700;
+    border-top: 2px solid var(--primary); padding-top: 0.7em;
+  }
+  article.post-body h2 .sec-num {
+    font-family: "JetBrains Mono", monospace; font-size: 13px;
+    color: var(--cta); letter-spacing: 0.16em; display: block;
+    margin-bottom: 8px;
+  }
+  article.post-body h3 {
+    margin: 1.8em 0 0.5em;
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 22px; letter-spacing: -0.015em;
+    color: var(--primary); font-weight: 600;
+  }
+  article.post-body strong { color: var(--primary); font-weight: 700; }
+  article.post-body em { font-family: "Newsreader", serif; font-style: italic; color: var(--secondary); }
+  article.post-body code {
+    font-family: "JetBrains Mono", monospace; font-size: 0.86em;
+    background: var(--surface-2); color: var(--cta);
+    padding: 2px 6px; border-radius: 2px;
+    border: 1px solid var(--line);
+  }
+  article.post-body pre {
+    margin: 1.6em 0; padding: 0;
+    background: var(--primary); color: #FAFAFA;
+    border-radius: 4px; overflow: hidden;
+    font-family: "JetBrains Mono", monospace; font-size: 13.5px; line-height: 1.6;
+    border: 1px solid var(--line-strong);
+  }
+  article.post-body pre .code-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 14px; background: rgba(255,255,255,0.04);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: #A1A1AA;
+  }
+  article.post-body pre .code-head .lang { color: #F472B6; }
+  article.post-body pre .code-head .copy {
+    background: transparent; border: 1px solid rgba(255,255,255,0.16);
+    color: #FAFAFA; padding: 3px 8px; border-radius: 2px;
+    cursor: pointer; font: inherit; letter-spacing: 0.1em;
+  }
+  article.post-body pre code {
+    background: transparent; border: 0; color: #FAFAFA;
+    padding: 16px 18px; display: block; white-space: pre;
+    font-size: inherit;
+  }
+  article.post-body pre .tk-k { color: #F472B6; }
+  article.post-body pre .tk-s { color: #FBBF24; }
+  article.post-body pre .tk-c { color: #71717A; font-style: italic; }
+  article.post-body pre .tk-t { color: #34D399; }
+  article.post-body pre .tk-f { color: #60A5FA; }
+  article.post-body pre .tk-n { color: #F87171; }
+
+  article.post-body blockquote {
+    margin: 2em 0; padding: 4px 0 4px 24px;
+    border-left: 4px solid var(--cta);
+    font-family: "Newsreader", serif; font-style: italic;
+    font-size: 22px; line-height: 1.45; color: var(--primary);
+    max-width: 56ch;
+  }
+  article.post-body blockquote cite {
+    display: block; margin-top: 14px;
+    font-family: "JetBrains Mono", monospace; font-style: normal;
+    font-size: 12px; color: var(--text-faint); letter-spacing: 0.1em; text-transform: uppercase;
+  }
+
+  article.post-body ul, article.post-body ol {
+    margin: 1.2em 0 1.6em; padding-left: 0; list-style: none;
+    max-width: 60ch;
+  }
+  article.post-body ul li, article.post-body ol li {
+    position: relative; padding-left: 36px; margin-bottom: 10px;
+  }
+  article.post-body ul li::before {
+    content: ""; position: absolute; left: 4px; top: 0.7em;
+    width: 16px; height: 1px; background: var(--cta);
+  }
+  article.post-body ol { counter-reset: item; }
+  article.post-body ol li::before {
+    counter-increment: item; content: counter(item, decimal-leading-zero);
+    position: absolute; left: 0; top: 2px;
+    font-family: "JetBrains Mono", monospace; font-size: 12px;
+    color: var(--cta); font-weight: 600;
+  }
+
+  .inline-figure {
+    margin: 2.4em -8% 2.4em;
+    padding: 0;
+  }
+  .inline-figure .frame {
+    aspect-ratio: 16/9;
+    border: 1px solid var(--line-strong);
+    background:
+      linear-gradient(135deg, rgba(236,72,153,0.18), rgba(24,24,27,0.05) 60%),
+      repeating-linear-gradient(0deg, var(--surface-2) 0 1px, transparent 1px 24px),
+      repeating-linear-gradient(90deg, var(--surface-2) 0 1px, transparent 1px 24px),
+      var(--surface);
+    border-radius: 4px;
+    position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .inline-figure .frame .schema {
+    position: relative; width: 78%; height: 78%;
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px;
+  }
+  .inline-figure .schema-box {
+    background: var(--surface); border: 1.5px solid var(--primary);
+    border-radius: 2px; padding: 12px;
+    display: flex; flex-direction: column; gap: 6px;
+    font-family: "JetBrains Mono", monospace; font-size: 10px;
+    color: var(--text); letter-spacing: 0.06em;
+    box-shadow: 4px 4px 0 var(--cta);
+  }
+  .inline-figure .schema-box b { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; }
+  .inline-figure .schema-box span { color: var(--text-muted); }
+  .inline-figure figcaption {
+    margin-top: 12px; padding-left: 4px;
+    font-family: "JetBrains Mono", monospace; font-size: 11px;
+    color: var(--text-faint); letter-spacing: 0.08em;
+    border-left: 2px solid var(--cta); padding-left: 10px;
+  }
+  @media (max-width: 720px) { .inline-figure { margin: 2em 0; } }
+
+  /* Share CTA */
+  .share-cta {
+    max-width: 720px; margin: 56px auto 0;
+    border: 2px solid var(--primary);
+    border-radius: 4px; padding: 28px;
+    background: var(--surface);
+    display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 22px;
+    position: relative;
+  }
+  .share-cta::before {
+    content: ""; position: absolute; inset: 6px;
+    border: 1px solid var(--line); pointer-events: none;
+  }
+  .share-cta .pre {
+    font-family: "JetBrains Mono", monospace; font-size: 11px;
+    color: var(--cta); letter-spacing: 0.16em; text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .share-cta h4 {
+    margin: 0 0 4px;
+    font-family: "Space Grotesk", sans-serif; font-size: 22px; letter-spacing: -0.02em;
+    color: var(--primary);
+  }
+  .share-cta p { margin: 0; color: var(--text-muted); font-size: 14px; }
+  .share-cta .ctas { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* =========================================================
+     Comments
+     ========================================================= */
+  .comments {
+    max-width: 760px; margin: 56px auto 0;
+    padding-top: 32px; border-top: 2px solid var(--primary);
+  }
+  .comments-head {
+    display: flex; align-items: end; justify-content: space-between; gap: 16px;
+    margin-bottom: 24px;
+  }
+  .comments-head h3 {
+    margin: 0; font-family: "Space Grotesk", sans-serif;
+    font-size: 28px; letter-spacing: -0.02em; color: var(--primary);
+  }
+  .comments-head .meta {
+    font-family: "JetBrains Mono", monospace; font-size: 11px;
+    color: var(--text-faint); letter-spacing: 0.1em; text-transform: uppercase;
+  }
+
+  .comment-form {
+    border: 1px solid var(--line); border-radius: 4px;
+    padding: 14px; background: var(--surface);
+    margin-bottom: 28px;
+  }
+  .comment-form .row-1 {
+    display: flex; gap: 12px; align-items: flex-start;
+  }
+  .comment-form textarea {
+    flex: 1; border: none; resize: vertical; min-height: 86px;
+    font: inherit; background: transparent; color: var(--text);
+    outline: none; padding: 6px 4px;
+  }
+  .comment-form textarea::placeholder { color: var(--text-faint); }
+  .comment-form .form-foot {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 10px; padding-top: 10px;
+    border-top: 1px dashed var(--line);
+  }
+  .counter {
+    font-family: "JetBrains Mono", monospace; font-size: 11px;
+    color: var(--text-faint); letter-spacing: 0.06em;
+  }
+  .counter b { color: var(--primary); }
+  .btn-send {
+    appearance: none; border: 1px solid var(--primary); background: var(--primary);
+    color: var(--bg); padding: 8px 18px; border-radius: 2px;
+    font: inherit; cursor: pointer; font-weight: 600; font-size: 13px;
+    display: inline-flex; align-items: center; gap: 8px;
+    letter-spacing: 0.04em;
+    transition: background 180ms ease;
+  }
+  .btn-send:hover { background: var(--cta); border-color: var(--cta); color: var(--cta-ink); }
+  .btn-send svg { width: 14px; height: 14px; }
+
+  .comment {
+    display: grid; grid-template-columns: 40px 1fr; gap: 14px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--line);
+    position: relative;
+  }
+  .comment .body-wrap { min-width: 0; }
+  .comment .who-line {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+  .comment .who-line .name {
+    font-family: "Space Grotesk", sans-serif; font-weight: 600;
+    color: var(--primary); font-size: 14px;
+  }
+  .comment .who-line .name.me::after {
+    content: "you"; margin-left: 6px;
+    background: var(--primary); color: var(--bg);
+    font-family: "JetBrains Mono", monospace; font-size: 9px;
+    padding: 2px 5px; border-radius: 2px; letter-spacing: 0.1em; text-transform: uppercase;
+    vertical-align: 1px;
+  }
+  .comment .who-line .when {
+    font-family: "JetBrains Mono", monospace; font-size: 11px;
+    color: var(--text-faint); letter-spacing: 0.06em;
+  }
+  .comment .who-line .badge-mod {
+    font-family: "JetBrains Mono", monospace; font-size: 10px;
+    background: var(--warn-soft); color: #92400E;
+    padding: 2px 7px; border-radius: 2px; letter-spacing: 0.06em;
+    border: 1px solid #FCD34D;
+  }
+  .dark .comment .who-line .badge-mod {
+    background: rgba(245,158,11,0.18); color: #FBBF24; border-color: rgba(245,158,11,0.4);
+  }
+  .comment .text {
+    color: var(--text); font-size: 15px; line-height: 1.55;
+    margin: 0 0 10px;
+  }
+  .comment .text em.pending {
+    color: var(--text-faint); font-style: italic;
+  }
+  .comment-actions { display: flex; gap: 4px; flex-wrap: wrap; }
+  .comment-actions button {
+    border: none; background: transparent; color: var(--text-muted);
+    font: inherit; font-size: 12px; cursor: pointer;
+    padding: 4px 8px; border-radius: 2px;
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: "JetBrains Mono", monospace; letter-spacing: 0.04em;
+    transition: color 180ms ease, background 180ms ease;
+  }
+  .comment-actions button:hover { color: var(--cta); background: var(--surface-2); }
+  .comment-actions button.danger:hover { color: #DC2626; }
+  .comment-actions svg { width: 12px; height: 12px; }
+  .comment-actions .liked { color: var(--cta); }
+  .comment-actions .liked svg { fill: var(--cta); }
+
+  .comment.nested {
+    margin-left: 54px;
+    border-bottom: 1px solid var(--line);
+    border-left: 2px solid var(--cta);
+    padding-left: 16px;
+  }
+
+  .load-more-btn {
+    margin: 24px auto 0; display: block;
+    appearance: none; border: 1px solid var(--line-strong); background: var(--surface);
+    color: var(--text); font: inherit; font-weight: 500;
+    padding: 12px 24px; border-radius: 2px; cursor: pointer;
+    font-family: "JetBrains Mono", monospace; font-size: 12px;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    transition: all 180ms ease;
+  }
+  .load-more-btn:hover { border-color: var(--primary); background: var(--primary); color: var(--bg); }
+
+  /* Footer-ish */
+  .canvas-foot {
+    border-top: 1px solid var(--line);
+    padding: 22px;
+    display: flex; justify-content: space-between; align-items: center; gap: 14px;
+    font-family: "JetBrains Mono", monospace; font-size: 11px;
+    color: var(--text-faint); letter-spacing: 0.08em;
+  }
+  .canvas-foot .marks { display: flex; gap: 14px; }
+
+  /* Tighter type scale on the right canvas (everything is contained per-canvas) */
+</style>
+</head>
+<body>
+
+<!-- =========================================================
+     Mockup chrome
+     ========================================================= -->
+<header class="meta-bar">
+  <div class="meta-bar-inner">
+    <div class="crumbs">
+      <span>kbw-blog /</span> <span>mockups /</span> <strong>mockup-B · ui-ux-pro-max</strong>
+      <span style="margin-left:14px;">style: <strong>Swiss Modernism 2.0</strong></span>
+      <span style="margin-left:14px;">palette: editorial-black + accent-pink</span>
+    </div>
+    <div class="controls">
+      <button class="meta-btn active" id="modeSplit">Split</button>
+      <button class="meta-btn" id="modeLight">Light only</button>
+      <button class="meta-btn" id="modeDark">Dark only</button>
+    </div>
+  </div>
+</header>
+
+<!-- =========================================================
+     SCREEN 1 : HOME FEED
+     ========================================================= -->
+<div class="section-divider">
+  <div class="num">SCREEN 01 / 02</div>
+  <h2>Home Feed</h2>
+  <p>Editorial grid. Numbered posts. Featured lead story with cover-art pattern. Filters as pills, topics in left rail, reader stats on the right. Loading row, end-of-feed marker, and an empty-state card all rendered in-line for review.</p>
+</div>
+
+<div class="mode-stack" id="feedStack">
+
+  <!-- ====== LIGHT MODE ====== -->
+  <section class="canvas">
+    <div class="label-bar">
+      <span><span class="dots"><i></i><i></i><i></i></span> &nbsp;&nbsp; LIGHT MODE</span>
+      <span>kbw-notes.app/feed</span>
+    </div>
+    <div class="app">
+
+      <nav class="nav">
+        <div class="nav-inner">
+          <a class="wordmark" href="#">
+            <span class="k">k</span><span class="bw">BW</span>
+            <span style="font-weight:400; color: var(--text-muted); margin-left: 6px;">Notes</span>
+            <span class="dot"></span>
+            <span class="tag">issue 042 · apr 2026</span>
+          </a>
+
+          <ul class="nav-links" role="navigation" aria-label="Primary">
+            <li><a class="active" href="#">Feed</a></li>
+            <li><a href="#">Submissions</a></li>
+            <li><a href="#">Notifications</a></li>
+            <li><a href="#">Settings</a></li>
+          </ul>
+
+          <div class="nav-cta">
+            <div class="theme-toggle" role="group" aria-label="Theme">
+              <button class="on" type="button">Light</button>
+              <button type="button">Dark</button>
+            </div>
+            <button class="icon-btn" aria-label="Notifications, 3 unread">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6Z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg>
+              <span class="badge">3</span>
+            </button>
+            <div class="user-menu-wrap">
+              <button class="user-trigger" aria-haspopup="menu" aria-expanded="true">
+                <span class="avatar av-1">PK</span>
+                <span style="font-size: 13px; font-weight: 500;">PK</span>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 9 6 6 6-6"/></svg>
+              </button>
+              <div class="user-menu" role="menu" aria-label="Account">
+                <div class="user-menu-head">
+                  <div class="name">PK · Founder</div>
+                  <div class="email">looods@gmail.com</div>
+                </div>
+                <a href="#"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg> Profile <kbd>⌘P</kbd></a>
+                <a href="#"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.4-2.3l2-1.5-2-3.4-2.3.9a7 7 0 0 0-4-2.3L11.6 1h-3.2l-.7 2.4a7 7 0 0 0-4 2.3L1.4 4.8l-2 3.4 2 1.5A7 7 0 0 0 1 12c0 .8.1 1.6.4 2.3l-2 1.5 2 3.4 2.3-.9a7 7 0 0 0 4 2.3l.7 2.4h3.2l.7-2.4a7 7 0 0 0 4-2.3l2.3.9 2-3.4-2-1.5c.3-.7.4-1.5.4-2.3Z" transform="translate(2 0)"/></svg> Settings <kbd>⌘,</kbd></a>
+                <div class="div"></div>
+                <a href="#" class="danger"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg> Sign out</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mobile nav (open) -->
+        <div class="mobile-nav-card" aria-label="Mobile navigation">
+          <div class="ham-row">
+            <strong>Menu</strong>
+            <button class="ham-x" aria-label="Close menu">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+          <ul>
+            <li>Feed <span class="chev">›</span></li>
+            <li>Submissions <span class="chev">›</span></li>
+            <li>Notifications <span class="item-badge">3</span></li>
+            <li>Settings <span class="chev">›</span></li>
+            <li>Profile <span class="chev">›</span></li>
+            <li style="color: var(--text-muted);">Sign out <span class="chev">›</span></li>
+          </ul>
+        </div>
+      </nav>
+
+      <!-- Page head -->
+      <header class="page-head">
+        <div>
+          <span class="eyebrow">A field journal · Vol. 04</span>
+          <h1>kbw <span class="accent">Notes</span></h1>
+          <p class="sub">Tech discoveries, projects, and insights. <span class="sep">/</span> Long-form notes on the systems we build, ship, and dismantle.</p>
+        </div>
+        <div class="head-meta">
+          <div><b>248</b> notes published</div>
+          <div><b>12</b> in draft</div>
+          <div><b>4,802</b> readers</div>
+          <div style="margin-top: 8px;">UPDATED 28.04.2026</div>
+        </div>
+      </header>
+
+      <!-- Feed shell -->
+      <div class="feed-shell">
+
+        <aside class="feed-side">
+          <h4>Topics</h4>
+          <ul class="topic-list">
+            <li class="on">All notes <span class="count">248</span></li>
+            <li>react <span class="count">42</span></li>
+            <li>supabase <span class="count">36</span></li>
+            <li>ai <span class="count">61</span></li>
+            <li>typescript <span class="count">29</span></li>
+            <li>ml <span class="count">18</span></li>
+            <li>design <span class="count">22</span></li>
+            <li>infra <span class="count">14</span></li>
+            <li>postmortems <span class="count">9</span></li>
+          </ul>
+
+          <h4>Series</h4>
+          <ul class="topic-list">
+            <li>Platform diaries <span class="count">12</span></li>
+            <li>Latency notes <span class="count">7</span></li>
+            <li>Field reports <span class="count">5</span></li>
+          </ul>
+        </aside>
+
+        <main class="feed-main">
+
+          <div class="filter-bar">
+            <div class="pill-row" role="tablist">
+              <button class="pill on">Latest</button>
+              <button class="pill">Most read</button>
+              <button class="pill">Discussed</button>
+              <button class="pill">Bookmarked</button>
+              <button class="pill">From you</button>
+            </div>
+            <button class="sort-select" aria-label="Sort">
+              SORT&nbsp;: &nbsp; <b>NEWEST FIRST</b>
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+          </div>
+
+          <div class="feed-list">
+
+            <!-- Featured card -->
+            <article class="post-card featured">
+              <div class="pc-cover" aria-hidden="true">
+                <span class="badge-feat">Featured</span>
+                <svg class="deco" viewBox="0 0 200 200" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="1.2">
+                  <circle cx="100" cy="100" r="80"/><circle cx="100" cy="100" r="60"/><circle cx="100" cy="100" r="40"/>
+                  <path d="M20 100h160M100 20v160"/>
+                </svg>
+              </div>
+              <div>
+                <div class="pc-num">N°042 · 28.04.26</div>
+                <div class="pc-tags"><span>ai</span><span>infra</span><span>postmortems</span></div>
+                <h3 class="pc-title">The 19-millisecond ghost: tracking down a tail-latency regression in our retrieval pipeline</h3>
+                <p class="pc-excerpt">Three weeks. Two on-calls. One mis-tuned connection pool. A field report on the kind of bug that shows up only in p99 dashboards — and only after you've already convinced yourself the system is fine.</p>
+                <div class="pc-foot">
+                  <span class="pc-author"><span class="avatar av-2">PK</span> <b>PK</b></span>
+                  <span class="pc-date">28 APR · 14 MIN READ</span>
+                  <div class="pc-actions">
+                    <button class="act liked" aria-label="Liked"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.4"><path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9Z"/></svg> 184</button>
+                    <button class="act" aria-label="Comments"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M21 15a4 4 0 0 1-4 4H8l-5 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/></svg> 23</button>
+                    <button class="act bookmarked" aria-label="Bookmarked"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.4"><path d="M19 21 12 16l-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2Z"/></svg></button>
+                    <button class="act" aria-label="Share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg></button>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article class="post-card">
+              <div class="pc-num">N°041 · 24.04.26</div>
+              <div>
+                <div class="pc-tags"><span>react</span><span>typescript</span></div>
+                <h3 class="pc-title">Server actions are not a substitute for a real form library — yet</h3>
+                <p class="pc-excerpt">A close reading of three production codebases shipping with bare server actions. What the abstraction gets right, and the dragons it leaves on the floor for whoever wires up validation, optimistic state, and progressive enhancement next.</p>
+                <div class="pc-foot">
+                  <span class="pc-author"><span class="avatar av-3">MR</span> <b>Maya R.</b></span>
+                  <span class="pc-date">24 APR · 9 MIN READ</span>
+                  <div class="pc-actions">
+                    <button class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9Z"/></svg> 96</button>
+                    <button class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M21 15a4 4 0 0 1-4 4H8l-5 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/></svg> 41</button>
+                    <button class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M19 21 12 16l-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2Z"/></svg></button>
+                    <button class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg></button>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article class="post-card">
+              <div class="pc-num">N°040 · 21.04.26</div>
+              <div>
+                <div class="pc-tags"><span>supabase</span><span>infra</span></div>
+                <h3 class="pc-title">RLS is a trust contract, not a security perimeter — and that distinction matters</h3>
+                <p class="pc-excerpt">Six months running Row Level Security in anger taught us where it shines (multi-tenant CRUD) and where it bleeds you dry (anything with cross-row aggregates, anything with audit trails, anything an analyst needs to read).</p>
+                <div class="pc-foot">
+                  <span class="pc-author"><span class="avatar av-4">JH</span> <b>Jordan H.</b></span>
+                  <span class="pc-date">21 APR · 12 MIN READ</span>
+                  <div class="pc-actions">
+                    <button class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9Z"/></svg> 142</button>
+                    <button class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M21 15a4 4 0 0 1-4 4H8l-5 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/></svg> 28</button>
+                    <button class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M19 21 12 16l-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2Z"/></svg></button>
+                    <button class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg></button>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article class="post-card">
+              <div class="pc-num">N°039 · 17.04.26</div>
+              <div>
+                <div class="pc-tags"><span>ml</span><span>ai</span></div>
+                <h3 class="pc-title">When fine-tuning is the wrong answer: a decision tree we actually use</h3>
+                <p class="pc-excerpt">Most "we should fine-tune" conversations are really "we have not tried structured prompting yet" conversations. Here is the four-question filter we run before anyone touches a training run, and the receipts on what each branch saved.</p>
+                <div class="pc-foot">
+                  <span class="pc-author"><span class="avatar av-5">AS</span> <b>Aria S.</b></span>
+                  <span class="pc-date">17 APR · 7 MIN READ</span>
+                  <div class="pc-actions">
+                    <button class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9Z"/></svg> 78</button>
+                    <button class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M21 15a4 4 0 0 1-4 4H8l-5 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/></svg> 19</button>
+                    <button class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M19 21 12 16l-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2Z"/></svg></button>
+                    <button class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg></button>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article class="post-card">
+              <div class="pc-num">N°038 · 14.04.26</div>
+              <div>
+                <div class="pc-tags"><span>design</span><span>react</span></div>
+                <h3 class="pc-title">The case for boring component APIs (and the seven rules we use to enforce it)</h3>
+                <p class="pc-excerpt">Cleverness in components is a tax that compounds. We replaced six headless libraries with seven boring rules and the maintenance load dropped by half. Here are the rules, and the audits that produced them.</p>
+                <div class="pc-foot">
+                  <span class="pc-author"><span class="avatar av-6">CK</span> <b>Chen K.</b></span>
+                  <span class="pc-date">14 APR · 6 MIN READ</span>
+                  <div class="pc-actions">
+                    <button class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9Z"/></svg> 53</button>
+                    <button class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M21 15a4 4 0 0 1-4 4H8l-5 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/></svg> 14</button>
+                    <button class="act bookmarked"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.4"><path d="M19 21 12 16l-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2Z"/></svg></button>
+                    <button class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg></button>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article class="post-card">
+              <div class="pc-num">N°037 · 09.04.26</div>
+              <div>
+                <div class="pc-tags"><span>typescript</span><span>ml</span></div>
+                <h3 class="pc-title">Type-safe tool calling: 600 lines of TypeScript that replaced an entire orchestration framework</h3>
+                <p class="pc-excerpt">A walkthrough of the schema-first, generator-driven approach we shipped this quarter — including the three concrete bugs we used to motivate the rewrite, and the benchmarks against our previous "agentic" library.</p>
+                <div class="pc-foot">
+                  <span class="pc-author"><span class="avatar av-7">SO</span> <b>Sami O.</b></span>
+                  <span class="pc-date">09 APR · 11 MIN READ</span>
+                  <div class="pc-actions">
+                    <button class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9Z"/></svg> 67</button>
+                    <button class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M21 15a4 4 0 0 1-4 4H8l-5 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/></svg> 11</button>
+                    <button class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M19 21 12 16l-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2Z"/></svg></button>
+                    <button class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg></button>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <!-- Loading -->
+            <div class="loading-row">
+              <span class="skel-dot"></span><span class="skel-dot"></span><span class="skel-dot"></span>
+              Loading more posts…
+              <span class="skel-bar"></span>
+            </div>
+
+            <!-- End -->
+            <div class="end-row">
+              <span class="rule"></span><span class="x"></span> You've reached the end <span class="x"></span><span class="rule"></span>
+            </div>
+
+            <!-- Empty -->
+            <div class="empty-card" role="note" aria-label="Empty topic state">
+              <div class="ico">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16v16H4z"/><path d="M4 9h16M9 4v16"/></svg>
+              </div>
+              <h5>No posts yet — check back soon</h5>
+              <p>This topic is still being seeded. New notes land here every Tuesday and Friday.</p>
+            </div>
+
+          </div>
+        </main>
+
+        <aside class="feed-aside">
+          <div class="aside-card">
+            <h4>This week</h4>
+            <p class="lead">"The systems you don't write down are the ones that bite you twice."</p>
+            <div class="stat-grid">
+              <div class="stat"><div class="v">12</div><div class="l">notes / wk</div></div>
+              <div class="stat"><div class="v">38m</div><div class="l">avg session</div></div>
+              <div class="stat"><div class="v">4.8k</div><div class="l">readers</div></div>
+              <div class="stat"><div class="v">142</div><div class="l">replies</div></div>
+            </div>
+          </div>
+
+          <div class="aside-card">
+            <h4>Most discussed</h4>
+            <ul class="reader-list">
+              <li><span class="avatar av-2">PK</span><b>The 19ms ghost</b><span class="meta">23</span></li>
+              <li><span class="avatar av-3">MR</span><b>Server actions…</b><span class="meta">41</span></li>
+              <li><span class="avatar av-4">JH</span><b>RLS contracts</b><span class="meta">28</span></li>
+              <li><span class="avatar av-5">AS</span><b>Wrong fine-tune</b><span class="meta">19</span></li>
+            </ul>
+          </div>
+
+          <div class="aside-card" style="background: var(--primary); color: var(--bg); border-color: var(--primary);">
+            <h4 style="color: var(--cta); border-color: var(--cta);">Get the digest</h4>
+            <p class="lead" style="color: var(--bg); font-style: normal; font-family: 'DM Sans', sans-serif; font-size: 14px; line-height: 1.5;">
+              One email per Sunday. Three notes, picked by hand, with one paragraph of context each.
+            </p>
+            <button class="btn-send" style="background: var(--cta); border-color: var(--cta); color: var(--cta-ink); width: 100%; justify-content: center; margin-top: 6px;">
+              Subscribe →
+            </button>
+          </div>
+        </aside>
+
+      </div>
+
+      <div class="canvas-foot">
+        <div class="marks">
+          <span>kbw notes · 2026</span>
+          <span>v 4.2.0</span>
+          <span>built for slow reading</span>
+        </div>
+        <span>↑ back to top</span>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ====== DARK MODE ====== -->
+  <section class="canvas dark">
+    <div class="label-bar">
+      <span><span class="dots"><i></i><i></i><i></i></span> &nbsp;&nbsp; DARK MODE</span>
+      <span>kbw-notes.app/feed</span>
+    </div>
+    <div class="app">
+
+      <nav class="nav">
+        <div class="nav-inner">
+          <a class="wordmark" href="#">
+            <span class="k">k</span><span class="bw">BW</span>
+            <span style="font-weight:400; color: var(--text-muted); margin-left: 6px;">Notes</span>
+            <span class="dot"></span>
+            <span class="tag">issue 042 · apr 2026</span>
+          </a>
+
+          <ul class="nav-links" role="navigation" aria-label="Primary">
+            <li><a class="active" href="#">Feed</a></li>
+            <li><a href="#">Submissions</a></li>
+            <li><a href="#">Notifications</a></li>
+            <li><a href="#">Settings</a></li>
+          </ul>
+
+          <div class="nav-cta">
+            <div class="theme-toggle" role="group" aria-label="Theme">
+              <button type="button">Light</button>
+              <button class="on" type="button">Dark</button>
+            </div>
+            <button class="icon-btn" aria-label="Notifications, 3 unread">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6Z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg>
+              <span class="badge">3</span>
+            </button>
+            <div class="user-menu-wrap">
+              <button class="user-trigger" aria-haspopup="menu" aria-expanded="true">
+                <span class="avatar av-1">PK</span>
+                <span style="font-size: 13px; font-weight: 500;">PK</span>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 9 6 6 6-6"/></svg>
+              </button>
+              <div class="user-menu" role="menu" aria-label="Account">
+                <div class="user-menu-head">
+                  <div class="name">PK · Founder</div>
+                  <div class="email">looods@gmail.com</div>
+                </div>
+                <a href="#"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg> Profile <kbd>⌘P</kbd></a>
+                <a href="#"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15A2 2 0 0 0 21 13l-2-3a2 2 0 0 0-2-1l-2 1-2-1-2-1a2 2 0 0 0-2 1l-2 3a2 2 0 0 0 0 2l2 3a2 2 0 0 0 2 1l2-1 2 1 2 1a2 2 0 0 0 2-1Z"/></svg> Settings <kbd>⌘,</kbd></a>
+                <div class="div"></div>
+                <a href="#" class="danger"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg> Sign out</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mobile-nav-card" aria-label="Mobile navigation">
+          <div class="ham-row">
+            <strong>Menu</strong>
+            <button class="ham-x" aria-label="Close menu">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+          <ul>
+            <li>Feed <span class="chev">›</span></li>
+            <li>Submissions <span class="chev">›</span></li>
+            <li>Notifications <span class="item-badge">3</span></li>
+            <li>Settings <span class="chev">›</span></li>
+            <li>Profile <span class="chev">›</span></li>
+            <li style="color: var(--text-muted);">Sign out <span class="chev">›</span></li>
+          </ul>
+        </div>
+      </nav>
+
+      <header class="page-head">
+        <div>
+          <span class="eyebrow">A field journal · Vol. 04</span>
+          <h1>kbw <span class="accent">Notes</span></h1>
+          <p class="sub">Tech discoveries, projects, and insights. <span class="sep">/</span> Long-form notes on the systems we build, ship, and dismantle.</p>
+        </div>
+        <div class="head-meta">
+          <div><b>248</b> notes published</div>
+          <div><b>12</b> in draft</div>
+          <div><b>4,802</b> readers</div>
+          <div style="margin-top: 8px;">UPDATED 28.04.2026</div>
+        </div>
+      </header>
+
+      <div class="feed-shell">
+        <aside class="feed-side">
+          <h4>Topics</h4>
+          <ul class="topic-list">
+            <li class="on">All notes <span class="count">248</span></li>
+            <li>react <span class="count">42</span></li>
+            <li>supabase <span class="count">36</span></li>
+            <li>ai <span class="count">61</span></li>
+            <li>typescript <span class="count">29</span></li>
+            <li>ml <span class="count">18</span></li>
+            <li>design <span class="count">22</span></li>
+            <li>infra <span class="count">14</span></li>
+          </ul>
+          <h4>Series</h4>
+          <ul class="topic-list">
+            <li>Platform diaries <span class="count">12</span></li>
+            <li>Latency notes <span class="count">7</span></li>
+            <li>Field reports <span class="count">5</span></li>
+          </ul>
+        </aside>
+
+        <main class="feed-main">
+          <div class="filter-bar">
+            <div class="pill-row">
+              <button class="pill on">Latest</button>
+              <button class="pill">Most read</button>
+              <button class="pill">Discussed</button>
+              <button class="pill">Bookmarked</button>
+              <button class="pill">From you</button>
+            </div>
+            <button class="sort-select">SORT&nbsp;: &nbsp; <b>NEWEST FIRST</b>
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+          </div>
+
+          <div class="feed-list">
+            <article class="post-card featured">
+              <div class="pc-cover" aria-hidden="true">
+                <span class="badge-feat">Featured</span>
+                <svg class="deco" viewBox="0 0 200 200" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="1.2">
+                  <circle cx="100" cy="100" r="80"/><circle cx="100" cy="100" r="60"/><circle cx="100" cy="100" r="40"/>
+                  <path d="M20 100h160M100 20v160"/>
+                </svg>
+              </div>
+              <div>
+                <div class="pc-num">N°042 · 28.04.26</div>
+                <div class="pc-tags"><span>ai</span><span>infra</span><span>postmortems</span></div>
+                <h3 class="pc-title">The 19-millisecond ghost: tracking down a tail-latency regression in our retrieval pipeline</h3>
+                <p class="pc-excerpt">Three weeks. Two on-calls. One mis-tuned connection pool. A field report on the kind of bug that shows up only in p99 dashboards — and only after you've already convinced yourself the system is fine.</p>
+                <div class="pc-foot">
+                  <span class="pc-author"><span class="avatar av-2">PK</span> <b>PK</b></span>
+                  <span class="pc-date">28 APR · 14 MIN READ</span>
+                  <div class="pc-actions">
+                    <button class="act liked"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.4"><path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9Z"/></svg> 184</button>
+                    <button class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M21 15a4 4 0 0 1-4 4H8l-5 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/></svg> 23</button>
+                    <button class="act bookmarked"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.4"><path d="M19 21 12 16l-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2Z"/></svg></button>
+                    <button class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg></button>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article class="post-card">
+              <div class="pc-num">N°041 · 24.04.26</div>
+              <div>
+                <div class="pc-tags"><span>react</span><span>typescript</span></div>
+                <h3 class="pc-title">Server actions are not a substitute for a real form library — yet</h3>
+                <p class="pc-excerpt">A close reading of three production codebases shipping with bare server actions. What the abstraction gets right, and the dragons it leaves on the floor for whoever wires up validation, optimistic state, and progressive enhancement next.</p>
+                <div class="pc-foot">
+                  <span class="pc-author"><span class="avatar av-3">MR</span> <b>Maya R.</b></span>
+                  <span class="pc-date">24 APR · 9 MIN READ</span>
+                  <div class="pc-actions">
+                    <button class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9Z"/></svg> 96</button>
+                    <button class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M21 15a4 4 0 0 1-4 4H8l-5 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/></svg> 41</button>
+                    <button class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M19 21 12 16l-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2Z"/></svg></button>
+                    <button class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg></button>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article class="post-card">
+              <div class="pc-num">N°040 · 21.04.26</div>
+              <div>
+                <div class="pc-tags"><span>supabase</span><span>infra</span></div>
+                <h3 class="pc-title">RLS is a trust contract, not a security perimeter — and that distinction matters</h3>
+                <p class="pc-excerpt">Six months running Row Level Security in anger taught us where it shines (multi-tenant CRUD) and where it bleeds you dry (anything with cross-row aggregates, anything with audit trails, anything an analyst needs to read).</p>
+                <div class="pc-foot">
+                  <span class="pc-author"><span class="avatar av-4">JH</span> <b>Jordan H.</b></span>
+                  <span class="pc-date">21 APR · 12 MIN READ</span>
+                  <div class="pc-actions">
+                    <button class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9Z"/></svg> 142</button>
+                    <button class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M21 15a4 4 0 0 1-4 4H8l-5 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/></svg> 28</button>
+                    <button class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M19 21 12 16l-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2Z"/></svg></button>
+                    <button class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg></button>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article class="post-card">
+              <div class="pc-num">N°039 · 17.04.26</div>
+              <div>
+                <div class="pc-tags"><span>ml</span><span>ai</span></div>
+                <h3 class="pc-title">When fine-tuning is the wrong answer: a decision tree we actually use</h3>
+                <p class="pc-excerpt">Most "we should fine-tune" conversations are really "we have not tried structured prompting yet" conversations. Here is the four-question filter we run before anyone touches a training run, and the receipts on what each branch saved.</p>
+                <div class="pc-foot">
+                  <span class="pc-author"><span class="avatar av-5">AS</span> <b>Aria S.</b></span>
+                  <span class="pc-date">17 APR · 7 MIN READ</span>
+                  <div class="pc-actions">
+                    <button class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9Z"/></svg> 78</button>
+                    <button class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M21 15a4 4 0 0 1-4 4H8l-5 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/></svg> 19</button>
+                    <button class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M19 21 12 16l-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2Z"/></svg></button>
+                    <button class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg></button>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article class="post-card">
+              <div class="pc-num">N°038 · 14.04.26</div>
+              <div>
+                <div class="pc-tags"><span>design</span><span>react</span></div>
+                <h3 class="pc-title">The case for boring component APIs (and the seven rules we use to enforce it)</h3>
+                <p class="pc-excerpt">Cleverness in components is a tax that compounds. We replaced six headless libraries with seven boring rules and the maintenance load dropped by half. Here are the rules, and the audits that produced them.</p>
+                <div class="pc-foot">
+                  <span class="pc-author"><span class="avatar av-6">CK</span> <b>Chen K.</b></span>
+                  <span class="pc-date">14 APR · 6 MIN READ</span>
+                  <div class="pc-actions">
+                    <button class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9Z"/></svg> 53</button>
+                    <button class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M21 15a4 4 0 0 1-4 4H8l-5 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/></svg> 14</button>
+                    <button class="act bookmarked"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.4"><path d="M19 21 12 16l-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2Z"/></svg></button>
+                    <button class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg></button>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article class="post-card">
+              <div class="pc-num">N°037 · 09.04.26</div>
+              <div>
+                <div class="pc-tags"><span>typescript</span><span>ml</span></div>
+                <h3 class="pc-title">Type-safe tool calling: 600 lines of TypeScript that replaced an entire orchestration framework</h3>
+                <p class="pc-excerpt">A walkthrough of the schema-first, generator-driven approach we shipped this quarter — including the three concrete bugs we used to motivate the rewrite, and the benchmarks against our previous "agentic" library.</p>
+                <div class="pc-foot">
+                  <span class="pc-author"><span class="avatar av-7">SO</span> <b>Sami O.</b></span>
+                  <span class="pc-date">09 APR · 11 MIN READ</span>
+                  <div class="pc-actions">
+                    <button class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9Z"/></svg> 67</button>
+                    <button class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M21 15a4 4 0 0 1-4 4H8l-5 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/></svg> 11</button>
+                    <button class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M19 21 12 16l-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2Z"/></svg></button>
+                    <button class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg></button>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <div class="loading-row">
+              <span class="skel-dot"></span><span class="skel-dot"></span><span class="skel-dot"></span>
+              Loading more posts…
+              <span class="skel-bar"></span>
+            </div>
+            <div class="end-row">
+              <span class="rule"></span><span class="x"></span> You've reached the end <span class="x"></span><span class="rule"></span>
+            </div>
+            <div class="empty-card">
+              <div class="ico">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16v16H4z"/><path d="M4 9h16M9 4v16"/></svg>
+              </div>
+              <h5>No posts yet — check back soon</h5>
+              <p>This topic is still being seeded. New notes land here every Tuesday and Friday.</p>
+            </div>
+          </div>
+        </main>
+
+        <aside class="feed-aside">
+          <div class="aside-card">
+            <h4>This week</h4>
+            <p class="lead">"The systems you don't write down are the ones that bite you twice."</p>
+            <div class="stat-grid">
+              <div class="stat"><div class="v">12</div><div class="l">notes / wk</div></div>
+              <div class="stat"><div class="v">38m</div><div class="l">avg session</div></div>
+              <div class="stat"><div class="v">4.8k</div><div class="l">readers</div></div>
+              <div class="stat"><div class="v">142</div><div class="l">replies</div></div>
+            </div>
+          </div>
+          <div class="aside-card">
+            <h4>Most discussed</h4>
+            <ul class="reader-list">
+              <li><span class="avatar av-2">PK</span><b>The 19ms ghost</b><span class="meta">23</span></li>
+              <li><span class="avatar av-3">MR</span><b>Server actions…</b><span class="meta">41</span></li>
+              <li><span class="avatar av-4">JH</span><b>RLS contracts</b><span class="meta">28</span></li>
+              <li><span class="avatar av-5">AS</span><b>Wrong fine-tune</b><span class="meta">19</span></li>
+            </ul>
+          </div>
+          <div class="aside-card" style="background: var(--cta-soft); color: var(--text); border-color: var(--cta);">
+            <h4 style="color: var(--cta); border-color: var(--cta);">Get the digest</h4>
+            <p class="lead" style="font-style: normal; font-family: 'DM Sans', sans-serif; font-size: 14px; line-height: 1.5; color: var(--text);">
+              One email per Sunday. Three notes, picked by hand, with one paragraph of context each.
+            </p>
+            <button class="btn-send" style="background: var(--cta); border-color: var(--cta); color: var(--cta-ink); width: 100%; justify-content: center; margin-top: 6px;">
+              Subscribe →
+            </button>
+          </div>
+        </aside>
+      </div>
+
+      <div class="canvas-foot">
+        <div class="marks">
+          <span>kbw notes · 2026</span>
+          <span>v 4.2.0</span>
+          <span>built for slow reading</span>
+        </div>
+        <span>↑ back to top</span>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- =========================================================
+     SCREEN 2 : SINGLE POST
+     ========================================================= -->
+<div class="section-divider">
+  <div class="num">SCREEN 02 / 02</div>
+  <h2>Single Post View</h2>
+  <p>A reading-first article view. Long-form serif body (Newsreader), Space Grotesk display heads, mathematical column. Drop cap, numbered section heads, schema figure, code block, bulleted/numbered lists, blockquote, share-CTA, full discussion thread with moderation pending state.</p>
+</div>
+
+<div class="mode-stack" id="postStack">
+
+  <!-- ====== LIGHT ====== -->
+  <section class="canvas">
+    <div class="label-bar">
+      <span><span class="dots"><i></i><i></i><i></i></span> &nbsp;&nbsp; LIGHT MODE</span>
+      <span>kbw-notes.app/n/042-19ms-ghost</span>
+    </div>
+    <div class="app">
+      <nav class="nav">
+        <div class="nav-inner">
+          <a class="wordmark" href="#">
+            <span class="k">k</span><span class="bw">BW</span>
+            <span style="font-weight:400; color: var(--text-muted); margin-left: 6px;">Notes</span>
+            <span class="dot"></span>
+            <span class="tag">issue 042 · 14 min read</span>
+          </a>
+          <ul class="nav-links">
+            <li><a href="#">Feed</a></li>
+            <li><a class="active" href="#">Reading</a></li>
+            <li><a href="#">Notifications</a></li>
+            <li><a href="#">Settings</a></li>
+          </ul>
+          <div class="nav-cta">
+            <div class="theme-toggle"><button class="on">Light</button><button>Dark</button></div>
+            <button class="icon-btn"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6Z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg><span class="badge">3</span></button>
+            <button class="user-trigger"><span class="avatar av-1">PK</span><span style="font-size:13px;">PK</span></button>
+          </div>
+        </div>
+      </nav>
+
+      <div class="post-shell">
+
+        <button class="post-back"><span class="arr"></span> Back to feed</button>
+
+        <header class="post-header">
+          <div class="pc-tags">
+            <span class="tag primary">ai</span>
+            <span class="tag">infra</span>
+            <span class="tag">postmortems</span>
+          </div>
+          <h1>The 19-millisecond ghost</h1>
+          <p class="lede">Three weeks. Two on-calls. One mis-tuned connection pool. A field report on the kind of bug that shows up only in p99 dashboards — and only after you've already convinced yourself the system is fine.</p>
+
+          <div class="post-byline">
+            <div class="who">
+              <span class="avatar lg av-2">PK</span>
+              <div>
+                <div class="name">PK</div>
+                <div class="role">Founder · platform · writes mostly on Sundays</div>
+              </div>
+            </div>
+            <div class="meta-pipes">
+              <span><b>28 APR 2026</b></span>
+              <span>14 MIN READ</span>
+              <span>184 LIKES</span>
+            </div>
+          </div>
+
+          <div class="share-row">
+            <span>Share —</span>
+            <button class="btn-share"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 4h3l-7 8 8 8h-6l-5-6-5 6H3l8-9-8-7h6l4 5 5-5z"/></svg> Twitter</button>
+            <button class="btn-share"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h4v16H4zM6 2a2 2 0 1 1 0 4 2 2 0 0 1 0-4Zm6 6h4v2c.6-1 2-2 4-2 4 0 4 3 4 5v9h-4v-8c0-1 0-3-2-3s-2 2-2 3v8h-4z"/></svg> LinkedIn</button>
+            <button class="btn-share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="9" y="9" width="11" height="11" rx="1.5"/><path d="M5 15V5a1.5 1.5 0 0 1 1.5-1.5H15"/></svg> Copy link</button>
+          </div>
+        </header>
+
+        <article class="post-body">
+          <p class="dropcap">There is a particular kind of bug that you only meet once you have built something other people depend on. It does not appear in your local environment. It does not appear in staging. It appears in production at 03:17 on a Wednesday, on the 99th percentile of a graph that no one was looking at, and it adds <strong>nineteen milliseconds</strong> to a request that should already have returned by then.</p>
+
+          <p>This is the story of finding one of those bugs. It involves a vector index, a connection pool, and the kind of three-AM reasoning that is only useful in retrospect. If you skip to the end, the lesson is: <em>your tail latency is a measurement of your system's least patient component, not its average one.</em> But you already knew that. The interesting part is how we forgot.</p>
+
+          <h2><span class="sec-num">§ 01 — symptom</span>The pager that almost wasn't</h2>
+
+          <p>The alert fired on a synthetic check, not a real user complaint. We had wired up an SLO of <code>p99 &lt; 320ms</code> on the retrieval endpoint, and for two months it sat comfortably at 280-ish, the way these things do when you've over-provisioned and underused. Then, sometime in the second week of April, the <strong>p99 line</strong> began to drift. Not spike. <em>Drift.</em></p>
+
+          <p>By the time anyone looked, we were at 339ms. By the next morning, 358. The p50 had not moved. The p95 had moved by maybe four milliseconds. From any reasonable summary statistic, the service was healthy. From the perspective of the slowest one-in-a-hundred users, something was quietly getting worse.</p>
+
+          <h3>What we tried first (and why it didn't help)</h3>
+
+          <ul>
+            <li>Restarted the pods. Worked for ninety minutes. Came back.</li>
+            <li>Increased the embedding cache TTL. Cut average latency by 12ms. Did not move p99.</li>
+            <li>Bisected the deploys. Every commit in the suspect range looked plausibly innocent.</li>
+            <li>Re-ran the benchmark suite locally. Nothing. The bug refused to leave the production blast radius.</li>
+          </ul>
+
+          <h2><span class="sec-num">§ 02 — instrumentation</span>You can't fix what you can't see</h2>
+
+          <p>The breakthrough — if you can call something so embarrassing a breakthrough — came from finally adding span-level tracing to the part of the pipeline we had been treating as a black box. Specifically: the connection acquire step on the vector store client.</p>
+
+          <pre>
+<span class="code-head"><span class="lang">typescript · retrieval.ts</span><span><button class="copy">Copy</button></span></span><code><span class="tk-c">// retrieval.ts — the offending hot path, with the trace we should have added on day one</span>
+<span class="tk-k">import</span> { trace } <span class="tk-k">from</span> <span class="tk-s">"@/observability"</span>;
+<span class="tk-k">import</span> { pool } <span class="tk-k">from</span> <span class="tk-s">"@/vector-pool"</span>;
+
+<span class="tk-k">export async function</span> <span class="tk-f">retrieve</span>(query: <span class="tk-t">string</span>, k: <span class="tk-t">number</span> = <span class="tk-n">8</span>) {
+  <span class="tk-k">return</span> <span class="tk-f">trace</span>(<span class="tk-s">"retrieve"</span>, <span class="tk-k">async</span> (span) => {
+    <span class="tk-k">const</span> client = <span class="tk-k">await</span> <span class="tk-f">trace</span>(<span class="tk-s">"pool.acquire"</span>, () => pool.<span class="tk-f">acquire</span>());
+    <span class="tk-k">try</span> {
+      <span class="tk-k">const</span> rows = <span class="tk-k">await</span> client.<span class="tk-f">query</span>(SEARCH_SQL, [query, k]);
+      span.<span class="tk-f">setAttribute</span>(<span class="tk-s">"rows"</span>, rows.length);
+      <span class="tk-k">return</span> rows;
+    } <span class="tk-k">finally</span> {
+      <span class="tk-k">await</span> client.<span class="tk-f">release</span>();
+    }
+  });
+}</code></pre>
+
+          <p>The first time we saw a real waterfall, it was obvious. The pool acquire was taking <strong>17–23ms</strong> on the slow tail, and zero everywhere else. We had a maximum pool size of 10, an average concurrency of 14, and a queue policy nobody had ever read.</p>
+
+          <blockquote>
+            "Every connection pool is a bet about how much patience the slowest user has. We had been winning that bet for so long we forgot we were placing it."
+            <cite>— from the postmortem</cite>
+          </blockquote>
+
+          <h2><span class="sec-num">§ 03 — fix</span>The four-line change that ate the ghost</h2>
+
+          <p>The fix was numerically anti-climactic and architecturally embarrassing. In order:</p>
+
+          <ol>
+            <li>Raise <code>maxPoolSize</code> from <strong>10</strong> to <strong>32</strong>. We had picked 10 in 2024 and never revisited it.</li>
+            <li>Add a per-acquire timeout of <code>250ms</code>, so backpressure is observable, not invisible.</li>
+            <li>Emit a <code>pool.queue_depth</code> gauge into the metric pipeline that was already running.</li>
+            <li>Alert when <em>queue_depth &gt; 4</em> for more than 60 seconds, escalating after 5 minutes.</li>
+          </ol>
+
+          <p>Within <strong>eleven minutes</strong> of the change rolling out, p99 dropped to 264ms — <em>lower than the baseline we had been treating as healthy</em>. The 19ms ghost was, of course, the wait time inside the connection acquire step, surfacing only when concurrency was high enough to saturate the pool.</p>
+
+          <figure class="inline-figure">
+            <div class="frame">
+              <div class="schema">
+                <div class="schema-box"><b>Client</b><span>HTTP request</span><span>p99 → 339ms</span></div>
+                <div class="schema-box" style="border-color: var(--cta); box-shadow: 4px 4px 0 var(--primary);"><b>Pool wait</b><span>queue depth ≥ 4</span><span><strong style="color:var(--cta)">+19ms</strong></span></div>
+                <div class="schema-box"><b>Vector store</b><span>kNN(k=8)</span><span>p50 → 41ms</span></div>
+              </div>
+            </div>
+            <figcaption>FIG. 01 — the missing span. The middle box is the part we never instrumented. The arrow we kept drawing on whiteboards went straight from "Client" to "Vector store". The actual cost lived in the gap.</figcaption>
+          </figure>
+
+          <h2><span class="sec-num">§ 04 — lesson</span>What we changed about how we work</h2>
+
+          <p>The technical fix took an afternoon. The cultural fix took the rest of the quarter. We made three commitments, each of which has cost us something and saved us more:</p>
+
+          <ul>
+            <li><strong>Trace first, optimize second.</strong> Every new dependency must arrive with at least one span around its acquire-and-release lifecycle.</li>
+            <li><strong>Defaults are decisions.</strong> If a number was right two years ago, that is not a reason it is right today. We now annotate every magic constant with the date it was last reviewed.</li>
+            <li><strong>If your p50 looks fine, you are looking at the wrong percentile.</strong> Tail-latency budgets are part of every SLO conversation now, not an optional bolt-on for "mature" services.</li>
+          </ul>
+
+          <p>None of this is new. People have been writing about tail latency for at least a decade — Dean and Barroso's "The Tail at Scale" came out in 2013, and it remains the best four-thousand-word article in the entire field. The only thing that is novel is that it was <em>our</em> tail this time, not someone else's.</p>
+
+          <p>If you take one thing away from this note, take this: the bugs that get away from you are rarely loud. They are <em>nineteen milliseconds long</em>, they show up at the 99th percentile of a chart you do not look at, and they have been there longer than you think.</p>
+        </article>
+
+        <div class="share-cta">
+          <div>
+            <div class="pre">If this was useful</div>
+            <h4>Pass it along — or push back.</h4>
+            <p>Send this to one engineer who is currently arguing with a p99 chart. Or reply with where we got it wrong.</p>
+          </div>
+          <div class="ctas">
+            <button class="btn-share"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 4h3l-7 8 8 8h-6l-5-6-5 6H3l8-9-8-7h6l4 5 5-5z"/></svg> Tweet</button>
+            <button class="btn-share"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h4v16H4zM6 2a2 2 0 1 1 0 4 2 2 0 0 1 0-4Zm6 6h4v2c.6-1 2-2 4-2 4 0 4 3 4 5v9h-4v-8c0-1 0-3-2-3s-2 2-2 3v8h-4z"/></svg> LinkedIn</button>
+            <button class="btn-share" style="background: var(--primary); color: var(--bg); border-color: var(--primary);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="9" y="9" width="11" height="11" rx="1.5"/><path d="M5 15V5a1.5 1.5 0 0 1 1.5-1.5H15"/></svg> Copy link</button>
+          </div>
+        </div>
+
+        <!-- Comments -->
+        <section class="comments">
+          <div class="comments-head">
+            <h3>Discussion (3)</h3>
+            <span class="meta">SORT: BEST · 2 RESOLVED · 1 PENDING</span>
+          </div>
+
+          <form class="comment-form" onsubmit="event.preventDefault();">
+            <div class="row-1">
+              <span class="avatar av-1">PK</span>
+              <textarea placeholder="Add a thoughtful reply… (markdown is fine. think before you press send.)" maxlength="500"></textarea>
+            </div>
+            <div class="form-foot">
+              <span class="counter"><b>0</b> / 500</span>
+              <button class="btn-send" type="submit">
+                Send
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 11 22 2l-9 19-2-9-8-1Z"/></svg>
+              </button>
+            </div>
+          </form>
+
+          <!-- Top-level with reply -->
+          <div class="comment">
+            <span class="avatar av-3">MR</span>
+            <div class="body-wrap">
+              <div class="who-line">
+                <span class="name">Maya R.</span>
+                <span class="when">2h ago</span>
+              </div>
+              <p class="text">The point about tail latency being a measurement of the <em>least patient</em> component is going on a wall somewhere. We had a structurally identical bug in our session store last quarter and I will be sending this thread to anyone who asks why we keep harping on connection-pool defaults.</p>
+              <div class="comment-actions">
+                <button class="liked"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.4"><path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9Z"/></svg> Liked · 14</button>
+                <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M9 17 4 12l5-5"/><path d="M20 18v-3a4 4 0 0 0-4-4H4"/></svg> Reply</button>
+                <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 22V4a2 2 0 0 1 2-2h12l4 4v16a2 2 0 0 1-2 2Z"/></svg> Report</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="comment nested">
+            <span class="avatar av-2">PK</span>
+            <div class="body-wrap">
+              <div class="who-line">
+                <span class="name me">PK</span>
+                <span class="when">1h ago</span>
+              </div>
+              <p class="text">Would love to read your version, Maya — especially the alerting structure. We landed on <code>queue_depth &gt; 4 for 60s</code> partly by gut and the 60-second window is doing a lot of unexamined work.</p>
+              <div class="comment-actions">
+                <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9Z"/></svg> Like · 6</button>
+                <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M9 17 4 12l5-5"/><path d="M20 18v-3a4 4 0 0 0-4-4H4"/></svg> Reply</button>
+                <button class="danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M6 6l1 14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-14"/></svg> Delete</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Standalone -->
+          <div class="comment">
+            <span class="avatar av-5">AS</span>
+            <div class="body-wrap">
+              <div class="who-line">
+                <span class="name">Aria S.</span>
+                <span class="when">5h ago</span>
+              </div>
+              <p class="text">"<strong>Defaults are decisions</strong>" is the line I am stealing. Filed under: things I will say in code review next week and pretend I came up with on the spot.</p>
+              <div class="comment-actions">
+                <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9Z"/></svg> Like · 22</button>
+                <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M9 17 4 12l5-5"/><path d="M20 18v-3a4 4 0 0 0-4-4H4"/></svg> Reply</button>
+                <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 22V4a2 2 0 0 1 2-2h12l4 4v16a2 2 0 0 1-2 2Z"/></svg> Report</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Moderation pending -->
+          <div class="comment">
+            <span class="avatar av-7">JN</span>
+            <div class="body-wrap">
+              <div class="who-line">
+                <span class="name">jnewuser</span>
+                <span class="when">just now</span>
+                <span class="badge-mod">Moderation pending</span>
+              </div>
+              <p class="text"><em class="pending">This comment is awaiting moderator approval. New accounts are reviewed before their first post is published — usually within a few hours. The author can see it; nobody else will until it clears the queue.</em></p>
+              <div class="comment-actions">
+                <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> Pending</button>
+                <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 22V4a2 2 0 0 1 2-2h12l4 4v16a2 2 0 0 1-2 2Z"/></svg> Report</button>
+              </div>
+            </div>
+          </div>
+
+          <button class="load-more-btn">Load more comments</button>
+        </section>
+      </div>
+
+      <div class="canvas-foot">
+        <div class="marks">
+          <span>kbw notes · 2026</span>
+          <span>article 042</span>
+          <span>last edit 28.04.26</span>
+        </div>
+        <span>↑ back to top</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== DARK ====== -->
+  <section class="canvas dark">
+    <div class="label-bar">
+      <span><span class="dots"><i></i><i></i><i></i></span> &nbsp;&nbsp; DARK MODE</span>
+      <span>kbw-notes.app/n/042-19ms-ghost</span>
+    </div>
+    <div class="app">
+      <nav class="nav">
+        <div class="nav-inner">
+          <a class="wordmark" href="#">
+            <span class="k">k</span><span class="bw">BW</span>
+            <span style="font-weight:400; color: var(--text-muted); margin-left: 6px;">Notes</span>
+            <span class="dot"></span>
+            <span class="tag">issue 042 · 14 min read</span>
+          </a>
+          <ul class="nav-links">
+            <li><a href="#">Feed</a></li>
+            <li><a class="active" href="#">Reading</a></li>
+            <li><a href="#">Notifications</a></li>
+            <li><a href="#">Settings</a></li>
+          </ul>
+          <div class="nav-cta">
+            <div class="theme-toggle"><button>Light</button><button class="on">Dark</button></div>
+            <button class="icon-btn"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6Z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg><span class="badge">3</span></button>
+            <button class="user-trigger"><span class="avatar av-1">PK</span><span style="font-size:13px;">PK</span></button>
+          </div>
+        </div>
+      </nav>
+
+      <div class="post-shell">
+        <button class="post-back"><span class="arr"></span> Back to feed</button>
+
+        <header class="post-header">
+          <div class="pc-tags">
+            <span class="tag primary">ai</span>
+            <span class="tag">infra</span>
+            <span class="tag">postmortems</span>
+          </div>
+          <h1>The 19-millisecond ghost</h1>
+          <p class="lede">Three weeks. Two on-calls. One mis-tuned connection pool. A field report on the kind of bug that shows up only in p99 dashboards — and only after you've already convinced yourself the system is fine.</p>
+
+          <div class="post-byline">
+            <div class="who">
+              <span class="avatar lg av-2">PK</span>
+              <div>
+                <div class="name">PK</div>
+                <div class="role">Founder · platform · writes mostly on Sundays</div>
+              </div>
+            </div>
+            <div class="meta-pipes">
+              <span><b>28 APR 2026</b></span>
+              <span>14 MIN READ</span>
+              <span>184 LIKES</span>
+            </div>
+          </div>
+
+          <div class="share-row">
+            <span>Share —</span>
+            <button class="btn-share"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 4h3l-7 8 8 8h-6l-5-6-5 6H3l8-9-8-7h6l4 5 5-5z"/></svg> Twitter</button>
+            <button class="btn-share"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h4v16H4zM6 2a2 2 0 1 1 0 4 2 2 0 0 1 0-4Zm6 6h4v2c.6-1 2-2 4-2 4 0 4 3 4 5v9h-4v-8c0-1 0-3-2-3s-2 2-2 3v8h-4z"/></svg> LinkedIn</button>
+            <button class="btn-share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="9" y="9" width="11" height="11" rx="1.5"/><path d="M5 15V5a1.5 1.5 0 0 1 1.5-1.5H15"/></svg> Copy link</button>
+          </div>
+        </header>
+
+        <article class="post-body">
+          <p class="dropcap">There is a particular kind of bug that you only meet once you have built something other people depend on. It does not appear in your local environment. It does not appear in staging. It appears in production at 03:17 on a Wednesday, on the 99th percentile of a graph that no one was looking at, and it adds <strong>nineteen milliseconds</strong> to a request that should already have returned by then.</p>
+
+          <p>This is the story of finding one of those bugs. It involves a vector index, a connection pool, and the kind of three-AM reasoning that is only useful in retrospect. If you skip to the end, the lesson is: <em>your tail latency is a measurement of your system's least patient component, not its average one.</em> But you already knew that. The interesting part is how we forgot.</p>
+
+          <h2><span class="sec-num">§ 01 — symptom</span>The pager that almost wasn't</h2>
+
+          <p>The alert fired on a synthetic check, not a real user complaint. We had wired up an SLO of <code>p99 &lt; 320ms</code> on the retrieval endpoint, and for two months it sat comfortably at 280-ish, the way these things do when you've over-provisioned and underused. Then, sometime in the second week of April, the <strong>p99 line</strong> began to drift. Not spike. <em>Drift.</em></p>
+
+          <p>By the time anyone looked, we were at 339ms. By the next morning, 358. The p50 had not moved. The p95 had moved by maybe four milliseconds. From any reasonable summary statistic, the service was healthy. From the perspective of the slowest one-in-a-hundred users, something was quietly getting worse.</p>
+
+          <h3>What we tried first (and why it didn't help)</h3>
+          <ul>
+            <li>Restarted the pods. Worked for ninety minutes. Came back.</li>
+            <li>Increased the embedding cache TTL. Cut average latency by 12ms. Did not move p99.</li>
+            <li>Bisected the deploys. Every commit in the suspect range looked plausibly innocent.</li>
+            <li>Re-ran the benchmark suite locally. Nothing. The bug refused to leave the production blast radius.</li>
+          </ul>
+
+          <h2><span class="sec-num">§ 02 — instrumentation</span>You can't fix what you can't see</h2>
+
+          <p>The breakthrough — if you can call something so embarrassing a breakthrough — came from finally adding span-level tracing to the part of the pipeline we had been treating as a black box. Specifically: the connection acquire step on the vector store client.</p>
+
+          <pre>
+<span class="code-head"><span class="lang">typescript · retrieval.ts</span><span><button class="copy">Copy</button></span></span><code><span class="tk-c">// retrieval.ts — the offending hot path, with the trace we should have added on day one</span>
+<span class="tk-k">import</span> { trace } <span class="tk-k">from</span> <span class="tk-s">"@/observability"</span>;
+<span class="tk-k">import</span> { pool } <span class="tk-k">from</span> <span class="tk-s">"@/vector-pool"</span>;
+
+<span class="tk-k">export async function</span> <span class="tk-f">retrieve</span>(query: <span class="tk-t">string</span>, k: <span class="tk-t">number</span> = <span class="tk-n">8</span>) {
+  <span class="tk-k">return</span> <span class="tk-f">trace</span>(<span class="tk-s">"retrieve"</span>, <span class="tk-k">async</span> (span) => {
+    <span class="tk-k">const</span> client = <span class="tk-k">await</span> <span class="tk-f">trace</span>(<span class="tk-s">"pool.acquire"</span>, () => pool.<span class="tk-f">acquire</span>());
+    <span class="tk-k">try</span> {
+      <span class="tk-k">const</span> rows = <span class="tk-k">await</span> client.<span class="tk-f">query</span>(SEARCH_SQL, [query, k]);
+      span.<span class="tk-f">setAttribute</span>(<span class="tk-s">"rows"</span>, rows.length);
+      <span class="tk-k">return</span> rows;
+    } <span class="tk-k">finally</span> {
+      <span class="tk-k">await</span> client.<span class="tk-f">release</span>();
+    }
+  });
+}</code></pre>
+
+          <p>The first time we saw a real waterfall, it was obvious. The pool acquire was taking <strong>17–23ms</strong> on the slow tail, and zero everywhere else. We had a maximum pool size of 10, an average concurrency of 14, and a queue policy nobody had ever read.</p>
+
+          <blockquote>
+            "Every connection pool is a bet about how much patience the slowest user has. We had been winning that bet for so long we forgot we were placing it."
+            <cite>— from the postmortem</cite>
+          </blockquote>
+
+          <h2><span class="sec-num">§ 03 — fix</span>The four-line change that ate the ghost</h2>
+
+          <p>The fix was numerically anti-climactic and architecturally embarrassing. In order:</p>
+
+          <ol>
+            <li>Raise <code>maxPoolSize</code> from <strong>10</strong> to <strong>32</strong>. We had picked 10 in 2024 and never revisited it.</li>
+            <li>Add a per-acquire timeout of <code>250ms</code>, so backpressure is observable, not invisible.</li>
+            <li>Emit a <code>pool.queue_depth</code> gauge into the metric pipeline that was already running.</li>
+            <li>Alert when <em>queue_depth &gt; 4</em> for more than 60 seconds, escalating after 5 minutes.</li>
+          </ol>
+
+          <p>Within <strong>eleven minutes</strong> of the change rolling out, p99 dropped to 264ms — <em>lower than the baseline we had been treating as healthy</em>. The 19ms ghost was, of course, the wait time inside the connection acquire step, surfacing only when concurrency was high enough to saturate the pool.</p>
+
+          <figure class="inline-figure">
+            <div class="frame">
+              <div class="schema">
+                <div class="schema-box"><b>Client</b><span>HTTP request</span><span>p99 → 339ms</span></div>
+                <div class="schema-box" style="border-color: var(--cta); box-shadow: 4px 4px 0 var(--primary);"><b>Pool wait</b><span>queue depth ≥ 4</span><span><strong style="color:var(--cta)">+19ms</strong></span></div>
+                <div class="schema-box"><b>Vector store</b><span>kNN(k=8)</span><span>p50 → 41ms</span></div>
+              </div>
+            </div>
+            <figcaption>FIG. 01 — the missing span. The middle box is the part we never instrumented. The arrow we kept drawing on whiteboards went straight from "Client" to "Vector store". The actual cost lived in the gap.</figcaption>
+          </figure>
+
+          <h2><span class="sec-num">§ 04 — lesson</span>What we changed about how we work</h2>
+
+          <p>The technical fix took an afternoon. The cultural fix took the rest of the quarter. We made three commitments, each of which has cost us something and saved us more:</p>
+
+          <ul>
+            <li><strong>Trace first, optimize second.</strong> Every new dependency must arrive with at least one span around its acquire-and-release lifecycle.</li>
+            <li><strong>Defaults are decisions.</strong> If a number was right two years ago, that is not a reason it is right today. We now annotate every magic constant with the date it was last reviewed.</li>
+            <li><strong>If your p50 looks fine, you are looking at the wrong percentile.</strong> Tail-latency budgets are part of every SLO conversation now, not an optional bolt-on for "mature" services.</li>
+          </ul>
+
+          <p>None of this is new. People have been writing about tail latency for at least a decade — Dean and Barroso's "The Tail at Scale" came out in 2013, and it remains the best four-thousand-word article in the entire field. The only thing that is novel is that it was <em>our</em> tail this time, not someone else's.</p>
+
+          <p>If you take one thing away from this note, take this: the bugs that get away from you are rarely loud. They are <em>nineteen milliseconds long</em>, they show up at the 99th percentile of a chart you do not look at, and they have been there longer than you think.</p>
+        </article>
+
+        <div class="share-cta">
+          <div>
+            <div class="pre">If this was useful</div>
+            <h4>Pass it along — or push back.</h4>
+            <p>Send this to one engineer who is currently arguing with a p99 chart. Or reply with where we got it wrong.</p>
+          </div>
+          <div class="ctas">
+            <button class="btn-share"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 4h3l-7 8 8 8h-6l-5-6-5 6H3l8-9-8-7h6l4 5 5-5z"/></svg> Tweet</button>
+            <button class="btn-share"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h4v16H4zM6 2a2 2 0 1 1 0 4 2 2 0 0 1 0-4Zm6 6h4v2c.6-1 2-2 4-2 4 0 4 3 4 5v9h-4v-8c0-1 0-3-2-3s-2 2-2 3v8h-4z"/></svg> LinkedIn</button>
+            <button class="btn-share" style="background: var(--cta); color: var(--cta-ink); border-color: var(--cta);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="9" y="9" width="11" height="11" rx="1.5"/><path d="M5 15V5a1.5 1.5 0 0 1 1.5-1.5H15"/></svg> Copy link</button>
+          </div>
+        </div>
+
+        <section class="comments">
+          <div class="comments-head">
+            <h3>Discussion (3)</h3>
+            <span class="meta">SORT: BEST · 2 RESOLVED · 1 PENDING</span>
+          </div>
+
+          <form class="comment-form" onsubmit="event.preventDefault();">
+            <div class="row-1">
+              <span class="avatar av-1">PK</span>
+              <textarea placeholder="Add a thoughtful reply… (markdown is fine. think before you press send.)" maxlength="500"></textarea>
+            </div>
+            <div class="form-foot">
+              <span class="counter"><b>0</b> / 500</span>
+              <button class="btn-send" type="submit">Send
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 11 22 2l-9 19-2-9-8-1Z"/></svg>
+              </button>
+            </div>
+          </form>
+
+          <div class="comment">
+            <span class="avatar av-3">MR</span>
+            <div class="body-wrap">
+              <div class="who-line"><span class="name">Maya R.</span><span class="when">2h ago</span></div>
+              <p class="text">The point about tail latency being a measurement of the <em>least patient</em> component is going on a wall somewhere. We had a structurally identical bug in our session store last quarter and I will be sending this thread to anyone who asks why we keep harping on connection-pool defaults.</p>
+              <div class="comment-actions">
+                <button class="liked"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.4"><path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9Z"/></svg> Liked · 14</button>
+                <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M9 17 4 12l5-5"/><path d="M20 18v-3a4 4 0 0 0-4-4H4"/></svg> Reply</button>
+                <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 22V4a2 2 0 0 1 2-2h12l4 4v16a2 2 0 0 1-2 2Z"/></svg> Report</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="comment nested">
+            <span class="avatar av-2">PK</span>
+            <div class="body-wrap">
+              <div class="who-line"><span class="name me">PK</span><span class="when">1h ago</span></div>
+              <p class="text">Would love to read your version, Maya — especially the alerting structure. We landed on <code>queue_depth &gt; 4 for 60s</code> partly by gut and the 60-second window is doing a lot of unexamined work.</p>
+              <div class="comment-actions">
+                <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9Z"/></svg> Like · 6</button>
+                <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M9 17 4 12l5-5"/><path d="M20 18v-3a4 4 0 0 0-4-4H4"/></svg> Reply</button>
+                <button class="danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M6 6l1 14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-14"/></svg> Delete</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="comment">
+            <span class="avatar av-5">AS</span>
+            <div class="body-wrap">
+              <div class="who-line"><span class="name">Aria S.</span><span class="when">5h ago</span></div>
+              <p class="text">"<strong>Defaults are decisions</strong>" is the line I am stealing. Filed under: things I will say in code review next week and pretend I came up with on the spot.</p>
+              <div class="comment-actions">
+                <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9Z"/></svg> Like · 22</button>
+                <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M9 17 4 12l5-5"/><path d="M20 18v-3a4 4 0 0 0-4-4H4"/></svg> Reply</button>
+                <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 22V4a2 2 0 0 1 2-2h12l4 4v16a2 2 0 0 1-2 2Z"/></svg> Report</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="comment">
+            <span class="avatar av-7">JN</span>
+            <div class="body-wrap">
+              <div class="who-line">
+                <span class="name">jnewuser</span>
+                <span class="when">just now</span>
+                <span class="badge-mod">Moderation pending</span>
+              </div>
+              <p class="text"><em class="pending">This comment is awaiting moderator approval. New accounts are reviewed before their first post is published — usually within a few hours. The author can see it; nobody else will until it clears the queue.</em></p>
+              <div class="comment-actions">
+                <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> Pending</button>
+                <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 22V4a2 2 0 0 1 2-2h12l4 4v16a2 2 0 0 1-2 2Z"/></svg> Report</button>
+              </div>
+            </div>
+          </div>
+
+          <button class="load-more-btn">Load more comments</button>
+        </section>
+      </div>
+
+      <div class="canvas-foot">
+        <div class="marks">
+          <span>kbw notes · 2026</span>
+          <span>article 042</span>
+          <span>last edit 28.04.26</span>
+        </div>
+        <span>↑ back to top</span>
+      </div>
+    </div>
+  </section>
+</div>
+
+<footer class="meta-bar" style="position: static;">
+  <div class="meta-bar-inner">
+    <div class="crumbs">
+      <span>End of mockup ·</span> <strong>kbw Notes / B / Swiss Modernism 2.0</strong>
+      <span style="margin-left:14px;">type: Space Grotesk + DM Sans + Newsreader + JetBrains Mono</span>
+    </div>
+    <div class="crumbs"><span>open in browser to review</span></div>
+  </div>
+</footer>
+
+<script>
+  // Layout toggle for the mockup chrome (independent of in-app theme toggle)
+  const stacks = [document.getElementById('feedStack'), document.getElementById('postStack')];
+  function setLayout(mode) {
+    stacks.forEach(s => {
+      if (!s) return;
+      const cards = s.querySelectorAll('.canvas');
+      if (mode === 'split') {
+        s.style.gridTemplateColumns = '1fr 1fr';
+        cards.forEach(c => c.style.display = '');
+      } else if (mode === 'light') {
+        s.style.gridTemplateColumns = '1fr';
+        cards[0].style.display = '';
+        cards[1].style.display = 'none';
+      } else if (mode === 'dark') {
+        s.style.gridTemplateColumns = '1fr';
+        cards[0].style.display = 'none';
+        cards[1].style.display = '';
+      }
+    });
+    document.querySelectorAll('.meta-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('mode' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active');
+  }
+  document.getElementById('modeSplit').addEventListener('click', () => setLayout('split'));
+  document.getElementById('modeLight').addEventListener('click', () => setLayout('light'));
+  document.getElementById('modeDark').addEventListener('click', () => setLayout('dark'));
+
+  // Live char counter on textareas
+  document.querySelectorAll('.comment-form').forEach(form => {
+    const ta = form.querySelector('textarea');
+    const c = form.querySelector('.counter b');
+    if (!ta || !c) return;
+    ta.addEventListener('input', () => { c.textContent = ta.value.length; });
+  });
+</script>
+
+</body>
+</html>
