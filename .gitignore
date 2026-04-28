@@ -43,5 +43,6 @@ test-results/
 product-plan/
 reviews/
 
-# Supabase CLI version cache
+# Supabase CLI local state
 supabase/.temp/
+supabase/.branches/

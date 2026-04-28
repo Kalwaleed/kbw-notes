@@ -25,6 +25,32 @@ supabase functions serve                      # Run Edge Functions locally
 supabase gen types typescript --project-id <ref> > src/lib/database.types.ts  # Regenerate DB types
 ```
 
+### Local Supabase (for authenticated e2e + offline dev)
+
+```bash
+supabase start --exclude edge-runtime          # Start local stack (skip edge runtime, see caveat)
+eval "$(supabase status -o env)"               # Export SUPABASE_URL, ANON_KEY, SERVICE_ROLE_KEY
+SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY \
+  node scripts/seed-local.mjs                  # Creates k@kbw.vc (admin) + e2e-author@kbw.vc
+supabase status                                # Print URLs + keys
+supabase stop                                  # Tear down
+```
+
+Local URLs (default ports):
+- API:     `http://127.0.0.1:54321`
+- DB:      `postgresql://postgres:postgres@127.0.0.1:54322/postgres`
+- Studio:  `http://127.0.0.1:54323`
+- Mailpit: `http://127.0.0.1:54324` (captures auth emails)
+
+**Caveat — edge-runtime is currently excluded** because Supabase's local edge-runtime image fetches `https://deno.land/std/...` on boot, and intermittent deno.land outages cause exit 143 with no useful error. Auth/RLS/PostgREST tests run fine without it; tests that need `request-magic-link` or `moderate-comment` should mock the call or run against the deployed project instead.
+
+Local default keys are deterministic but NOT committed — pull them via `supabase status -o env`. They are the same on every Supabase install (not usable against your production project) but GitHub's secret scanner blocks pushes that contain the literal values, so we keep them out of source.
+
+Test fixtures:
+- `k@kbw.vc` — admin (`raw_app_meta_data.role = 'admin'`)
+- `e2e-author@kbw.vc` — regular invited author
+- Password (both): `e2e-local-test-password`
+
 ### Running a Single Test
 
 ```bash
