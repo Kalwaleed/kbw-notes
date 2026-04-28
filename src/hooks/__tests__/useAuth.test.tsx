@@ -29,7 +29,7 @@ describe('useAuth', () => {
 
     const { result } = renderHook(() => useAuth(), { wrapper })
     expect(result.current).toHaveProperty('user')
-    expect(result.current).toHaveProperty('signInWithOtp')
+    expect(result.current).toHaveProperty('requestMagicLink')
     expect(result.current).toHaveProperty('signOut')
     expect(result.current).toHaveProperty('isEmailAllowed')
   })

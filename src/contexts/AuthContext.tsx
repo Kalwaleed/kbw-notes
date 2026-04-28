@@ -13,9 +13,9 @@ interface AuthContextValue {
   user: User | null
   session: Session | null
   isLoading: boolean
+  isAdmin: boolean
   error: Error | null
-  instantSignIn: (email: string) => Promise<AuthResult>
-  signInWithOtp: (email: string) => Promise<AuthResult>
+  requestMagicLink: (email: string) => Promise<AuthResult>
   isEmailAllowed: (email: string) => boolean
   signOut: () => Promise<void>
 }
@@ -28,7 +28,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
 
-  // Initialize auth state
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
@@ -47,31 +46,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe()
   }, [])
 
-  // Check if email domain is allowed
-  // Security: Uses NFKC normalization and strict validation to prevent bypass attacks
+  // NFKC + invisible-character strip + strict @kbw.vc check.
   const isEmailAllowed = useCallback((email: string): boolean => {
     const normalizedEmail = email
       .normalize('NFKC')
       .toLowerCase()
       .trim()
-      .replace(/\u200B|\u200C|\u200D|\u200E|\u200F|\uFEFF|\u00AD|\u034F|\u061C|\u115F|\u1160|\u17B4|\u17B5|\u180B|\u180C|\u180D|[\u2060-\u206F]/g, '')
+      .replace(/​|‌|‍|‎|‏|﻿|­|͏|؜|ᅟ|ᅠ|឴|឵|᠋|᠌|᠍|[⁠-⁯]/g, '')
 
     const strictEmailRegex = /^[a-z0-9._%+-]+@kbw\.vc$/
-
-    if (!strictEmailRegex.test(normalizedEmail)) {
-      return false
-    }
+    if (!strictEmailRegex.test(normalizedEmail)) return false
 
     const atCount = (normalizedEmail.match(/@/g) || []).length
-    if (atCount !== 1) {
-      return false
-    }
+    if (atCount !== 1) return false
 
     const [localPart, domain] = normalizedEmail.split('@')
     return localPart.length > 0 && domain === ALLOWED_DOMAIN
   }, [])
 
-  const instantSignIn = useCallback(async (email: string): Promise<AuthResult> => {
+  // Magic-link only. Never returns a token to the client. The edge function
+  // performs the rate-limit, invite check, and email send. We always treat a
+  // 200 response as success on the UI side ("check your inbox") — the server
+  // intentionally returns 200 even for non-invited or rate-limited emails to
+  // avoid enumeration. Non-2xx responses indicate a transport or origin error.
+  const requestMagicLink = useCallback(async (email: string): Promise<AuthResult> => {
     setError(null)
     const normalizedEmail = email.toLowerCase().trim()
 
@@ -81,65 +79,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auto-sign-in`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/request-magic-link`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: normalizedEmail }),
+          body: JSON.stringify({
+            email: normalizedEmail,
+            redirectTo: `${window.location.origin}/kbw-notes/home`,
+          }),
         }
       )
 
-      const data = await response.json()
-
       if (!response.ok) {
-        if (data.error === 'not_invited') {
-          return { success: false, error: 'not_invited' }
-        }
-        throw new Error(data.error || 'Sign-in failed')
+        return { success: false, error: 'Sign-in service unavailable' }
       }
 
-      const { error: verifyError } = await supabase.auth.verifyOtp({
-        token_hash: data.token_hash,
-        type: 'email',
-      })
-
-      if (verifyError) throw verifyError
       return { success: true }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Sign-in failed'
-      setError(err instanceof Error ? err : new Error(errorMessage))
-      return { success: false, error: errorMessage }
-    }
-  }, [isEmailAllowed])
-
-  const signInWithOtp = useCallback(async (email: string): Promise<AuthResult> => {
-    setError(null)
-    const normalizedEmail = email.toLowerCase().trim()
-
-    if (!isEmailAllowed(normalizedEmail)) {
-      return { success: false, error: 'Only @kbw.vc emails are allowed' }
-    }
-
-    try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email: normalizedEmail,
-        options: {
-          emailRedirectTo: `${window.location.origin}/kbw-notes/home`,
-        },
-      })
-
-      if (error) throw error
-      return { success: true }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to send magic link'
-      setError(err instanceof Error ? err : new Error(errorMessage))
-      return { success: false, error: errorMessage }
+      const message = err instanceof Error ? err.message : 'Network error'
+      setError(err instanceof Error ? err : new Error(message))
+      return { success: false, error: message }
     }
   }, [isEmailAllowed])
 
   const signOut = useCallback(async () => {
     setError(null)
-
     try {
       const { error } = await supabase.auth.signOut()
       if (error) throw error
@@ -149,15 +113,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  const isAdmin = ((user?.app_metadata as { role?: string } | undefined)?.role) === 'admin'
+
   return (
     <AuthContext.Provider
       value={{
         user,
         session,
         isLoading,
+        isAdmin,
         error,
-        instantSignIn,
-        signInWithOtp,
+        requestMagicLink,
         isEmailAllowed,
         signOut,
       }}

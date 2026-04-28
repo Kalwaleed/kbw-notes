@@ -1,21 +1,20 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth, useSettings } from '../hooks'
 import { useEffect, useState } from 'react'
-import { Mail } from 'lucide-react'
+import { Mail, MailCheck } from 'lucide-react'
 
-type FormState = 'idle' | 'signing-in' | 'error'
+type FormState = 'idle' | 'sending' | 'sent' | 'error'
 
 export function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { resolvedTheme, toggleTheme } = useSettings()
-  const { user, instantSignIn, isEmailAllowed, isLoading } = useAuth()
+  const { user, requestMagicLink, isEmailAllowed, isLoading } = useAuth()
 
   const [email, setEmail] = useState('')
   const [formState, setFormState] = useState<FormState>('idle')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
-  // Validate and normalize redirect path to prevent open redirect
   const rawFrom = (location.state as { from?: string })?.from
   const from = (() => {
     if (!rawFrom) return '/kbw-notes/home'
@@ -27,7 +26,6 @@ export function LoginPage() {
     }
   })()
 
-  // Redirect if already logged in
   useEffect(() => {
     if (user && !isLoading) {
       navigate(from, { replace: true })
@@ -47,18 +45,13 @@ export function LoginPage() {
       return
     }
 
-    setFormState('signing-in')
+    setFormState('sending')
     setErrorMessage(null)
 
-    const result = await instantSignIn(normalizedEmail)
+    const result = await requestMagicLink(normalizedEmail)
 
     if (result.success) {
-      // onAuthStateChange will fire and the useEffect above will redirect
-      return
-    }
-
-    if (result.error === 'not_invited') {
-      navigate('/rejected', { replace: true })
+      setFormState('sent')
       return
     }
 
@@ -77,7 +70,6 @@ export function LoginPage() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
-        {/* Header */}
         <div className="text-center">
           <h1
             className="text-3xl font-bold text-slate-900 dark:text-white"
@@ -86,80 +78,95 @@ export function LoginPage() {
             Welcome to kbw Notes
           </h1>
           <p className="mt-2 text-slate-600 dark:text-slate-400">
-            Are you invited? Enter your email to check.
+            {formState === 'sent'
+              ? 'Check your inbox for a sign-in link.'
+              : 'Enter your @kbw.vc email to receive a magic link.'}
           </p>
         </div>
 
-        {/* Login Card */}
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-8">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Error Message */}
-            {formState === 'error' && errorMessage && (
-              <div className="p-4 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800">
-                <p className="text-sm text-red-600 dark:text-red-400">{errorMessage}</p>
+          {formState === 'sent' ? (
+            <div className="space-y-4 text-center">
+              <div className="mx-auto w-12 h-12 flex items-center justify-center rounded-full bg-violet-100 dark:bg-violet-950/40">
+                <MailCheck className="h-6 w-6 text-violet-600 dark:text-violet-400" />
               </div>
-            )}
-
-            {/* Email Input */}
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Email address
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-slate-400" />
-                </div>
-                <input
-                  type="email"
-                  id="email"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value)
-                    if (formState === 'error') {
-                      setFormState('idle')
-                      setErrorMessage(null)
-                    }
-                  }}
-                  placeholder="you@kbw.vc"
-                  disabled={formState === 'signing-in'}
-                  className="block w-full pl-10 pr-3 py-3 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
-                  autoComplete="email"
-                  autoFocus
-                />
-              </div>
-              {showDomainWarning && (
-                <p className="mt-2 text-sm text-amber-600 dark:text-amber-400">
-                  Only @kbw.vc emails are allowed
-                </p>
-              )}
+              <p className="text-sm text-slate-700 dark:text-slate-300">
+                If <span className="font-medium">{normalizedEmail}</span> is on the invite list, a sign-in
+                link is on its way. The link expires in a few minutes.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setFormState('idle')
+                  setEmail('')
+                }}
+                className="text-sm text-violet-600 dark:text-violet-400 hover:underline"
+              >
+                Use a different email
+              </button>
             </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={
-                formState === 'signing-in' ||
-                !normalizedEmail ||
-                showDomainWarning
-              }
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium rounded-lg bg-violet-600 hover:bg-violet-700 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {formState === 'signing-in' ? (
-                <>
-                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  Signing in...
-                </>
-              ) : (
-                'Continue'
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {formState === 'error' && errorMessage && (
+                <div className="p-4 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800">
+                  <p className="text-sm text-red-600 dark:text-red-400">{errorMessage}</p>
+                </div>
               )}
-            </button>
-          </form>
+
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Email address
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Mail className="h-5 w-5 text-slate-400" />
+                  </div>
+                  <input
+                    type="email"
+                    id="email"
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value)
+                      if (formState === 'error') {
+                        setFormState('idle')
+                        setErrorMessage(null)
+                      }
+                    }}
+                    placeholder="you@kbw.vc"
+                    disabled={formState === 'sending'}
+                    className="block w-full pl-10 pr-3 py-3 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+                    autoComplete="email"
+                    autoFocus
+                  />
+                </div>
+                {showDomainWarning && (
+                  <p className="mt-2 text-sm text-amber-600 dark:text-amber-400">
+                    Only @kbw.vc emails are allowed
+                  </p>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                disabled={formState === 'sending' || !normalizedEmail || showDomainWarning}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium rounded-lg bg-violet-600 hover:bg-violet-700 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {formState === 'sending' ? (
+                  <>
+                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Sending link...
+                  </>
+                ) : (
+                  'Send sign-in link'
+                )}
+              </button>
+            </form>
+          )}
         </div>
 
-        {/* Theme Toggle */}
         <div className="text-center">
           <button
             onClick={toggleTheme}
@@ -169,7 +176,6 @@ export function LoginPage() {
           </button>
         </div>
 
-        {/* Terms */}
         <p className="text-center text-xs text-slate-400 dark:text-slate-500">
           By signing in, you agree to our Terms of Service and Privacy Policy
         </p>

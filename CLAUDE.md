@@ -18,7 +18,9 @@ npm run test:e2e:ui  # Playwright with UI
 
 ```bash
 supabase db push                              # Apply migrations to remote database
-supabase functions deploy moderate-comment    # Deploy Edge Function
+supabase functions deploy moderate-comment    # Deploy moderation Edge Function
+supabase functions deploy request-magic-link  # Deploy invite-only magic-link request Edge Function
+supabase functions deploy auto-sign-in        # Deploy 410-Gone stub for legacy URL
 supabase functions serve                      # Run Edge Functions locally
 supabase gen types typescript --project-id <ref> > src/lib/database.types.ts  # Regenerate DB types
 ```
@@ -62,13 +64,17 @@ Auth uses React Context, not scattered hooks:
 - `AuthProvider` in `src/contexts/AuthContext.tsx` — wraps the app, maintains a single `onAuthStateChange` subscription shared by all consumers
 - `useAuth` hook (`src/hooks/useAuth.ts`) — thin wrapper that reads from AuthContext
 - `KbwNotesLayout` (`src/components/auth/KbwNotesLayout.tsx`) — wraps all `/kbw-notes/*` routes, contains `ProtectedRoute` which redirects unauthenticated users to `/`
-- Domain lock: only `@kbw.vc` emails can register/sign in (validated via NFKC normalization + strict regex)
+- **Invite-only magic links** (no passwords): emails must exist in the `invited_emails` table. The `request-magic-link` Edge Function atomically rate-limits, validates `@kbw.vc`, checks `invited_emails`, and triggers a Supabase magic-link email via `auth.signInWithOtp`. The function never returns the token; the client only learns whether the request was accepted at the transport layer. All attempts (denied/rate-limited/sent) are logged to `auth_audit`. The legacy `auto-sign-in` URL returns `410 Gone` and logs a `legacy_endpoint` event so we can confirm no stale clients remain before deleting it.
+- Always returns `200 { ok: true }` to the client to prevent enumeration of the invite list.
+- Domain lock at the auth hook layer (migration 015) plus invited-email allowlist (migrations 016, 017) and admin-only invite-management RLS (migration 018) — all enforced server-side.
+- Admin role is stored in `auth.users.raw_app_meta_data.role = 'admin'` (so it appears in the JWT). Bootstrapped to `k@kbw.vc` only.
 
 ### Routing
 
 All authenticated routes are nested under `/kbw-notes` in `src/router.tsx`, wrapped by `KbwNotesLayout`:
 
-- `/` — Login page (unauthenticated)
+- `/` — Login page (unauthenticated, magic link only)
+- `/rejected` — Shown to users whose email is not in `invited_emails`
 - `/kbw-notes` — Redirects to `/kbw-notes/home` (index route)
 - `/kbw-notes/home` — Blog feed (reads from `submissions` table, NOT `blog_posts`)
 - `/kbw-notes/post/:id` — Single post view with comments
@@ -125,23 +131,23 @@ All navigation paths from `AppShell` and `UserMenu` must use the `/kbw-notes/` p
 - `post_likes` / `post_bookmarks` — User engagement (FK → `submissions` with CASCADE)
 - `profiles` — User profiles (extends Supabase auth.users)
 - `notifications` — User notifications with realtime support
-- `rate_limits` — Persistent rate limiting for Edge Functions
+- `rate_limits` — Persistent rate limiting for Edge Functions (atomic via `rate_limit_increment` RPC)
+- `invited_emails` — Allowlist for magic-link sign-in (lowercase-enforced; admin-only RLS)
+- `auth_audit` — Append-only log of every sign-in attempt (admin-readable)
 
 **Legacy (do not use):**
 - `blog_posts` — Superseded by `submissions` table
 
 **Types:** `src/lib/database.types.ts` is auto-generated via `supabase gen types`. Do NOT manually edit. Convenience aliases (`Profile`, `CommentRow`, `SubmissionRow`, `NotificationRow`) are exported from this file.
 
-**Migrations:** `supabase/migrations/` contains migrations 001-015.
+**Migrations:** `supabase/migrations/` contains migrations 001-018.
 
 ### Security Model
 
-Edge Function (`moderate-comment`):
-- CORS restricted to allowed origins
-- CSRF via `Content-Type: application/json` requirement
-- Rate limiting: database-backed, 10/min per IP (prefers `cf-connecting-ip` over spoofable headers)
-- Input validation: Zod schemas
-- Unicode normalization: NFKC to prevent homograph attacks
+Edge Functions:
+- `moderate-comment` — Claude-backed comment moderation. CORS restricted to allowed origins. CSRF via `Content-Type: application/json`. Rate limiting: database-backed, 10/min per IP (prefers `cf-connecting-ip` over spoofable headers). Input validation via Zod. NFKC Unicode normalization to prevent homograph attacks.
+- `request-magic-link` — Magic-link request handler. Atomic rate-limit (per-IP + per-email via `rate_limit_increment`), validates `@kbw.vc`, checks `invited_emails`, then triggers Supabase to email a magic link via `auth.signInWithOtp` — never returns the token. Logs every attempt to `auth_audit`. Returns `200 { ok: true }` for all outcomes to prevent enumeration.
+- `auto-sign-in` — Legacy URL stub. Returns `410 Gone` and logs a `legacy_endpoint` event. Delete once the audit log shows no traffic.
 
 Client-side:
 - XSS: DOMPurify sanitizes TipTap HTML in submission preview and blog post rendering

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor, act } from '@testing-library/react'
 import { AuthProvider, AuthContext, type AuthContextValue } from '../AuthContext'
 import { useContext } from 'react'
@@ -7,7 +7,6 @@ const mockSupabase = vi.hoisted(() => ({
   auth: {
     getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
     getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
-    signInWithOtp: vi.fn().mockResolvedValue({ data: {}, error: null }),
     signOut: vi.fn().mockResolvedValue({ error: null }),
     onAuthStateChange: vi.fn().mockReturnValue({
       data: { subscription: { unsubscribe: vi.fn() } },
@@ -16,7 +15,6 @@ const mockSupabase = vi.hoisted(() => ({
 }))
 vi.mock('../../lib/supabase', () => ({ supabase: mockSupabase }))
 
-// Helper to consume auth context
 function AuthConsumer({ action }: { action?: (ctx: AuthContextValue) => void }) {
   const ctx = useContext(AuthContext)
   if (!ctx) return <div>no context</div>
@@ -43,7 +41,6 @@ describe('AuthContext', () => {
     })
   })
 
-  // ── isEmailAllowed ──────────────────────────────────────────────
   describe('isEmailAllowed', () => {
     it('allows valid @kbw.vc emails', async () => {
       let result: boolean | undefined
@@ -85,7 +82,7 @@ describe('AuthContext', () => {
       let result: boolean | undefined
       render(
         <AuthProvider>
-          <AuthConsumer action={(ctx) => { result = ctx.isEmailAllowed('user@kbw.vc\uFEFF') }} />
+          <AuthConsumer action={(ctx) => { result = ctx.isEmailAllowed('user@kbw.vc﻿') }} />
         </AuthProvider>
       )
       await waitFor(() => expect(screen.getByTestId('loading').textContent).toBe('false'))
@@ -97,7 +94,7 @@ describe('AuthContext', () => {
       let result: boolean | undefined
       render(
         <AuthProvider>
-          <AuthConsumer action={(ctx) => { result = ctx.isEmailAllowed('user\u200B@kbw.vc') }} />
+          <AuthConsumer action={(ctx) => { result = ctx.isEmailAllowed('user​@kbw.vc') }} />
         </AuthProvider>
       )
       await waitFor(() => expect(screen.getByTestId('loading').textContent).toBe('false'))
@@ -130,57 +127,82 @@ describe('AuthContext', () => {
     })
   })
 
-  // ── signInWithOtp ─────────────────────────────────────────────
-  describe('signInWithOtp', () => {
-    it('rejects non-kbw.vc email', async () => {
+  describe('requestMagicLink', () => {
+    let fetchMock: ReturnType<typeof vi.fn>
+
+    beforeEach(() => {
+      fetchMock = vi.fn()
+      vi.stubGlobal('fetch', fetchMock)
+    })
+
+    afterEach(() => {
+      vi.unstubAllGlobals()
+    })
+
+    it('rejects non-kbw.vc email without calling the edge function', async () => {
       let result: { success: boolean; error?: string } | undefined
       render(
         <AuthProvider>
-          <AuthConsumer action={async (ctx) => { result = await ctx.signInWithOtp('user@gmail.com') }} />
+          <AuthConsumer action={async (ctx) => { result = await ctx.requestMagicLink('user@gmail.com') }} />
         </AuthProvider>
       )
       await waitFor(() => expect(screen.getByTestId('loading').textContent).toBe('false'))
       await act(async () => { screen.getByTestId('action').click() })
       expect(result?.success).toBe(false)
       expect(result?.error).toBe('Only @kbw.vc emails are allowed')
-      expect(mockSupabase.auth.signInWithOtp).not.toHaveBeenCalled()
+      expect(fetchMock).not.toHaveBeenCalled()
     })
 
-    it('calls supabase.auth.signInWithOtp with correct args', async () => {
-      mockSupabase.auth.signInWithOtp.mockResolvedValue({ data: {}, error: null })
+    it('posts email + redirectTo to /functions/v1/request-magic-link and returns success on 200', async () => {
+      fetchMock.mockResolvedValue({ ok: true, status: 200, json: async () => ({ ok: true }) })
       let result: { success: boolean; error?: string } | undefined
       render(
         <AuthProvider>
-          <AuthConsumer action={async (ctx) => { result = await ctx.signInWithOtp('user@kbw.vc') }} />
+          <AuthConsumer action={async (ctx) => { result = await ctx.requestMagicLink('user@kbw.vc') }} />
         </AuthProvider>
       )
       await waitFor(() => expect(screen.getByTestId('loading').textContent).toBe('false'))
       await act(async () => { screen.getByTestId('action').click() })
       expect(result?.success).toBe(true)
-      expect(mockSupabase.auth.signInWithOtp).toHaveBeenCalledWith({
+      expect(fetchMock).toHaveBeenCalledTimes(1)
+      const [url, init] = fetchMock.mock.calls[0]
+      expect(url).toContain('/functions/v1/request-magic-link')
+      expect(init?.method).toBe('POST')
+      expect(JSON.parse(init?.body as string)).toMatchObject({
         email: 'user@kbw.vc',
-        options: {
-          emailRedirectTo: expect.stringContaining('/kbw-notes/home'),
-        },
+        redirectTo: expect.stringContaining('/kbw-notes/home'),
       })
     })
 
-    it('returns error from supabase', async () => {
-      mockSupabase.auth.signInWithOtp.mockResolvedValue({ data: null, error: new Error('Rate limit exceeded') })
+    it('returns failure when the edge function responds non-2xx', async () => {
+      fetchMock.mockResolvedValue({ ok: false, status: 500, json: async () => ({ error: 'oops' }) })
       let result: { success: boolean; error?: string } | undefined
       render(
         <AuthProvider>
-          <AuthConsumer action={async (ctx) => { result = await ctx.signInWithOtp('user@kbw.vc') }} />
+          <AuthConsumer action={async (ctx) => { result = await ctx.requestMagicLink('user@kbw.vc') }} />
         </AuthProvider>
       )
       await waitFor(() => expect(screen.getByTestId('loading').textContent).toBe('false'))
       await act(async () => { screen.getByTestId('action').click() })
       expect(result?.success).toBe(false)
-      expect(result?.error).toBe('Rate limit exceeded')
+      expect(result?.error).toBe('Sign-in service unavailable')
+    })
+
+    it('treats network failures as errors', async () => {
+      fetchMock.mockRejectedValue(new Error('network down'))
+      let result: { success: boolean; error?: string } | undefined
+      render(
+        <AuthProvider>
+          <AuthConsumer action={async (ctx) => { result = await ctx.requestMagicLink('user@kbw.vc') }} />
+        </AuthProvider>
+      )
+      await waitFor(() => expect(screen.getByTestId('loading').textContent).toBe('false'))
+      await act(async () => { screen.getByTestId('action').click() })
+      expect(result?.success).toBe(false)
+      expect(result?.error).toBe('network down')
     })
   })
 
-  // ── signOut ─────────────────────────────────────────────────────
   describe('signOut', () => {
     it('calls supabase.auth.signOut', async () => {
       mockSupabase.auth.signOut.mockResolvedValue({ error: null })
@@ -195,7 +217,6 @@ describe('AuthContext', () => {
     })
   })
 
-  // ── session init ────────────────────────────────────────────────
   describe('session initialization', () => {
     it('calls getSession on mount', async () => {
       render(<AuthProvider><div /></AuthProvider>)
