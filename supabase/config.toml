@@ -16,4 +16,10 @@ enable_confirmations = true
 verify_jwt = false
 
 [functions.auto-sign-in]
+# Legacy 410 Gone stub — must respond pre-auth
+verify_jwt = false
+
+[functions.request-magic-link]
+# Pre-auth sign-in endpoint. Function does its own rate-limit + domain +
+# invite-list gating; platform JWT check would block legitimate sign-ins.
 verify_jwt = false

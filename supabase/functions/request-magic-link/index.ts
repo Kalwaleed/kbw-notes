@@ -1,5 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.4'
-import { z } from 'https://deno.land/x/zod@v3.24.1/mod.ts'
+import { z } from 'https://esm.sh/zod@3.24.1'
 
 const SignInRequestSchema = z.object({
   email: z.string().email().max(254),
