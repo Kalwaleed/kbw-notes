@@ -75,7 +75,7 @@ export function SubmissionCard({ submission, onEdit, onView, onDelete }: Submiss
 
       <div className="flex items-start justify-between" style={{ gap: 8, marginBottom: 'var(--space-3)' }}>
         <StatusBadge status={submission.status} />
-        <div ref={menuRef} style={{ position: 'relative' }}>
+        <div ref={menuRef} style={{ position: 'relative', zIndex: 1 }}>
           <button
             type="button"
             onClick={() => setShowMenu(!showMenu)}

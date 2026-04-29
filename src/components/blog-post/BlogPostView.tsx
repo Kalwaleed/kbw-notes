@@ -42,12 +42,20 @@ function decorateAndExtractToc(sanitizedHtml: string): { html: string; toc: TocE
   if (!root) return { html: sanitizedHtml, toc: [] }
 
   const toc: TocEntry[] = []
+  const usedIds = new Set<string>()
   let h2Count = 0
   let h3Count = 0
 
   root.querySelectorAll('h2, h3').forEach((el) => {
     const text = el.textContent ?? ''
-    const id = slugify(text) || `section-${toc.length + 1}`
+    const baseId = slugify(text) || `section-${toc.length + 1}`
+    let id = baseId
+    let suffix = 2
+    while (usedIds.has(id)) {
+      id = `${baseId}-${suffix}`
+      suffix += 1
+    }
+    usedIds.add(id)
     el.setAttribute('id', id)
     const folio = doc.createElement('span')
     folio.className = 'folio'
