@@ -3,27 +3,47 @@ import { Heart, Bookmark, Share2, MessageCircle } from 'lucide-react'
 
 interface BlogPostCardProps {
   post: BlogPost
+  /** Lead card sits at the top of the asymmetric grid and uses raised paper
+   *  with a hairline border + larger title. */
+  variant?: 'default' | 'lead'
+  /** A folio number to print above the tags row. Falls back to a derived
+   *  short id from the post if not supplied. */
+  folio?: string
   onView?: () => void
   onLike?: () => void
   onBookmark?: () => void
   onShare?: () => void
 }
 
+/** Render the publish date in mono uppercase: "28 APR 2026". */
+function formatEditorialDate(iso: string): string {
+  const d = new Date(iso)
+  const day = String(d.getUTCDate()).padStart(2, '0')
+  const month = d.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' }).toUpperCase()
+  const year = d.getUTCFullYear()
+  return `${day} ${month} ${year}`
+}
+
+function deriveFolio(id: string): string {
+  // Last 3 hex chars of the id, decimal-leading-zero. Stable, deterministic.
+  const tail = id.replace(/[^0-9a-fA-F]/g, '').slice(-3) || '000'
+  const n = parseInt(tail, 16) % 1000
+  return `№ ${String(n).padStart(3, '0')}`
+}
+
 export function BlogPostCard({
   post,
+  variant = 'default',
+  folio,
   onView,
   onLike,
   onBookmark,
   onShare,
 }: BlogPostCardProps) {
-  // Format date
-  const formattedDate = new Date(post.publishedAt).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  })
+  const isLead = variant === 'lead'
+  const formattedDate = formatEditorialDate(post.publishedAt)
+  const folioLabel = folio ?? deriveFolio(post.id)
 
-  // Get author initials for avatar fallback
   const initials = post.author.name
     .split(' ')
     .map((n) => n[0])
@@ -33,139 +53,286 @@ export function BlogPostCard({
 
   return (
     <article
-      className="group relative bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-lg shadow-slate-200/50 dark:shadow-slate-950/50 hover:shadow-xl hover:shadow-violet-500/10 dark:hover:shadow-violet-500/5 transition-all duration-300 hover:-translate-y-1 overflow-hidden"
+      style={{
+        position: 'relative',
+        background: isLead ? 'var(--color-paper-raised)' : 'var(--color-paper)',
+        border: isLead ? '1px solid var(--color-hair)' : 'none',
+        borderTop: isLead ? '1px solid var(--color-hair)' : '1px solid var(--color-hair)',
+        padding: 'var(--space-6) var(--space-4)',
+      }}
     >
-      {/* Clickable card area */}
       <button
+        type="button"
         onClick={onView}
-        className="w-full text-left p-6 pb-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 rounded-t-2xl"
-        style={{ padding: 'var(--density-py, 1.5rem)' }}
+        aria-label={`View post: ${post.title}`}
+        className="w-full"
+        style={{
+          display: 'block',
+          width: '100%',
+          textAlign: 'left',
+          background: 'transparent',
+          border: 'none',
+          padding: 0,
+          cursor: 'pointer',
+        }}
       >
-        {/* Tags */}
-        <div className="flex flex-wrap gap-2 mb-4">
-          {post.tags.map((tag) => (
-            <span
-              key={tag}
-              className="px-2.5 py-0.5 text-xs font-medium bg-indigo-100 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 rounded-full"
-              style={{ fontFamily: 'var(--font-body)' }}
-            >
-              {tag}
-            </span>
-          ))}
+        {isLead && (
+          <div
+            aria-hidden="true"
+            style={{
+              aspectRatio: '16 / 9',
+              background: 'var(--color-paper-sunken)',
+              border: '1px solid var(--color-hair)',
+              marginBottom: 'var(--space-5)',
+            }}
+          />
+        )}
+
+        {/* Folio number */}
+        <div
+          className="font-mono uppercase"
+          style={{
+            fontSize: 'var(--text-mono-xs)',
+            color: 'var(--color-ink-soft)',
+            letterSpacing: '0.08em',
+            marginBottom: 'var(--space-2)',
+          }}
+        >
+          {folioLabel}
         </div>
+
+        {/* Tags */}
+        {post.tags.length > 0 && (
+          <div className="flex flex-wrap" style={{ gap: 'var(--space-2)', marginBottom: 'var(--space-3)' }}>
+            {post.tags.map((tag) => (
+              <span
+                key={tag}
+                className="font-mono uppercase"
+                style={{
+                  fontSize: 'var(--text-mono-xs)',
+                  color: 'var(--color-ink-muted)',
+                  letterSpacing: '0.04em',
+                  padding: '2px 8px',
+                  border: '1px solid var(--color-hair)',
+                  borderRadius: 2,
+                }}
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
 
         {/* Title */}
         <h2
-          className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-3 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors leading-tight"
-          style={{ fontFamily: 'var(--font-heading)' }}
+          style={{
+            fontFamily: 'var(--font-serif)',
+            fontWeight: 600,
+            fontSize: isLead ? 'var(--text-card-title-lg)' : 'var(--text-card-title)',
+            lineHeight: isLead ? 1.2 : 1.25,
+            letterSpacing: isLead ? '-0.015em' : '-0.01em',
+            color: 'var(--color-ink)',
+            margin: 0,
+            marginBottom: 'var(--space-3)',
+            transition: 'color 100ms ease',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-accent)' }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-ink)' }}
         >
           {post.title}
         </h2>
 
         {/* Excerpt */}
         <p
-          className="text-slate-600 dark:text-slate-400 leading-relaxed mb-4 line-clamp-2"
-          style={{ fontFamily: 'var(--font-body)' }}
+          style={{
+            fontFamily: 'var(--font-sans)',
+            fontSize: 'var(--text-ui-base)',
+            lineHeight: 1.55,
+            color: 'var(--color-ink-muted)',
+            margin: 0,
+            marginBottom: 'var(--space-4)',
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+          }}
         >
           {post.excerpt}
         </p>
 
-        {/* Author and Date */}
-        <div className="flex items-center gap-3">
+        {/* Byline row */}
+        <div className="flex items-center" style={{ gap: 'var(--space-2)' }}>
           {post.author.avatarUrl ? (
             <img
               src={post.author.avatarUrl}
               alt={post.author.name}
-              className="w-8 h-8 rounded-full object-cover ring-2 ring-slate-100 dark:ring-slate-800"
+              style={{
+                width: 24,
+                height: 24,
+                borderRadius: '50%',
+                objectFit: 'cover',
+                border: '1px solid var(--color-hair)',
+              }}
             />
           ) : (
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white text-xs font-medium ring-2 ring-slate-100 dark:ring-slate-800">
+            <div
+              style={{
+                width: 24,
+                height: 24,
+                borderRadius: '50%',
+                background: 'var(--color-accent-tint)',
+                color: 'var(--color-ink)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontFamily: 'var(--font-sans)',
+                fontSize: 11,
+                fontWeight: 500,
+                border: '1px solid var(--color-hair)',
+              }}
+            >
               {initials}
             </div>
           )}
-          <div className="flex-1 min-w-0">
-            <p
-              className="text-sm font-medium text-slate-900 dark:text-white truncate"
-              style={{ fontFamily: 'var(--font-body)' }}
-            >
-              {post.author.name}
-            </p>
-            <p
-              className="text-xs text-slate-500 dark:text-slate-500"
-              style={{ fontFamily: 'var(--font-body)' }}
-            >
-              {formattedDate}
-            </p>
-          </div>
+          <span
+            style={{
+              fontFamily: 'var(--font-sans)',
+              fontSize: 'var(--text-ui-sm)',
+              fontWeight: 500,
+              color: 'var(--color-ink)',
+            }}
+          >
+            {post.author.name}
+          </span>
+          <span style={{ color: 'var(--color-ink-soft)', fontFamily: 'var(--font-mono)', fontSize: 'var(--text-mono-sm)' }}>·</span>
+          <span
+            className="font-mono uppercase"
+            style={{
+              fontSize: 'var(--text-mono-sm)',
+              color: 'var(--color-ink-soft)',
+              letterSpacing: '0.02em',
+            }}
+          >
+            {formattedDate}
+          </span>
         </div>
       </button>
 
-      {/* Action Bar */}
-      <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-        {/* Stats */}
-        <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-500">
-          <span className="flex items-center gap-1.5">
-            <Heart className="w-4 h-4" />
-            <span style={{ fontFamily: 'var(--font-body)' }}>
-              {post.likeCount}
-            </span>
+      {/* Action bar */}
+      <div
+        className="flex items-center justify-between"
+        style={{
+          marginTop: 'var(--space-5)',
+          paddingTop: 'var(--space-3)',
+          borderTop: '1px solid var(--color-hair)',
+        }}
+      >
+        <div className="flex items-center" style={{ gap: 'var(--space-4)' }}>
+          <span
+            className="flex items-center"
+            style={{
+              gap: 6,
+              fontFamily: 'var(--font-mono)',
+              fontSize: 'var(--text-mono-sm)',
+              color: post.isLiked ? 'var(--color-rose)' : 'var(--color-ink-muted)',
+              fontWeight: post.isLiked ? 600 : 500,
+            }}
+          >
+            <Heart size={14} strokeWidth={1.5} fill={post.isLiked ? 'currentColor' : 'none'} />
+            {post.likeCount}
           </span>
-          <span className="flex items-center gap-1.5">
-            <MessageCircle className="w-4 h-4" />
-            <span style={{ fontFamily: 'var(--font-body)' }}>
-              {post.commentCount}
-            </span>
+          <span
+            className="flex items-center"
+            style={{
+              gap: 6,
+              fontFamily: 'var(--font-mono)',
+              fontSize: 'var(--text-mono-sm)',
+              color: 'var(--color-ink-muted)',
+            }}
+          >
+            <MessageCircle size={14} strokeWidth={1.5} />
+            {post.commentCount}
           </span>
         </div>
 
-        {/* Quick Actions */}
-        <div className="flex items-center gap-1">
-          <button
+        <div className="flex items-center" style={{ gap: 4 }}>
+          <IconButton
+            label={post.isLiked ? 'Unlike' : 'Like'}
+            active={post.isLiked}
             onClick={(e) => {
               e.stopPropagation()
               onLike?.()
             }}
-            className={`p-2 rounded-full transition-all duration-200 ${
-              post.isLiked
-                ? 'text-violet-600 bg-violet-50 dark:bg-violet-950/30 dark:text-violet-400'
-                : 'text-slate-400 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-950/30 dark:hover:text-violet-400'
-            }`}
-            aria-label={post.isLiked ? 'Unlike' : 'Like'}
           >
-            <Heart
-              className="w-5 h-5"
-              fill={post.isLiked ? 'currentColor' : 'none'}
-            />
-          </button>
-          <button
+            <Heart size={16} strokeWidth={1.5} fill={post.isLiked ? 'currentColor' : 'none'} />
+          </IconButton>
+          <IconButton
+            label={post.isBookmarked ? 'Remove bookmark' : 'Bookmark'}
+            active={post.isBookmarked}
             onClick={(e) => {
               e.stopPropagation()
               onBookmark?.()
             }}
-            className={`p-2 rounded-full transition-all duration-200 ${
-              post.isBookmarked
-                ? 'text-violet-500 bg-violet-50 dark:bg-violet-950/30'
-                : 'text-slate-400 hover:text-violet-500 hover:bg-violet-50 dark:hover:bg-violet-950/30'
-            }`}
-            aria-label={post.isBookmarked ? 'Remove bookmark' : 'Bookmark'}
           >
-            <Bookmark
-              className="w-5 h-5"
-              fill={post.isBookmarked ? 'currentColor' : 'none'}
-            />
-          </button>
-          <button
+            <Bookmark size={16} strokeWidth={1.5} fill={post.isBookmarked ? 'currentColor' : 'none'} />
+          </IconButton>
+          <IconButton
+            label="Share"
             onClick={(e) => {
               e.stopPropagation()
               onShare?.()
             }}
-            className="p-2 rounded-full text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 transition-all duration-200"
-            aria-label="Share"
           >
-            <Share2 className="w-5 h-5" />
-          </button>
+            <Share2 size={16} strokeWidth={1.5} />
+          </IconButton>
         </div>
       </div>
     </article>
+  )
+}
+
+function IconButton({
+  label,
+  active,
+  onClick,
+  children,
+}: {
+  label: string
+  active?: boolean
+  onClick: (e: React.MouseEvent) => void
+  children: React.ReactNode
+}) {
+  const color = active
+    ? (label === 'Unlike' ? 'var(--color-rose)' : 'var(--color-accent)')
+    : 'var(--color-ink-muted)'
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      style={{
+        width: 32,
+        height: 32,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'transparent',
+        color,
+        border: 'none',
+        borderRadius: 2,
+        cursor: 'pointer',
+        transition: 'background-color 100ms ease, color 100ms ease',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = 'var(--color-accent-tint)'
+        if (!active) e.currentTarget.style.color = 'var(--color-ink)'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = 'transparent'
+        if (!active) e.currentTarget.style.color = 'var(--color-ink-muted)'
+      }}
+    >
+      {children}
+    </button>
   )
 }

@@ -56,9 +56,9 @@ describe('BlogFeed', () => {
       expect(screen.getByText('No posts yet')).toBeInTheDocument()
     })
 
-    it('shows "Check back soon for new content." message when empty', () => {
+    it('shows the editorial subline when empty', () => {
       render(<BlogFeed blogPosts={[]} />)
-      expect(screen.getByText('Check back soon for new content.')).toBeInTheDocument()
+      expect(screen.getByText('Check back soon for new editions.')).toBeInTheDocument()
     })
 
     it('does not show empty state when posts exist', () => {
@@ -70,12 +70,12 @@ describe('BlogFeed', () => {
   describe('Loading state', () => {
     it('shows loading indicator when isLoading is true', () => {
       render(<BlogFeed blogPosts={mockBlogPosts} isLoading={true} />)
-      expect(screen.getByText('Loading more posts...')).toBeInTheDocument()
+      expect(screen.getByText(/loading more posts/i)).toBeInTheDocument()
     })
 
     it('does not show loading indicator when isLoading is false', () => {
       render(<BlogFeed blogPosts={mockBlogPosts} isLoading={false} />)
-      expect(screen.queryByText('Loading more posts...')).not.toBeInTheDocument()
+      expect(screen.queryByText(/loading more posts/i)).not.toBeInTheDocument()
     })
 
     it('does not show empty state when loading with no posts', () => {
@@ -85,19 +85,19 @@ describe('BlogFeed', () => {
   })
 
   describe('End of feed', () => {
-    it('shows "You\'ve reached the end" when hasMore is false and posts exist', () => {
+    it('shows the editorial end-of-feed marker when hasMore is false and posts exist', () => {
       render(<BlogFeed blogPosts={mockBlogPosts} hasMore={false} />)
-      expect(screen.getByText("You've reached the end")).toBeInTheDocument()
+      expect(screen.getByText(/end of feed/i)).toBeInTheDocument()
     })
 
     it('does not show end message when hasMore is true', () => {
       render(<BlogFeed blogPosts={mockBlogPosts} hasMore={true} />)
-      expect(screen.queryByText("You've reached the end")).not.toBeInTheDocument()
+      expect(screen.queryByText(/end of feed/i)).not.toBeInTheDocument()
     })
 
     it('does not show end message when no posts exist', () => {
       render(<BlogFeed blogPosts={[]} hasMore={false} />)
-      expect(screen.queryByText("You've reached the end")).not.toBeInTheDocument()
+      expect(screen.queryByText(/end of feed/i)).not.toBeInTheDocument()
     })
   })
 
@@ -107,11 +107,8 @@ describe('BlogFeed', () => {
       const onViewPost = vi.fn()
       render(<BlogFeed blogPosts={mockBlogPosts} onViewPost={onViewPost} />)
 
-      // Click the first card's button area (the title is inside a button)
-      const buttons = screen.getAllByRole('button', { name: undefined })
-      // The first wide button in each card is the view button
-      const cardButtons = buttons.filter((btn) => btn.classList.contains('w-full'))
-      await user.click(cardButtons[0])
+      const cardButton = screen.getByRole('button', { name: /view post: building a real-time/i })
+      await user.click(cardButton)
 
       expect(onViewPost).toHaveBeenCalledWith('post-001')
     })
