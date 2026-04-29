@@ -249,7 +249,7 @@ export function SubmissionDetailPage() {
                 }}
               >
                 {editsRemaining === 0
-                  ? '⚠ Edit cap reached — contact an admin'
+                  ? '⟁ Edit cap reached — contact an admin'
                   : `${editsRemaining} edit${editsRemaining === 1 ? '' : 's'} remaining`}
               </p>
             )}
