@@ -1,19 +1,88 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useMemo, useState } from 'react'
 import DOMPurify from 'dompurify'
+import { Twitter, Linkedin, Link2, MessageCircle } from 'lucide-react'
 import type { BlogPostCommentsProps, Comment } from './types'
 import { CommentThread } from './CommentThread'
 import { CommentForm } from './CommentForm'
 import { BlogPostSkeleton, CommentSkeleton } from './BlogPostSkeleton'
-import { Twitter, Linkedin, Link2, Clock, MessageCircle, ChevronDown, ArrowLeft } from 'lucide-react'
 
-function formatDate(dateString: string): string {
-  const date = new Date(dateString)
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
+/** "28 APR 2026" — mono uppercase editorial date */
+function formatEditorialDate(iso: string): string {
+  const d = new Date(iso)
+  const day = String(d.getUTCDate()).padStart(2, '0')
+  const month = d.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' }).toUpperCase()
+  const year = d.getUTCFullYear()
+  return `${day} ${month} ${year}`
+}
+
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+}
+
+interface TocEntry { id: string; text: string; level: 2 | 3 }
+
+/**
+ * Walks DOMPurify-sanitized HTML, assigns ids to H2/H3, prepends a folio
+ * span, and returns both the decorated HTML and a TOC entry list.
+ *
+ * Security: the input is already DOMPurify-sanitized; this pass only adds
+ * `id` attributes and a leading `<span class="folio">` to existing
+ * heading nodes — it does not introduce executable content.
+ */
+function decorateAndExtractToc(sanitizedHtml: string): { html: string; toc: TocEntry[] } {
+  if (typeof window === 'undefined') return { html: sanitizedHtml, toc: [] }
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(`<root>${sanitizedHtml}</root>`, 'text/html')
+  const root = doc.querySelector('root')
+  if (!root) return { html: sanitizedHtml, toc: [] }
+
+  const toc: TocEntry[] = []
+  let h2Count = 0
+  let h3Count = 0
+
+  root.querySelectorAll('h2, h3').forEach((el) => {
+    const text = el.textContent ?? ''
+    const id = slugify(text) || `section-${toc.length + 1}`
+    el.setAttribute('id', id)
+    const folio = doc.createElement('span')
+    folio.className = 'folio'
+    folio.setAttribute('aria-hidden', 'true')
+    if (el.tagName === 'H2') {
+      h2Count += 1
+      h3Count = 0
+      folio.textContent = `§ ${String(h2Count).padStart(2, '0')}`
+      el.insertBefore(folio, el.firstChild)
+      toc.push({ id, text, level: 2 })
+    } else {
+      h3Count += 1
+      folio.textContent = `§ ${String(h2Count).padStart(2, '0')}.${String(h3Count).padStart(2, '0')}`
+      el.insertBefore(folio, el.firstChild)
+      toc.push({ id, text, level: 3 })
+    }
   })
+
+  return { html: root.innerHTML, toc }
+}
+
+/**
+ * Renders pre-sanitized article HTML. Sanitization happens upstream via
+ * DOMPurify; this component requires its caller to pass a string already
+ * cleaned. Kept tiny so the security review stays narrow.
+ */
+function ArticleProse({ html }: { html: string }) {
+  return (
+    <article
+      className="prose-article kbw-prose-section"
+      // Input is sanitized by DOMPurify in the parent before reaching here.
+      // eslint-disable-next-line react/no-danger
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  )
 }
 
 export function BlogPostView({
@@ -35,193 +104,355 @@ export function BlogPostView({
   onReport,
   onLoadMore,
 }: BlogPostCommentsProps) {
-  const navigate = useNavigate()
   const [isLoadingMore, setIsLoadingMore] = useState(false)
 
-  // Filter comments: show approved OR show to author if pending review
   const filterVisibleComments = (commentsList: Comment[]): Comment[] => {
     return commentsList
-      .filter(comment => comment.isModerated || comment.commenter.id === currentUserId)
-      .map(comment => ({
-        ...comment,
-        replies: filterVisibleComments(comment.replies || [])
-      }))
+      .filter((c) => c.isModerated || c.commenter.id === currentUserId)
+      .map((c) => ({ ...c, replies: filterVisibleComments(c.replies || []) }))
   }
-
   const visibleComments = filterVisibleComments(comments)
-
   const totalComments = visibleComments.reduce((acc, comment) => {
-    const countReplies = (c: Comment): number => {
-      return 1 + (c.replies?.reduce((sum, r) => sum + countReplies(r), 0) || 0)
-    }
+    const countReplies = (c: Comment): number =>
+      1 + (c.replies?.reduce((sum, r) => sum + countReplies(r), 0) || 0)
     return acc + countReplies(comment)
   }, 0)
 
+  const { html: decoratedHtml, toc } = useMemo(() => {
+    const sanitized = DOMPurify.sanitize(blogPost.content ?? '', { ADD_ATTR: ['id'] })
+    return decorateAndExtractToc(sanitized)
+  }, [blogPost.content])
+
   const handleLoadMore = async () => {
     setIsLoadingMore(true)
-    try {
-      await onLoadMore?.()
-    } finally {
-      setIsLoadingMore(false)
-    }
+    try { await onLoadMore?.() } finally { setIsLoadingMore(false) }
   }
 
-  // Show skeleton while loading
-  if (isLoading) {
-    return <BlogPostSkeleton />
-  }
+  if (isLoading) return <BlogPostSkeleton />
 
-  const handleBack = () => {
-    navigate(-1) // Go back to previous page
-  }
+  const formattedDate = formatEditorialDate(blogPost.publishedAt)
+  const initials = blogPost.author.name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
+  const kicker = blogPost.tags[0]?.toUpperCase() ?? 'ESSAY'
 
   return (
-    <div className="min-h-screen bg-slate-300 dark:bg-slate-900 py-8 sm:py-12 md:py-16 px-4 sm:px-6 relative">
-      {/* Back button - fixed at top right */}
-      <div className="fixed top-4 right-4 sm:top-6 sm:right-6 z-50">
-        <button
-          onClick={handleBack}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 shadow-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700"
-          title="Go back"
-          aria-label="Go back"
-        >
-          <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
-          <span className="hidden sm:inline text-sm font-medium">Back</span>
-        </button>
-      </div>
-      {/* Elevated article card */}
-      <article className="max-w-3xl mx-auto bg-white dark:bg-slate-800 rounded-2xl shadow-xl shadow-slate-400/30 dark:shadow-slate-950/50 overflow-hidden">
-        {/* Decorative top gradient bar */}
-        <div className="h-1.5 bg-gradient-to-r from-violet-500 via-indigo-500 to-violet-600" />
+    <div className="kbw-article-grid" style={{ position: 'relative' }}>
+      <style>{`
+        .kbw-article-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: var(--space-8);
+        }
+        @media (min-width: 1024px) {
+          .kbw-article-grid {
+            grid-template-columns: 1fr var(--container-prose) 1fr;
+          }
+        }
+        .kbw-article-toc, .kbw-article-meta {
+          display: none;
+        }
+        @media (min-width: 1024px) {
+          .kbw-article-toc, .kbw-article-meta {
+            display: block;
+            position: sticky;
+            top: 96px;
+            align-self: start;
+            max-height: calc(100vh - 96px);
+            overflow-y: auto;
+          }
+        }
+        .kbw-toc-link {
+          display: block;
+          font-family: var(--font-mono);
+          font-size: var(--text-mono-sm);
+          color: var(--color-ink-muted);
+          padding: 4px 0;
+          text-decoration: none;
+          letter-spacing: 0.02em;
+          line-height: 1.4;
+          transition: color 100ms ease;
+        }
+        .kbw-toc-link:hover { color: var(--color-ink); }
+        .kbw-article-main { min-width: 0; }
+        .kbw-prose-section h2, .kbw-prose-section h3 { scroll-margin-top: 80px; }
+      `}</style>
 
-        <div className="p-8 sm:p-12 md:p-16 lg:p-20">
-          {/* Tags */}
-          <div className="flex flex-wrap gap-2 mb-4 sm:mb-6">
-            {blogPost.tags.map((tag) => (
+      <aside className="kbw-article-toc" aria-label="Table of contents">
+        <div
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: 'var(--text-mono-xs)',
+            fontWeight: 600,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            color: 'var(--color-ink-soft)',
+            paddingBottom: 'var(--space-3)',
+            borderBottom: '1px solid var(--color-hair)',
+            marginBottom: 'var(--space-3)',
+          }}
+        >
+          Contents
+        </div>
+        {toc.length === 0 ? (
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-mono-xs)', color: 'var(--color-ink-soft)' }}>
+            ──
+          </div>
+        ) : (
+          toc.map((entry) => (
+            <a
+              key={entry.id}
+              href={`#${entry.id}`}
+              className="kbw-toc-link"
+              style={{ paddingLeft: entry.level === 3 ? 16 : 0 }}
+            >
+              {entry.text}
+            </a>
+          ))
+        )}
+      </aside>
+
+      <div className="kbw-article-main">
+        {toc.length > 0 && (
+          <details
+            style={{
+              border: '1px solid var(--color-hair)',
+              padding: 'var(--space-3) var(--space-4)',
+              marginBottom: 'var(--space-7)',
+            }}
+            className="lg:hidden"
+          >
+            <summary
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: 'var(--text-mono-sm)',
+                fontWeight: 600,
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase',
+                color: 'var(--color-ink-muted)',
+                cursor: 'pointer',
+              }}
+            >
+              Contents · {toc.length}
+            </summary>
+            <div style={{ marginTop: 'var(--space-3)' }}>
+              {toc.map((entry) => (
+                <a
+                  key={entry.id}
+                  href={`#${entry.id}`}
+                  className="kbw-toc-link"
+                  style={{ paddingLeft: entry.level === 3 ? 16 : 0 }}
+                >
+                  {entry.text}
+                </a>
+              ))}
+            </div>
+          </details>
+        )}
+
+        <div
+          className="font-mono uppercase"
+          style={{
+            fontSize: 'var(--text-h1-meta)',
+            fontWeight: 600,
+            letterSpacing: '0.05em',
+            color: 'var(--color-accent)',
+            marginBottom: 'var(--space-4)',
+          }}
+        >
+          {kicker}
+        </div>
+
+        {blogPost.tags.length > 1 && (
+          <div className="flex flex-wrap" style={{ gap: 8, marginBottom: 'var(--space-4)' }}>
+            {blogPost.tags.slice(1).map((tag) => (
               <span
                 key={tag}
-                className="px-2.5 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium bg-indigo-100 dark:bg-violet-950 text-indigo-700 dark:text-violet-600"
+                className="font-mono uppercase"
+                style={{
+                  fontSize: 'var(--text-mono-xs)',
+                  color: 'var(--color-ink-muted)',
+                  letterSpacing: '0.04em',
+                  padding: '2px 8px',
+                  border: '1px solid var(--color-hair)',
+                  borderRadius: 2,
+                }}
               >
                 {tag}
               </span>
             ))}
           </div>
+        )}
 
-          {/* Headline */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'minmax(0, 2.4fr) minmax(0, 1fr)',
+            gap: 'var(--space-7)',
+            alignItems: 'baseline',
+            marginBottom: 'var(--space-9)',
+          }}
+        >
           <h1
-            className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 dark:text-white leading-tight"
-            style={{ fontFamily: 'var(--font-heading)' }}
+            style={{
+              fontFamily: 'var(--font-serif)',
+              fontWeight: 700,
+              fontSize: 'var(--text-h1)',
+              lineHeight: 1.05,
+              letterSpacing: '-0.03em',
+              color: 'var(--color-ink)',
+              margin: 0,
+            }}
           >
             {blogPost.title}
           </h1>
-
-          {/* Subheader */}
-          <p className="mt-3 sm:mt-4 text-lg sm:text-xl text-slate-600 dark:text-white leading-relaxed">
-            {blogPost.excerpt}
-          </p>
-
-          {/* Author and meta info */}
-          <div className="mt-8 sm:mt-10 pb-6 sm:pb-8 border-b border-slate-200 dark:border-slate-700">
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-              <span className="font-medium text-slate-700 dark:text-slate-300">
+          <div style={{ alignSelf: 'end' }}>
+            <div className="flex items-center" style={{ gap: 8, marginBottom: 8 }}>
+              {blogPost.author.avatarUrl ? (
+                <img
+                  src={blogPost.author.avatarUrl}
+                  alt={blogPost.author.name}
+                  style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--color-hair)' }}
+                />
+              ) : (
+                <div
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: '50%',
+                    background: 'var(--color-accent-tint)',
+                    color: 'var(--color-ink)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontFamily: 'var(--font-sans)',
+                    fontSize: 'var(--text-ui-sm)',
+                    fontWeight: 500,
+                    border: '1px solid var(--color-hair)',
+                  }}
+                >
+                  {initials}
+                </div>
+              )}
+              <span
+                style={{
+                  fontFamily: 'var(--font-sans)',
+                  fontSize: 'var(--text-ui-base)',
+                  fontWeight: 500,
+                  color: 'var(--color-ink)',
+                }}
+              >
                 {blogPost.author.name}
               </span>
-              <span className="text-slate-300 dark:text-slate-600">•</span>
-              <span>{formatDate(blogPost.publishedAt)}</span>
-              <span className="text-slate-300 dark:text-slate-600">•</span>
-              <span className="flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5" strokeWidth={1.5} />
-                {blogPost.readingTime} min read
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <span
+                className="font-mono uppercase"
+                style={{
+                  fontSize: 'var(--text-mono-sm)',
+                  color: 'var(--color-ink-soft)',
+                  letterSpacing: '0.02em',
+                }}
+              >
+                {formattedDate}
               </span>
-            </div>
-
-            {/* Share buttons */}
-            <div className="flex items-center gap-1 mt-4">
-              <button
-                onClick={onShareTwitter}
-                className="p-2 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                title="Share on Twitter/X"
-                aria-label="Share on Twitter/X"
-              >
-                <Twitter className="w-4 h-4" strokeWidth={1.5} />
-              </button>
-              <button
-                onClick={onShareLinkedIn}
-                className="p-2 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                title="Share on LinkedIn"
-                aria-label="Share on LinkedIn"
-              >
-                <Linkedin className="w-4 h-4" strokeWidth={1.5} />
-              </button>
-              <button
-                onClick={onCopyLink}
-                className="p-2 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                title="Copy link"
-                aria-label="Copy link to clipboard"
-              >
-                <Link2 className="w-4 h-4" strokeWidth={1.5} />
-              </button>
-            </div>
-          </div>
-
-          {/* Article body — DOMPurify-sanitized HTML from TipTap editor */}
-          <div
-            className="mt-6 sm:mt-8 tiptap prose prose-slate dark:prose-invert max-w-none"
-            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(blogPost.content ?? '') }}
-          />
-
-          {/* Share CTA at bottom */}
-          <div className="mt-10 sm:mt-12 p-4 sm:p-6 rounded-xl bg-gradient-to-r from-violet-50 to-indigo-50 dark:from-violet-900/20 dark:to-indigo-900/20 border border-violet-100 dark:border-violet-800/50">
-            <p className="text-slate-700 dark:text-slate-300 text-sm sm:text-base font-medium mb-3">
-              Enjoyed this article? Share it with your network.
-            </p>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={onShareTwitter}
-                className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-xs sm:text-sm font-medium hover:bg-slate-800 dark:hover:bg-slate-200 transition-colors"
-              >
-                <Twitter className="w-4 h-4" strokeWidth={1.5} />
-                <span className="hidden sm:inline">Twitter</span>
-              </button>
-              <button
-                onClick={onShareLinkedIn}
-                className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-xs sm:text-sm font-medium hover:bg-slate-800 dark:hover:bg-slate-200 transition-colors"
-              >
-                <Linkedin className="w-4 h-4" strokeWidth={1.5} />
-                <span className="hidden sm:inline">LinkedIn</span>
-              </button>
-              <button
-                onClick={onCopyLink}
-                className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs sm:text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-              >
-                <Link2 className="w-4 h-4" strokeWidth={1.5} />
-                <span className="hidden sm:inline">Copy Link</span>
-              </button>
+              {typeof blogPost.readingTime === 'number' && (
+                <span
+                  className="font-mono uppercase"
+                  style={{
+                    fontSize: 'var(--text-mono-sm)',
+                    color: 'var(--color-ink-soft)',
+                    letterSpacing: '0.02em',
+                  }}
+                >
+                  {blogPost.readingTime} MIN READ
+                </span>
+              )}
             </div>
           </div>
         </div>
-      </article>
 
-      {/* Comments section */}
-      <section className="max-w-3xl mx-auto mt-8 sm:mt-10 bg-white dark:bg-slate-800 rounded-2xl shadow-xl shadow-slate-400/30 dark:shadow-slate-950/50 overflow-hidden">
-        <div className="p-8 sm:p-12 md:p-16 lg:p-20">
-          <div className="flex items-center gap-3 mb-6 sm:mb-8">
-            <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6 text-violet-600 dark:text-violet-400" strokeWidth={1.5} />
+        {blogPost.excerpt && (
+          <p
+            style={{
+              fontFamily: 'var(--font-serif)',
+              fontStyle: 'italic',
+              fontSize: 22,
+              lineHeight: 1.4,
+              color: 'var(--color-ink-muted)',
+              margin: 0,
+              marginBottom: 'var(--space-8)',
+              maxWidth: '60ch',
+            }}
+          >
+            {blogPost.excerpt}
+          </p>
+        )}
+
+        <ArticleProse html={decoratedHtml} />
+
+        <hr className="ascii" aria-hidden="true" />
+
+        <div
+          style={{
+            background: 'var(--color-accent-tint)',
+            borderTop: '2px solid var(--color-accent)',
+            padding: 'var(--space-7)',
+            marginTop: 'var(--space-8)',
+          }}
+        >
+          <div
+            className="font-mono uppercase"
+            style={{
+              fontSize: 'var(--text-mono-base)',
+              fontWeight: 600,
+              letterSpacing: '0.06em',
+              color: 'var(--color-ink)',
+              marginBottom: 'var(--space-3)',
+            }}
+          >
+            Share this post
+          </div>
+          <p
+            style={{
+              fontFamily: 'var(--font-sans)',
+              fontSize: 'var(--text-ui-base)',
+              color: 'var(--color-ink-muted)',
+              margin: 0,
+              marginBottom: 'var(--space-4)',
+            }}
+          >
+            If this was worth reading, send it to one person who would also read it.
+          </p>
+          <div className="flex items-center" style={{ gap: 8 }}>
+            <ShareIconButton onClick={onShareTwitter} label="Share on X" Icon={Twitter} text="X" />
+            <ShareIconButton onClick={onShareLinkedIn} label="Share on LinkedIn" Icon={Linkedin} text="IN" />
+            <ShareIconButton onClick={onCopyLink} label="Copy link to clipboard" Icon={Link2} text="URL" />
+          </div>
+        </div>
+
+        <section style={{ marginTop: 'var(--space-9)' }}>
+          <div
+            className="flex items-center"
+            style={{ gap: 'var(--space-2)', marginBottom: 'var(--space-6)' }}
+          >
+            <MessageCircle size={16} strokeWidth={1.5} style={{ color: 'var(--color-ink)' }} aria-hidden="true" />
             <h2
-              className="text-lg sm:text-xl font-semibold text-slate-900 dark:text-white"
-              style={{ fontFamily: 'var(--font-heading)' }}
+              className="font-mono uppercase"
+              style={{
+                fontSize: 'var(--text-mono-base)',
+                fontWeight: 600,
+                letterSpacing: '0.04em',
+                color: 'var(--color-ink)',
+                margin: 0,
+              }}
+              aria-live="polite"
             >
-              Discussion
-              <span className="ml-2 text-slate-400 dark:text-slate-500 font-normal text-base">
-                ({totalComments})
-              </span>
+              Discussion ({totalComments})
             </h2>
           </div>
 
-          {/* Comment form for new top-level comments */}
-          <div className="mb-6 sm:mb-8">
+          <div style={{ marginBottom: 'var(--space-7)' }}>
             <CommentForm
-              placeholder="Share your thoughts..."
+              placeholder="Share your thoughts."
               onSubmit={onAddComment}
               moderationError={moderationError}
               onClearModerationError={onClearModerationError}
@@ -229,14 +460,21 @@ export function BlogPostView({
           </div>
 
           {visibleComments.length === 0 ? (
-            <div className="text-center py-8 sm:py-12">
-              <p className="text-slate-500 dark:text-slate-400">
-                No comments yet. Be the first to share your thoughts.
+            <div style={{ padding: 'var(--space-7) 0', textAlign: 'center' }}>
+              <p
+                style={{
+                  fontFamily: 'var(--font-sans)',
+                  fontStyle: 'italic',
+                  color: 'var(--color-ink-muted)',
+                  margin: 0,
+                }}
+              >
+                No comments yet — be the first.
               </p>
             </div>
           ) : (
             <>
-              <div className="divide-y divide-slate-100 dark:divide-slate-700/50">
+              <div>
                 {visibleComments.map((comment) => (
                   <CommentThread
                     key={comment.id}
@@ -252,40 +490,133 @@ export function BlogPostView({
                 ))}
               </div>
 
-              {/* Load more button */}
               {hasMoreComments && (
-                <div className="mt-6 text-center">
-                  <button
-                    onClick={handleLoadMore}
-                    disabled={isLoadingMore}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    {isLoadingMore ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
-                        Loading...
-                      </>
-                    ) : (
-                      <>
-                        <ChevronDown className="w-4 h-4" strokeWidth={1.5} />
-                        Load more comments
-                      </>
-                    )}
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={handleLoadMore}
+                  disabled={isLoadingMore}
+                  style={{
+                    width: '100%',
+                    height: 44,
+                    background: 'transparent',
+                    border: '1px solid var(--color-hair)',
+                    borderRadius: 2,
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: 'var(--text-mono-sm)',
+                    fontWeight: 600,
+                    letterSpacing: '0.04em',
+                    textTransform: 'uppercase',
+                    color: 'var(--color-ink-muted)',
+                    marginTop: 'var(--space-5)',
+                    cursor: isLoadingMore ? 'not-allowed' : 'pointer',
+                    opacity: isLoadingMore ? 0.4 : 1,
+                  }}
+                >
+                  {isLoadingMore ? 'Loading…' : 'Load more comments'}
+                </button>
               )}
-
-              {/* Loading skeleton for more comments */}
               {isLoadingMore && (
-                <div className="mt-4 space-y-4">
+                <div style={{ marginTop: 'var(--space-4)' }}>
                   <CommentSkeleton />
                   <CommentSkeleton />
                 </div>
               )}
             </>
           )}
-        </div>
-      </section>
+        </section>
+      </div>
+
+      <aside className="kbw-article-meta" aria-label="Article metadata">
+        {typeof blogPost.readingTime === 'number' && (
+          <MetaCard label="Reading time" value={`${blogPost.readingTime} MIN`} />
+        )}
+        <MetaCard
+          label="Share"
+          value={
+            <div className="flex" style={{ gap: 6, marginTop: 6 }}>
+              <ShareIconButton onClick={onShareTwitter} label="Share on X" Icon={Twitter} text="X" />
+              <ShareIconButton onClick={onShareLinkedIn} label="Share on LinkedIn" Icon={Linkedin} text="IN" />
+              <ShareIconButton onClick={onCopyLink} label="Copy link to clipboard" Icon={Link2} text="URL" />
+            </div>
+          }
+        />
+      </aside>
     </div>
+  )
+}
+
+function MetaCard({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div style={{ borderTop: '1px solid var(--color-hair)', padding: 'var(--space-3) 0' }}>
+      <div
+        className="font-mono uppercase"
+        style={{
+          fontSize: 'var(--text-mono-xs)',
+          letterSpacing: '0.08em',
+          color: 'var(--color-ink-soft)',
+          marginBottom: 4,
+        }}
+      >
+        {label}
+      </div>
+      <div
+        style={{
+          fontFamily: typeof value === 'string' ? 'var(--font-mono)' : 'inherit',
+          fontSize: 'var(--text-mono-base)',
+          color: 'var(--color-ink)',
+          letterSpacing: typeof value === 'string' ? '0.02em' : 0,
+        }}
+      >
+        {value}
+      </div>
+    </div>
+  )
+}
+
+function ShareIconButton({
+  onClick,
+  label,
+  Icon,
+  text,
+}: {
+  onClick?: () => void
+  label: string
+  Icon: React.ComponentType<{ size?: number; strokeWidth?: number }>
+  text: string
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 6,
+        height: 32,
+        padding: '0 10px',
+        background: 'transparent',
+        border: '1px solid var(--color-hair)',
+        borderRadius: 2,
+        color: 'var(--color-ink)',
+        cursor: 'pointer',
+        transition: 'background-color 100ms ease',
+      }}
+      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-accent-tint)' }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+    >
+      <Icon size={14} strokeWidth={1.5} />
+      <span
+        className="font-mono uppercase"
+        style={{
+          fontSize: 'var(--text-mono-xs)',
+          fontWeight: 600,
+          letterSpacing: '0.04em',
+          color: 'var(--color-ink-muted)',
+        }}
+      >
+        {text}
+      </span>
+    </button>
   )
 }

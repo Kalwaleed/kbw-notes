@@ -21,6 +21,9 @@ export interface AppShellProps {
   onSignIn?: () => void
   /** Hide the folio bar (e.g., on auth-only screens). Defaults to false. */
   hideFolio?: boolean
+  /** Main container width. 'feed' = 1200px (default), 'wide' = 1320px,
+   *  'prose' = 720px, 'auto' = no max-width (child decides). */
+  containerWidth?: 'feed' | 'wide' | 'prose' | 'auto'
 }
 
 export function AppShell({
@@ -30,7 +33,16 @@ export function AppShell({
   onNavigate,
   onLogout,
   hideFolio = false,
+  containerWidth = 'feed',
 }: AppShellProps) {
+  const mainMaxWidth = containerWidth === 'auto'
+    ? 'none'
+    : containerWidth === 'wide'
+      ? 'var(--container-wide)'
+      : containerWidth === 'prose'
+        ? 'var(--container-prose)'
+        : 'var(--container-feed)'
+
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const { count: unreadCount } = useUnreadCount()
 
@@ -247,7 +259,7 @@ export function AppShell({
       <main
         className="mx-auto"
         style={{
-          maxWidth: 'var(--container-feed)',
+          maxWidth: mainMaxWidth,
           padding: 'var(--space-8) 24px',
           position: 'relative',
           zIndex: 2,

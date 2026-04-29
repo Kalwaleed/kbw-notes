@@ -1,27 +1,34 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { useAuth, useComments } from '../hooks'
+import { AppShell } from '../components/shell'
 import { BlogPostView } from '../components/blog-post'
 import { fetchBlogPost, getPostLikeCount } from '../lib/queries/blog'
 
 type PostData = NonNullable<Awaited<ReturnType<typeof fetchBlogPost>>>
 
+/** Strip HTML tags, count words, divide by 200 (avg adult reading speed). */
+function computeReadingTime(html: string): number {
+  const text = html.replace(/<[^>]*>/g, ' ')
+  const words = text.split(/\s+/).filter(Boolean).length
+  return Math.max(1, Math.ceil(words / 200))
+}
+
 export function PostPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { id: postId } = useParams<{ id: string }>()
-  const { user } = useAuth()
+  const { user, signOut } = useAuth()
   const [post, setPost] = useState<PostData | null>(null)
   const [postLoading, setPostLoading] = useState(true)
   const [postError, setPostError] = useState<string | null>(null)
   const [likeCount, setLikeCount] = useState(0)
 
-  // Fetch the post data
   useEffect(() => {
     if (!postId) return
 
     let cancelled = false
-    const id = postId // Capture for closure with narrowed type
+    const id = postId
 
     async function loadPost() {
       try {
@@ -48,8 +55,6 @@ export function PostPage() {
     return () => { cancelled = true }
   }, [postId])
 
-  // Use real comments from Supabase with AI moderation
-  // Anonymous users can now comment without authentication
   const {
     comments,
     isLoading,
@@ -62,7 +67,25 @@ export function PostPage() {
     likeComment,
   } = useComments(postId ?? '')
 
-  // Share handlers
+  const navigationItems = [
+    { label: 'Home',          href: '/kbw-notes/home',          isActive: false },
+    { label: 'Submissions',   href: '/kbw-notes/submissions',   isActive: false },
+    { label: 'Notifications', href: '/kbw-notes/notifications', isActive: false },
+    { label: 'Settings',      href: '/kbw-notes/settings',      isActive: false },
+  ]
+
+  const userDisplay = user
+    ? {
+        name: user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email ?? 'User',
+        email: user.email ?? undefined,
+        avatarUrl: user.user_metadata?.avatar_url,
+      }
+    : undefined
+
+  const handleNavigate = (href: string) => navigate(href)
+  const handleLogout = async () => { await signOut(); navigate('/') }
+  const handleSignIn = () => navigate('/', { state: { from: location.pathname } })
+
   const handleShareTwitter = () => {
     const url = window.location.href
     const text = encodeURIComponent(post?.title ?? '')
@@ -75,108 +98,139 @@ export function PostPage() {
   }
 
   const handleCopyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(window.location.href)
-    } catch {
-      // Silently fail - clipboard may not be available
-    }
+    try { await navigator.clipboard.writeText(window.location.href) } catch { /* ignore */ }
   }
 
-  // Comment handlers - now connected to Supabase
-  const handleAddComment = async (content: string) => {
-    await addComment(content)
-  }
-
-  const handleReply = async (commentId: string, content: string) => {
-    await addReply(commentId, content)
-  }
-
-  const handleDelete = async (commentId: string) => {
-    await deleteComment(commentId)
-  }
+  const handleAddComment = async (content: string) => { await addComment(content) }
+  const handleReply = async (commentId: string, content: string) => { await addReply(commentId, content) }
+  const handleDelete = async (commentId: string) => { await deleteComment(commentId) }
 
   const handleReact = async (commentId: string) => {
     if (!user) {
-      // Redirect to login if not authenticated
       navigate('/', { state: { from: location.pathname } })
       return
     }
-    try {
-      await likeComment(commentId)
-    } catch (err) {
+    try { await likeComment(commentId) } catch (err) {
       console.error('Failed to like comment:', err)
       alert(err instanceof Error ? err.message : 'Failed to like comment')
     }
   }
 
-  const handleReport = () => {
-    // TODO: Implement reports table
-  }
+  const handleReport = () => { /* TODO: reports table */ }
+  const handleLoadMore = async () => { /* TODO: pagination */ }
+  const handleLoginClick = () => navigate('/', { state: { from: location.pathname } })
 
-  const handleLoadMore = async () => {
-    // TODO: Implement pagination if needed
-  }
-
-  const handleLoginClick = () => {
-    navigate('/', { state: { from: location.pathname } })
-  }
-
-  // Loading state
   if (postLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
-        <div className="text-slate-500 dark:text-slate-400">Loading post...</div>
-      </div>
+      <AppShell
+        navigationItems={navigationItems}
+        user={userDisplay}
+        onNavigate={handleNavigate}
+        onLogout={handleLogout}
+        onSignIn={handleSignIn}
+        containerWidth="wide"
+      >
+        <div
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: 'var(--text-mono-sm)',
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            color: 'var(--color-ink-soft)',
+            padding: 'var(--space-9) 0',
+            textAlign: 'center',
+          }}
+        >
+          Loading post…
+        </div>
+      </AppShell>
     )
   }
 
-  // Error state
   if (postError || !post) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+      <AppShell
+        navigationItems={navigationItems}
+        user={userDisplay}
+        onNavigate={handleNavigate}
+        onLogout={handleLogout}
+        onSignIn={handleSignIn}
+        containerWidth="wide"
+      >
+        <div style={{ padding: 'var(--space-9) 0', textAlign: 'center' }}>
+          <h1
+            style={{
+              fontFamily: 'var(--font-serif)',
+              fontWeight: 700,
+              fontSize: 'var(--text-h2)',
+              color: 'var(--color-ink)',
+              margin: 0,
+              marginBottom: 'var(--space-4)',
+            }}
+          >
             {postError ?? 'Post not found'}
           </h1>
           <button
+            type="button"
             onClick={() => navigate('/kbw-notes/home')}
-            className="text-violet-600 dark:text-violet-400 hover:underline"
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 'var(--text-mono-sm)',
+              fontWeight: 600,
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+              color: 'var(--color-accent)',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              textDecoration: 'underline',
+              textUnderlineOffset: 4,
+            }}
           >
-            Back to Home
+            ← Back to home
           </button>
         </div>
-      </div>
+      </AppShell>
     )
   }
 
   const blogPostData = {
     ...post,
-    readingTime: Math.ceil(post.content.replace(/<[^>]*>/g, '').split(/\s+/).filter(Boolean).length / 200),
+    readingTime: computeReadingTime(post.content),
     likeCount,
     commentCount: comments.length,
   }
 
   return (
-    <BlogPostView
-      blogPost={blogPostData}
-      comments={comments}
-      isAuthenticated={!!user}
-      currentUserId={user?.id}
-      userReactions={userLikedComments}
-      isLoading={isLoading}
-      hasMoreComments={false}
-      moderationError={moderationError}
-      onClearModerationError={clearModerationError}
-      onShareTwitter={handleShareTwitter}
-      onShareLinkedIn={handleShareLinkedIn}
-      onCopyLink={handleCopyLink}
-      onAddComment={handleAddComment}
-      onReply={handleReply}
-      onDelete={handleDelete}
-      onReact={handleReact}
-      onReport={handleReport}
-      onLoadMore={handleLoadMore}
-      onLoginClick={handleLoginClick}
-    />
+    <AppShell
+      navigationItems={navigationItems}
+      user={userDisplay}
+      onNavigate={handleNavigate}
+      onLogout={handleLogout}
+      onSignIn={handleSignIn}
+      containerWidth="wide"
+    >
+      <BlogPostView
+        blogPost={blogPostData}
+        comments={comments}
+        isAuthenticated={!!user}
+        currentUserId={user?.id}
+        userReactions={userLikedComments}
+        isLoading={isLoading}
+        hasMoreComments={false}
+        moderationError={moderationError}
+        onClearModerationError={clearModerationError}
+        onShareTwitter={handleShareTwitter}
+        onShareLinkedIn={handleShareLinkedIn}
+        onCopyLink={handleCopyLink}
+        onAddComment={handleAddComment}
+        onReply={handleReply}
+        onDelete={handleDelete}
+        onReact={handleReact}
+        onReport={handleReport}
+        onLoadMore={handleLoadMore}
+        onLoginClick={handleLoginClick}
+      />
+    </AppShell>
   )
 }
