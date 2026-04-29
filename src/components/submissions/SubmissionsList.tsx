@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, FileText, Loader2 } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import type { Submission } from '../../types/submission'
 import { SubmissionCard } from './SubmissionCard'
 
@@ -29,13 +29,7 @@ export function SubmissionsList({
   const [activeTab, setActiveTab] = useState<TabFilter>('all')
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
 
-  // Filter submissions by tab
-  const filteredSubmissions = submissions.filter((s) => {
-    if (activeTab === 'all') return true
-    return s.status === activeTab
-  })
-
-  // Count submissions by status
+  const filteredSubmissions = submissions.filter((s) => activeTab === 'all' || s.status === activeTab)
   const counts = {
     all: submissions.length,
     draft: submissions.filter((s) => s.status === 'draft').length,
@@ -48,92 +42,193 @@ export function SubmissionsList({
       setDeleteConfirm(null)
     } else {
       setDeleteConfirm(id)
-      // Auto-clear after 3 seconds
       setTimeout(() => setDeleteConfirm(null), 3000)
     }
   }
 
+  const tabs: TabFilter[] = ['all', 'draft', 'published']
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-7)' }}>
+      <div className="flex items-end justify-between" style={{ gap: 'var(--space-4)', flexWrap: 'wrap' }}>
         <div>
-          <h1
-            className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white"
-            style={{ fontFamily: 'var(--font-heading)' }}
+          <div
+            className="font-mono uppercase"
+            style={{
+              fontSize: 'var(--text-mono-xs)',
+              letterSpacing: '0.08em',
+              color: 'var(--color-accent)',
+              fontWeight: 600,
+              marginBottom: 'var(--space-2)',
+            }}
           >
-            My Submissions
+            Authoring
+          </div>
+          <h1
+            style={{
+              fontFamily: 'var(--font-serif)',
+              fontWeight: 700,
+              fontSize: 'var(--text-h2)',
+              lineHeight: 1.2,
+              letterSpacing: '-0.02em',
+              color: 'var(--color-ink)',
+              margin: 0,
+            }}
+          >
+            Submissions
           </h1>
-          <p className="mt-1 text-slate-600 dark:text-slate-400">
-            Manage your blog post drafts and published articles
+          <p
+            style={{
+              fontFamily: 'var(--font-sans)',
+              fontSize: 'var(--text-ui-base)',
+              color: 'var(--color-ink-muted)',
+              margin: 0,
+              marginTop: 'var(--space-2)',
+            }}
+          >
+            Manage your drafts and published essays.
           </p>
         </div>
         <button
+          type="button"
           onClick={onNewSubmission}
-          className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg bg-violet-600 text-white hover:bg-violet-700 transition-colors shadow-sm"
+          className="font-mono uppercase flex items-center"
+          style={{
+            gap: 8,
+            fontSize: 'var(--text-mono-sm)',
+            fontWeight: 600,
+            letterSpacing: '0.04em',
+            background: 'var(--color-ink)',
+            color: 'var(--color-paper)',
+            border: 'none',
+            borderRadius: 2,
+            padding: '10px 16px',
+            cursor: 'pointer',
+            transition: 'background-color 100ms ease',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-accent)' }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--color-ink)' }}
         >
-          <Plus className="w-4 h-4" />
-          <span className="hidden sm:inline">New Submission</span>
-          <span className="sm:hidden">New</span>
+          <Plus size={14} strokeWidth={1.5} />
+          New submission
         </button>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg w-fit">
-        {(['all', 'draft', 'published'] as const).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-              activeTab === tab
-                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-            }`}
-          >
-            {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            <span className="ml-1.5 text-xs text-slate-400 dark:text-slate-500">
-              ({counts[tab]})
-            </span>
-          </button>
-        ))}
+      <div className="inline-flex" style={{ gap: 0, alignSelf: 'start' }}>
+        {tabs.map((tab, idx) => {
+          const isSelected = activeTab === tab
+          return (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setActiveTab(tab)}
+              className="font-mono uppercase"
+              aria-pressed={isSelected}
+              style={{
+                fontSize: 'var(--text-mono-sm)',
+                fontWeight: 600,
+                letterSpacing: '0.04em',
+                padding: '8px 14px',
+                background: isSelected ? 'var(--color-ink)' : 'transparent',
+                color: isSelected ? 'var(--color-paper)' : 'var(--color-ink-muted)',
+                border: '1px solid var(--color-hair)',
+                borderLeft: idx === 0 ? '1px solid var(--color-hair)' : 'none',
+                cursor: 'pointer',
+                transition: 'background-color 100ms ease, color 100ms ease',
+              }}
+            >
+              {tab} <span style={{ opacity: 0.6 }}>({counts[tab]})</span>
+            </button>
+          )
+        })}
       </div>
 
-      {/* Content */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 text-violet-500 animate-spin" />
+        <div
+          className="font-mono uppercase"
+          style={{
+            fontSize: 'var(--text-mono-xs)',
+            letterSpacing: '0.08em',
+            color: 'var(--color-ink-soft)',
+            textAlign: 'center',
+            padding: 'var(--space-9) 0',
+          }}
+        >
+          Loading submissions…
         </div>
       ) : error ? (
-        <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg p-6 text-center">
-          <p className="text-red-600 dark:text-red-400">{error.message}</p>
+        <div
+          role="alert"
+          style={{
+            padding: 'var(--space-5)',
+            background: 'var(--color-rose-tint)',
+            borderLeft: '2px solid var(--color-rose)',
+            fontFamily: 'var(--font-sans)',
+            fontSize: 'var(--text-ui-base)',
+            color: 'var(--color-rose)',
+          }}
+        >
+          {error.message}
         </div>
       ) : filteredSubmissions.length === 0 ? (
         <EmptyState activeTab={activeTab} onNewSubmission={onNewSubmission} />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div
+          style={{
+            display: 'grid',
+            gap: 'var(--space-5)',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+          }}
+        >
           {filteredSubmissions.map((submission) => (
             <SubmissionCard
               key={submission.id}
               submission={submission}
               onEdit={() => onEditSubmission(submission.id)}
-              onView={
-                submission.status === 'published'
-                  ? () => onViewSubmission(submission.id)
-                  : undefined
-              }
+              onView={submission.status === 'published' ? () => onViewSubmission(submission.id) : undefined}
               onDelete={(isAdmin || submission.status === 'draft') ? () => handleDelete(submission.id) : undefined}
             />
           ))}
         </div>
       )}
 
-      {/* Delete Confirmation Toast */}
       {deleteConfirm && (
-        <div className="fixed bottom-4 right-4 bg-slate-900 dark:bg-slate-800 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3">
-          <span className="text-sm">Click delete again to confirm</span>
+        <div
+          role="status"
+          style={{
+            position: 'fixed',
+            bottom: 16,
+            right: 16,
+            background: 'var(--color-ink)',
+            color: 'var(--color-paper)',
+            padding: '12px 16px',
+            border: '1px solid var(--color-hair)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            fontFamily: 'var(--font-mono)',
+            fontSize: 'var(--text-mono-sm)',
+            letterSpacing: '0.04em',
+            textTransform: 'uppercase',
+            zIndex: 60,
+          }}
+        >
+          <span>Click delete again to confirm</span>
           <button
+            type="button"
             onClick={() => setDeleteConfirm(null)}
-            className="text-xs text-slate-400 hover:text-white"
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--color-ink-soft)',
+              fontFamily: 'var(--font-mono)',
+              fontSize: 'var(--text-mono-xs)',
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+              cursor: 'pointer',
+              textDecoration: 'underline',
+              textUnderlineOffset: 3,
+            }}
           >
             Cancel
           </button>
@@ -143,7 +238,6 @@ export function SubmissionsList({
   )
 }
 
-// Empty State Component
 function EmptyState({
   activeTab,
   onNewSubmission,
@@ -151,47 +245,59 @@ function EmptyState({
   activeTab: TabFilter
   onNewSubmission: () => void
 }) {
-  const messages = {
-    all: {
-      title: 'No submissions yet',
-      description: 'Create your first blog post to get started.',
-    },
-    draft: {
-      title: 'No drafts',
-      description: "You don't have any draft posts. Start writing something new!",
-    },
-    published: {
-      title: 'No published posts',
-      description: 'Your published posts will appear here.',
-    },
+  const messages: Record<TabFilter, { title: string; description: string }> = {
+    all:       { title: 'No submissions yet.', description: 'Write your first essay to get started.' },
+    draft:     { title: 'No drafts.',           description: 'Start writing something new.' },
+    published: { title: 'No published posts.',  description: 'Your published essays will appear here.' },
   }
-
   const { title, description } = messages[activeTab]
 
   return (
-    <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-      <div className="flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 mb-4">
-        <FileText className="w-8 h-8 text-slate-400" />
-      </div>
+    <div style={{ padding: 'var(--space-10) var(--space-5)', textAlign: 'center' }}>
       <h3
-        className="text-lg font-semibold text-slate-900 dark:text-white mb-2"
-        style={{ fontFamily: 'var(--font-heading)' }}
+        style={{
+          fontFamily: 'var(--font-serif)',
+          fontSize: 'var(--text-section)',
+          fontWeight: 600,
+          color: 'var(--color-ink)',
+          margin: 0,
+          marginBottom: 'var(--space-3)',
+        }}
       >
         {title}
       </h3>
       <p
-        className="text-slate-600 dark:text-slate-400 mb-6 max-w-sm"
-        style={{ fontFamily: 'var(--font-body)' }}
+        style={{
+          fontFamily: 'var(--font-sans)',
+          fontStyle: 'italic',
+          fontSize: 'var(--text-ui-base)',
+          color: 'var(--color-ink-muted)',
+          margin: 0,
+          marginBottom: 'var(--space-5)',
+        }}
       >
         {description}
       </p>
       {activeTab !== 'published' && (
         <button
+          type="button"
           onClick={onNewSubmission}
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-violet-600 text-white hover:bg-violet-700 transition-colors"
+          className="font-mono uppercase inline-flex items-center"
+          style={{
+            gap: 8,
+            fontSize: 'var(--text-mono-sm)',
+            fontWeight: 600,
+            letterSpacing: '0.04em',
+            background: 'var(--color-ink)',
+            color: 'var(--color-paper)',
+            border: 'none',
+            borderRadius: 2,
+            padding: '10px 16px',
+            cursor: 'pointer',
+          }}
         >
-          <Plus className="w-4 h-4" />
-          New Submission
+          <Plus size={14} strokeWidth={1.5} />
+          New submission
         </button>
       )}
     </div>

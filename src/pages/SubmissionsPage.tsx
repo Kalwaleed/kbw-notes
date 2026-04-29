@@ -10,52 +10,33 @@ export function SubmissionsPage() {
   const { submissions, isLoading, error, create, remove } = useSubmissions()
 
   const navigationItems = [
-    { label: 'Home', href: '/kbw-notes/home', isActive: false },
-    { label: 'Submissions', href: '/kbw-notes/submissions', isActive: location.pathname.startsWith('/kbw-notes/submissions') },
+    { label: 'Home',          href: '/kbw-notes/home',          isActive: false },
+    { label: 'Submissions',   href: '/kbw-notes/submissions',   isActive: location.pathname.startsWith('/kbw-notes/submissions') },
+    { label: 'Notifications', href: '/kbw-notes/notifications', isActive: false },
+    { label: 'Settings',      href: '/kbw-notes/settings',      isActive: false },
   ]
 
-  const handleNavigate = (href: string) => {
-    navigate(href)
-  }
-
-  const handleLogout = async () => {
-    await signOut()
-    navigate('/')
-  }
-
-  const handleSignIn = () => {
-    navigate('/', { state: { from: location.pathname } })
-  }
+  const handleNavigate = (href: string) => navigate(href)
+  const handleLogout = async () => { await signOut(); navigate('/') }
+  const handleSignIn = () => navigate('/', { state: { from: location.pathname } })
 
   const handleNewSubmission = async () => {
     const submission = await create()
-    if (submission) {
-      navigate(`/kbw-notes/submissions/${submission.id}`)
-    }
+    if (submission) navigate(`/kbw-notes/submissions/${submission.id}`)
   }
 
-  const handleEditSubmission = (id: string) => {
-    navigate(`/kbw-notes/submissions/${id}`)
-  }
+  const handleEditSubmission = (id: string) => navigate(`/kbw-notes/submissions/${id}`)
+  const handleViewSubmission = (id: string) => navigate(`/kbw-notes/submissions/${id}`)
+  const handleDeleteSubmission = async (id: string) => { await remove(id) }
 
-  const handleViewSubmission = (id: string) => {
-    // TODO: Navigate to public post view when slug is available
-    navigate(`/kbw-notes/submissions/${id}`)
-  }
-
-  const handleDeleteSubmission = async (id: string) => {
-    await remove(id)
-  }
-
-  // User display info
   const userDisplay = user
     ? {
         name: user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email ?? 'User',
+        email: user.email ?? undefined,
         avatarUrl: user.user_metadata?.avatar_url,
       }
     : undefined
 
-  // Require authentication
   if (!user) {
     return (
       <AppShell
@@ -65,21 +46,62 @@ export function SubmissionsPage() {
         onLogout={handleLogout}
         onSignIn={handleSignIn}
       >
-        <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-          <h1
-            className="text-2xl font-bold text-slate-900 dark:text-white mb-4"
-            style={{ fontFamily: 'var(--font-heading)' }}
+        <div style={{ padding: 'var(--space-9) 0', textAlign: 'center' }}>
+          <div
+            className="font-mono uppercase"
+            style={{
+              fontSize: 'var(--text-mono-xs)',
+              letterSpacing: '0.08em',
+              color: 'var(--color-accent)',
+              fontWeight: 600,
+              marginBottom: 'var(--space-3)',
+            }}
           >
-            Sign in to view your submissions
+            Access · required
+          </div>
+          <h1
+            style={{
+              fontFamily: 'var(--font-serif)',
+              fontWeight: 700,
+              fontSize: 'var(--text-h2)',
+              lineHeight: 1.2,
+              letterSpacing: '-0.02em',
+              color: 'var(--color-ink)',
+              margin: 0,
+              marginBottom: 'var(--space-4)',
+            }}
+          >
+            Sign in to view your submissions.
           </h1>
-          <p className="text-slate-600 dark:text-slate-400 mb-6">
-            You need to be logged in to create and manage blog submissions.
+          <p
+            style={{
+              fontFamily: 'var(--font-sans)',
+              fontStyle: 'italic',
+              fontSize: 'var(--text-ui-base)',
+              color: 'var(--color-ink-muted)',
+              margin: 0,
+              marginBottom: 'var(--space-5)',
+            }}
+          >
+            You need to be signed in to create and manage drafts.
           </p>
           <button
+            type="button"
             onClick={handleSignIn}
-            className="px-6 py-3 text-sm font-medium rounded-lg bg-violet-600 text-white hover:bg-violet-700 transition-colors"
+            className="font-mono uppercase"
+            style={{
+              fontSize: 'var(--text-mono-sm)',
+              fontWeight: 600,
+              letterSpacing: '0.04em',
+              background: 'var(--color-ink)',
+              color: 'var(--color-paper)',
+              border: 'none',
+              borderRadius: 2,
+              padding: '10px 16px',
+              cursor: 'pointer',
+            }}
           >
-            Sign In
+            Sign in
           </button>
         </div>
       </AppShell>

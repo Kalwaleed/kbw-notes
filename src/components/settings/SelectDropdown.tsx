@@ -19,17 +19,26 @@ export function SelectDropdown<T extends string | number>({
   disabled = false,
 }: SelectDropdownProps<T>) {
   return (
-    <div className="relative">
+    <div style={{ position: 'relative' }}>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value as T)}
         disabled={disabled}
-        className={`
-          appearance-none bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700
-          rounded-lg px-3 py-1.5 pr-8 text-sm text-slate-900 dark:text-white
-          focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent
-          ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-        `}
+        className="font-mono uppercase"
+        style={{
+          appearance: 'none',
+          background: 'var(--color-paper)',
+          color: 'var(--color-ink)',
+          border: '1px solid var(--color-hair)',
+          borderRadius: 2,
+          padding: '6px 32px 6px 12px',
+          fontSize: 'var(--text-mono-sm)',
+          fontWeight: 500,
+          letterSpacing: '0.04em',
+          cursor: disabled ? 'not-allowed' : 'pointer',
+          opacity: disabled ? 0.4 : 1,
+          outline: 'none',
+        }}
       >
         {options.map((option) => (
           <option key={option.value} value={option.value}>
@@ -38,8 +47,17 @@ export function SelectDropdown<T extends string | number>({
         ))}
       </select>
       <ChevronDown
-        className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500 pointer-events-none"
+        size={14}
         strokeWidth={1.5}
+        style={{
+          position: 'absolute',
+          top: '50%',
+          right: 8,
+          transform: 'translateY(-50%)',
+          color: 'var(--color-ink-soft)',
+          pointerEvents: 'none',
+        }}
+        aria-hidden="true"
       />
     </div>
   )

@@ -1,4 +1,4 @@
-import { Bell, CheckCheck, Loader2 } from 'lucide-react'
+import { Bell, CheckCheck } from 'lucide-react'
 import type { Notification } from '../../types/notification'
 import { NotificationItem } from './NotificationItem'
 
@@ -27,116 +27,150 @@ export function NotificationsList({
   onNavigate,
   onSignIn,
 }: NotificationsListProps) {
-  // Not authenticated state
   if (!isAuthenticated) {
     return (
-      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-8 text-center">
-        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-violet-100 dark:bg-violet-950/50 flex items-center justify-center">
-          <Bell className="w-8 h-8 text-violet-500" />
-        </div>
-        <h3
-          className="text-lg font-semibold text-slate-900 dark:text-white mb-2"
-          style={{ fontFamily: 'var(--font-heading)' }}
-        >
-          Sign in to view notifications
-        </h3>
-        <p
-          className="text-slate-600 dark:text-slate-400 mb-4"
-          style={{ fontFamily: 'var(--font-body)' }}
-        >
-          Get notified when someone replies to your comments or interacts with your content.
-        </p>
+      <EmptyShell
+        icon={Bell}
+        kicker="Access · required"
+        title="Sign in to view notifications."
+        description="When someone replies to your comments or interacts with your work, it lands here."
+      >
         <button
+          type="button"
           onClick={onSignIn}
-          className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white font-medium rounded-lg transition-colors"
-          style={{ fontFamily: 'var(--font-body)' }}
+          className="font-mono uppercase"
+          style={{
+            fontSize: 'var(--text-mono-sm)',
+            fontWeight: 600,
+            letterSpacing: '0.04em',
+            background: 'var(--color-ink)',
+            color: 'var(--color-paper)',
+            border: 'none',
+            borderRadius: 2,
+            padding: '10px 16px',
+            cursor: 'pointer',
+          }}
         >
-          Sign In
+          Sign in
         </button>
-      </div>
+      </EmptyShell>
     )
   }
 
-  // Loading state
   if (isLoading) {
     return (
-      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-8 text-center">
-        <Loader2 className="w-8 h-8 mx-auto mb-4 text-violet-500 animate-spin" />
-        <p
-          className="text-slate-600 dark:text-slate-400"
-          style={{ fontFamily: 'var(--font-body)' }}
-        >
-          Loading notifications...
-        </p>
+      <div
+        style={{
+          padding: 'var(--space-9) var(--space-5)',
+          textAlign: 'center',
+          fontFamily: 'var(--font-mono)',
+          fontSize: 'var(--text-mono-xs)',
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          color: 'var(--color-ink-soft)',
+        }}
+      >
+        Loading notifications…
       </div>
     )
   }
 
-  // Error state
   if (error) {
     return (
-      <div className="bg-white dark:bg-slate-900 rounded-xl border border-rose-200 dark:border-rose-800 p-8 text-center">
-        <p className="text-rose-600 dark:text-rose-400" style={{ fontFamily: 'var(--font-body)' }}>
-          {error}
-        </p>
+      <div
+        role="alert"
+        style={{
+          padding: 'var(--space-5)',
+          background: 'var(--color-rose-tint)',
+          borderLeft: '2px solid var(--color-rose)',
+          fontFamily: 'var(--font-sans)',
+          fontStyle: 'italic',
+          fontSize: 'var(--text-ui-base)',
+          color: 'var(--color-rose)',
+        }}
+      >
+        {error}
       </div>
     )
   }
 
-  // Empty state
   if (notifications.length === 0) {
     return (
-      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-8 text-center">
-        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-          <Bell className="w-8 h-8 text-slate-400 dark:text-slate-500" />
-        </div>
-        <h3
-          className="text-lg font-semibold text-slate-900 dark:text-white mb-2"
-          style={{ fontFamily: 'var(--font-heading)' }}
-        >
-          No notifications yet
-        </h3>
-        <p
-          className="text-slate-600 dark:text-slate-400"
-          style={{ fontFamily: 'var(--font-body)' }}
-        >
-          When someone interacts with your content, you'll see it here.
-        </p>
-      </div>
+      <EmptyShell
+        icon={Bell}
+        kicker="Inbox · empty"
+        title="No notifications yet."
+        description="When someone interacts with your content, you'll see it here."
+      />
     )
   }
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-800">
-        <div className="flex items-center gap-2">
+    <div style={{ background: 'var(--color-paper)', border: '1px solid var(--color-hair)' }}>
+      <div
+        className="flex items-center justify-between"
+        style={{
+          padding: 'var(--space-3) var(--space-5)',
+          borderBottom: '1px solid var(--color-hair)',
+          background: 'var(--color-paper-sunken)',
+        }}
+      >
+        <div className="flex items-center" style={{ gap: 'var(--space-3)' }}>
           <span
-            className="text-sm font-medium text-slate-700 dark:text-slate-300"
-            style={{ fontFamily: 'var(--font-body)' }}
+            className="font-mono uppercase"
+            style={{
+              fontSize: 'var(--text-mono-xs)',
+              letterSpacing: '0.08em',
+              fontWeight: 600,
+              color: 'var(--color-ink-muted)',
+            }}
           >
             {notifications.length} notification{notifications.length !== 1 ? 's' : ''}
           </span>
           {unreadCount > 0 && (
-            <span className="px-2 py-0.5 text-xs font-medium bg-violet-100 dark:bg-violet-950/50 text-violet-700 dark:text-violet-300 rounded-full">
+            <span
+              className="font-mono uppercase"
+              style={{
+                fontSize: 'var(--text-mono-xs)',
+                fontWeight: 600,
+                letterSpacing: '0.04em',
+                padding: '2px 8px',
+                border: '1px solid var(--color-accent)',
+                color: 'var(--color-accent)',
+                borderRadius: 2,
+              }}
+            >
               {unreadCount} new
             </span>
           )}
         </div>
         {unreadCount > 0 && (
           <button
+            type="button"
             onClick={onMarkAllAsRead}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/30 rounded-lg transition-colors"
-            style={{ fontFamily: 'var(--font-body)' }}
+            className="font-mono uppercase flex items-center"
+            style={{
+              gap: 6,
+              fontSize: 'var(--text-mono-sm)',
+              fontWeight: 600,
+              letterSpacing: '0.04em',
+              color: 'var(--color-accent)',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              textDecoration: 'underline',
+              textDecorationThickness: 1,
+              textUnderlineOffset: 3,
+              padding: 0,
+            }}
           >
-            <CheckCheck className="w-4 h-4" />
-            Mark all as read
+            <CheckCheck size={14} strokeWidth={1.5} />
+            Mark all read
           </button>
         )}
       </div>
 
-      {/* Notification list */}
-      <div className="divide-y divide-slate-100 dark:divide-slate-800">
+      <div>
         {notifications.map((notification) => (
           <NotificationItem
             key={notification.id}
@@ -147,6 +181,74 @@ export function NotificationsList({
           />
         ))}
       </div>
+    </div>
+  )
+}
+
+interface EmptyShellProps {
+  icon: typeof Bell
+  kicker: string
+  title: string
+  description: string
+  children?: React.ReactNode
+}
+
+function EmptyShell({ icon: Icon, kicker, title, description, children }: EmptyShellProps) {
+  return (
+    <div
+      style={{
+        padding: 'var(--space-10) var(--space-5)',
+        textAlign: 'center',
+        background: 'var(--color-paper)',
+        border: '1px solid var(--color-hair)',
+      }}
+    >
+      <Icon
+        size={24}
+        strokeWidth={1.5}
+        style={{ color: 'var(--color-ink-soft)', display: 'block', margin: '0 auto var(--space-4)' }}
+        aria-hidden="true"
+      />
+      <div
+        className="font-mono uppercase"
+        style={{
+          fontSize: 'var(--text-mono-xs)',
+          letterSpacing: '0.08em',
+          color: 'var(--color-accent)',
+          fontWeight: 600,
+          marginBottom: 'var(--space-2)',
+        }}
+      >
+        {kicker}
+      </div>
+      <h3
+        style={{
+          fontFamily: 'var(--font-serif)',
+          fontWeight: 600,
+          fontSize: 'var(--text-section)',
+          color: 'var(--color-ink)',
+          margin: 0,
+          marginBottom: 'var(--space-3)',
+        }}
+      >
+        {title}
+      </h3>
+      <p
+        style={{
+          fontFamily: 'var(--font-sans)',
+          fontStyle: 'italic',
+          fontSize: 'var(--text-ui-base)',
+          color: 'var(--color-ink-muted)',
+          margin: 0,
+          marginBottom: children ? 'var(--space-5)' : 0,
+          maxWidth: '52ch',
+          marginLeft: 'auto',
+          marginRight: 'auto',
+        }}
+      >
+        {description}
+      </p>
+      {children}
     </div>
   )
 }

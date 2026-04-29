@@ -32,7 +32,7 @@ describe('ProtectedRoute', () => {
     mockUseAuth.mockReturnValue({ user: null, isLoading: true })
     renderProtected()
 
-    expect(screen.getByText('Loading...')).toBeInTheDocument()
+    expect(screen.getByText(/loading/i)).toBeInTheDocument()
     expect(screen.queryByTestId('protected')).not.toBeInTheDocument()
     expect(screen.queryByTestId('login')).not.toBeInTheDocument()
   })

@@ -1,5 +1,5 @@
 import { Edit2, Trash2, Eye, MoreVertical } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import type { Submission } from '../../types/submission'
 import { StatusBadge } from './StatusBadge'
 
@@ -10,180 +10,270 @@ interface SubmissionCardProps {
   onDelete?: () => void
 }
 
-export function SubmissionCard({
-  submission,
-  onEdit,
-  onView,
-  onDelete,
-}: SubmissionCardProps) {
+function formatEditorialDate(iso: string): string {
+  const d = new Date(iso)
+  const day = String(d.getUTCDate()).padStart(2, '0')
+  const month = d.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' }).toUpperCase()
+  const year = d.getUTCFullYear()
+  return `${day} ${month} ${year}`
+}
+
+function formatRelativeTime(iso: string): string {
+  const date = new Date(iso)
+  const diffMs = Date.now() - date.getTime()
+  const minutes = Math.floor(diffMs / 60_000)
+  if (minutes < 1) return 'just now'
+  if (minutes < 60) return `${minutes}m ago`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.floor(hours / 24)
+  if (days < 7) return `${days}d ago`
+  return formatEditorialDate(iso)
+}
+
+export function SubmissionCard({ submission, onEdit, onView, onDelete }: SubmissionCardProps) {
   const [showMenu, setShowMenu] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
 
-  // Format date
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    })
-  }
-
-  // Format relative time
-  const formatRelativeTime = (dateStr: string) => {
-    const date = new Date(dateStr)
-    const now = new Date()
-    const diffMs = now.getTime() - date.getTime()
-    const diffMins = Math.floor(diffMs / (1000 * 60))
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-
-    if (diffMins < 1) return 'Just now'
-    if (diffMins < 60) return `${diffMins}m ago`
-    if (diffHours < 24) return `${diffHours}h ago`
-    if (diffDays < 7) return `${diffDays}d ago`
-    return formatDate(dateStr)
-  }
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowMenu(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const title = submission.title || 'Untitled'
-  const excerpt = submission.excerpt || 'No excerpt yet...'
+  const excerpt = submission.excerpt || 'No excerpt yet.'
+  const hasTitle = !!submission.title
+  const hasExcerpt = !!submission.excerpt
 
   return (
-    <article className="group relative bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
-      {/* Cover Image Placeholder */}
+    <article
+      style={{
+        position: 'relative',
+        background: 'var(--color-paper-raised)',
+        border: '1px solid var(--color-hair)',
+        padding: 'var(--space-5)',
+      }}
+    >
       {submission.coverImageUrl && (
-        <div className="aspect-video bg-slate-100 dark:bg-slate-800 overflow-hidden">
-          <img
-            src={submission.coverImageUrl}
-            alt=""
-            className="w-full h-full object-cover"
-          />
+        <div
+          style={{
+            aspectRatio: '16 / 9',
+            background: 'var(--color-paper-sunken)',
+            border: '1px solid var(--color-hair)',
+            overflow: 'hidden',
+            marginBottom: 'var(--space-4)',
+          }}
+        >
+          <img src={submission.coverImageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
       )}
 
-      <div className="p-4 sm:p-5">
-        {/* Header: Status + Menu */}
-        <div className="flex items-start justify-between gap-2 mb-3">
-          <StatusBadge status={submission.status} />
-          <div className="relative">
-            <button
-              onClick={() => setShowMenu(!showMenu)}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:text-slate-300 dark:hover:bg-slate-800 transition-colors"
-              aria-label="More options"
+      <div className="flex items-start justify-between" style={{ gap: 8, marginBottom: 'var(--space-3)' }}>
+        <StatusBadge status={submission.status} />
+        <div ref={menuRef} style={{ position: 'relative' }}>
+          <button
+            type="button"
+            onClick={() => setShowMenu(!showMenu)}
+            aria-label="More options"
+            style={{
+              width: 28,
+              height: 28,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'transparent',
+              color: 'var(--color-ink-muted)',
+              border: 'none',
+              borderRadius: 2,
+              cursor: 'pointer',
+              transition: 'background-color 100ms ease, color 100ms ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'var(--color-accent-tint)'
+              e.currentTarget.style.color = 'var(--color-ink)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent'
+              e.currentTarget.style.color = 'var(--color-ink-muted)'
+            }}
+          >
+            <MoreVertical size={14} strokeWidth={1.5} />
+          </button>
+          {showMenu && (
+            <div
+              className="drawer-enter"
+              style={{
+                position: 'absolute',
+                top: '100%',
+                right: 0,
+                marginTop: 4,
+                width: 140,
+                background: 'var(--color-paper-raised)',
+                border: '1px solid var(--color-hair)',
+                boxShadow: '6px 6px 0 0 var(--color-hair)',
+                padding: '4px 0',
+                zIndex: 30,
+              }}
             >
-              <MoreVertical className="w-4 h-4" />
-            </button>
-
-            {/* Dropdown Menu */}
-            {showMenu && (
-              <>
-                <div
-                  className="fixed inset-0 z-10"
-                  onClick={() => setShowMenu(false)}
-                />
-                <div className="absolute right-0 top-full mt-1 z-20 w-32 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-1">
-                  {onEdit && (
-                    <button
-                      onClick={() => {
-                        setShowMenu(false)
-                        onEdit()
-                      }}
-                      className="w-full px-3 py-2 text-left text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                      Edit
-                    </button>
-                  )}
-                  {submission.status === 'published' && onView && (
-                    <button
-                      onClick={() => {
-                        setShowMenu(false)
-                        onView()
-                      }}
-                      className="w-full px-3 py-2 text-left text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
-                    >
-                      <Eye className="w-4 h-4" />
-                      View
-                    </button>
-                  )}
-                  {onDelete && (
-                    <button
-                      onClick={() => {
-                        setShowMenu(false)
-                        onDelete()
-                      }}
-                      className="w-full px-3 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 flex items-center gap-2"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      Delete
-                    </button>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Title */}
-        <h3
-          className={`text-lg font-semibold mb-2 leading-tight ${
-            submission.title
-              ? 'text-slate-900 dark:text-white'
-              : 'text-slate-400 dark:text-slate-500 italic'
-          }`}
-          style={{ fontFamily: 'var(--font-heading)' }}
-        >
-          {title}
-        </h3>
-
-        {/* Excerpt */}
-        <p
-          className={`text-sm mb-3 line-clamp-2 ${
-            submission.excerpt
-              ? 'text-slate-600 dark:text-slate-400'
-              : 'text-slate-400 dark:text-slate-500 italic'
-          }`}
-          style={{ fontFamily: 'var(--font-body)' }}
-        >
-          {excerpt}
-        </p>
-
-        {/* Tags */}
-        {submission.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mb-3">
-            {submission.tags.slice(0, 3).map((tag) => (
-              <span
-                key={tag}
-                className="px-2 py-0.5 text-xs font-medium bg-indigo-100 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 rounded-full"
-              >
-                {tag}
-              </span>
-            ))}
-            {submission.tags.length > 3 && (
-              <span className="px-2 py-0.5 text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-full">
-                +{submission.tags.length - 3}
-              </span>
-            )}
-          </div>
-        )}
-
-        {/* Footer: Date */}
-        <div
-          className="text-xs text-slate-500 dark:text-slate-500"
-          style={{ fontFamily: 'var(--font-body)' }}
-        >
-          {submission.status === 'published' && submission.publishedAt ? (
-            <span>Published {formatDate(submission.publishedAt)}</span>
-          ) : (
-            <span>Edited {formatRelativeTime(submission.updatedAt)}</span>
+              {onEdit && (
+                <MenuItem onClick={() => { setShowMenu(false); onEdit() }}>
+                  <Edit2 size={14} strokeWidth={1.5} />
+                  Edit
+                </MenuItem>
+              )}
+              {submission.status === 'published' && onView && (
+                <MenuItem onClick={() => { setShowMenu(false); onView() }}>
+                  <Eye size={14} strokeWidth={1.5} />
+                  View
+                </MenuItem>
+              )}
+              {onDelete && (
+                <MenuItem destructive onClick={() => { setShowMenu(false); onDelete() }}>
+                  <Trash2 size={14} strokeWidth={1.5} />
+                  Delete
+                </MenuItem>
+              )}
+            </div>
           )}
         </div>
       </div>
 
-      {/* Click overlay for editing */}
+      <h3
+        style={{
+          fontFamily: 'var(--font-serif)',
+          fontWeight: 600,
+          fontSize: 'var(--text-card-title)',
+          lineHeight: 1.25,
+          letterSpacing: '-0.01em',
+          color: hasTitle ? 'var(--color-ink)' : 'var(--color-ink-soft)',
+          fontStyle: hasTitle ? 'normal' : 'italic',
+          margin: 0,
+          marginBottom: 'var(--space-2)',
+        }}
+      >
+        {title}
+      </h3>
+
+      <p
+        style={{
+          fontFamily: 'var(--font-sans)',
+          fontSize: 'var(--text-ui-base)',
+          lineHeight: 1.55,
+          color: hasExcerpt ? 'var(--color-ink-muted)' : 'var(--color-ink-soft)',
+          fontStyle: hasExcerpt ? 'normal' : 'italic',
+          margin: 0,
+          marginBottom: 'var(--space-3)',
+          display: '-webkit-box',
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical',
+          overflow: 'hidden',
+        }}
+      >
+        {excerpt}
+      </p>
+
+      {submission.tags.length > 0 && (
+        <div className="flex flex-wrap" style={{ gap: 6, marginBottom: 'var(--space-3)' }}>
+          {submission.tags.slice(0, 3).map((tag) => (
+            <span
+              key={tag}
+              className="font-mono uppercase"
+              style={{
+                fontSize: 'var(--text-mono-xs)',
+                color: 'var(--color-ink-muted)',
+                letterSpacing: '0.04em',
+                padding: '2px 8px',
+                border: '1px solid var(--color-hair)',
+                borderRadius: 2,
+              }}
+            >
+              {tag}
+            </span>
+          ))}
+          {submission.tags.length > 3 && (
+            <span
+              className="font-mono"
+              style={{
+                fontSize: 'var(--text-mono-xs)',
+                color: 'var(--color-ink-soft)',
+                padding: '2px 8px',
+              }}
+            >
+              +{submission.tags.length - 3}
+            </span>
+          )}
+        </div>
+      )}
+
+      <div
+        className="font-mono uppercase"
+        style={{
+          fontSize: 'var(--text-mono-xs)',
+          letterSpacing: '0.04em',
+          color: 'var(--color-ink-soft)',
+        }}
+      >
+        {submission.status === 'published' && submission.publishedAt
+          ? `Published · ${formatEditorialDate(submission.publishedAt)}`
+          : `Edited · ${formatRelativeTime(submission.updatedAt)}`}
+      </div>
+
       <button
+        type="button"
         onClick={onEdit}
-        className="absolute inset-0 z-0 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-inset rounded-xl"
         aria-label={`Edit ${title}`}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+          zIndex: 0,
+        }}
       />
     </article>
+  )
+}
+
+function MenuItem({
+  onClick,
+  destructive,
+  children,
+}: {
+  onClick: () => void
+  destructive?: boolean
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex items-center"
+      style={{
+        gap: 8,
+        width: '100%',
+        textAlign: 'left',
+        padding: '8px 12px',
+        fontFamily: 'var(--font-sans)',
+        fontSize: 'var(--text-ui-sm)',
+        fontWeight: 500,
+        color: destructive ? 'var(--color-rose)' : 'var(--color-ink)',
+        background: 'transparent',
+        border: 'none',
+        cursor: 'pointer',
+        transition: 'background-color 100ms ease',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = destructive ? 'var(--color-rose-tint)' : 'var(--color-accent-tint)'
+      }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+    >
+      {children}
+    </button>
   )
 }

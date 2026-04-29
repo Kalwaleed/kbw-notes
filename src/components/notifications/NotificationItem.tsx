@@ -8,11 +8,23 @@ interface NotificationItemProps {
   onNavigate?: (url: string) => void
 }
 
-const typeConfig: Record<NotificationType, { icon: typeof MessageCircle; color: string }> = {
-  comment_reply: { icon: MessageCircle, color: 'text-indigo-500' },
-  submission_comment: { icon: MessageCircle, color: 'text-violet-500' },
-  submission_like: { icon: Heart, color: 'text-rose-500' },
-  mention: { icon: AtSign, color: 'text-amber-500' },
+const typeIcon: Record<NotificationType, typeof MessageCircle> = {
+  comment_reply: MessageCircle,
+  submission_comment: MessageCircle,
+  submission_like: Heart,
+  mention: AtSign,
+}
+
+function formatRelativeTime(iso: string): string {
+  const diffMs = Date.now() - new Date(iso).getTime()
+  const minutes = Math.floor(diffMs / 60_000)
+  if (minutes < 1) return 'now'
+  if (minutes < 60) return `${minutes}m ago`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.floor(hours / 24)
+  if (days < 7) return `${days}d ago`
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase()
 }
 
 export function NotificationItem({
@@ -21,25 +33,9 @@ export function NotificationItem({
   onDelete,
   onNavigate,
 }: NotificationItemProps) {
-  const { icon: Icon, color } = typeConfig[notification.type]
+  const Icon = typeIcon[notification.type]
+  const isUnread = !notification.isRead
 
-  // Format relative time
-  const formatRelativeTime = (dateString: string) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffMs = now.getTime() - date.getTime()
-    const diffMins = Math.floor(diffMs / 60000)
-    const diffHours = Math.floor(diffMs / 3600000)
-    const diffDays = Math.floor(diffMs / 86400000)
-
-    if (diffMins < 1) return 'Just now'
-    if (diffMins < 60) return `${diffMins}m ago`
-    if (diffHours < 24) return `${diffHours}h ago`
-    if (diffDays < 7) return `${diffDays}d ago`
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-  }
-
-  // Get actor initials for avatar fallback
   const initials = notification.actor?.displayName
     ?.split(' ')
     .map((n) => n[0])
@@ -48,12 +44,8 @@ export function NotificationItem({
     .slice(0, 2) || '?'
 
   const handleClick = () => {
-    if (!notification.isRead) {
-      onMarkAsRead?.(notification.id)
-    }
-    if (notification.actionUrl) {
-      onNavigate?.(notification.actionUrl)
-    }
+    if (isUnread) onMarkAsRead?.(notification.id)
+    if (notification.actionUrl) onNavigate?.(notification.actionUrl)
   }
 
   const handleDelete = (e: React.MouseEvent) => {
@@ -64,65 +56,121 @@ export function NotificationItem({
   return (
     <div
       onClick={handleClick}
-      className={`
-        group relative flex items-start gap-4 p-4 cursor-pointer transition-colors
-        ${notification.isRead
-          ? 'bg-white dark:bg-slate-900'
-          : 'bg-violet-50/50 dark:bg-violet-950/20'
-        }
-        hover:bg-slate-50 dark:hover:bg-slate-800/50
-      `}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick() } }}
+      className="group flex items-start"
+      style={{
+        position: 'relative',
+        gap: 'var(--space-4)',
+        padding: 'var(--space-4) var(--space-5)',
+        background: 'var(--color-paper)',
+        borderTop: '1px solid var(--color-hair)',
+        borderLeft: isUnread ? '2px solid var(--color-accent)' : '2px solid transparent',
+        cursor: 'pointer',
+        transition: 'background-color 100ms ease',
+      }}
+      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-paper-raised)' }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--color-paper)' }}
     >
-      {/* Unread indicator */}
-      {!notification.isRead && (
-        <div className="absolute left-1.5 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-violet-500" />
-      )}
-
-      {/* Icon or Avatar */}
-      <div className="flex-shrink-0">
+      <div style={{ flexShrink: 0 }}>
         {notification.actor?.avatarUrl ? (
           <img
             src={notification.actor.avatarUrl}
             alt={notification.actor.displayName}
-            className="w-10 h-10 rounded-full object-cover ring-2 ring-slate-100 dark:ring-slate-800"
+            style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--color-hair)' }}
           />
         ) : notification.actor ? (
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white text-sm font-medium ring-2 ring-slate-100 dark:ring-slate-800">
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: '50%',
+              background: 'var(--color-accent-tint)',
+              color: 'var(--color-ink)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontFamily: 'var(--font-sans)',
+              fontSize: 'var(--text-ui-sm)',
+              fontWeight: 500,
+              border: '1px solid var(--color-hair)',
+            }}
+          >
             {initials}
           </div>
         ) : (
-          <div className={`w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center ${color}`}>
-            <Icon className="w-5 h-5" />
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--color-ink-muted)',
+              border: '1px solid var(--color-hair)',
+              borderRadius: 2,
+            }}
+          >
+            <Icon size={16} strokeWidth={1.5} />
           </div>
         )}
       </div>
 
-      {/* Content */}
-      <div className="flex-1 min-w-0">
+      <div style={{ flex: 1, minWidth: 0 }}>
         <p
-          className={`text-sm ${notification.isRead ? 'text-slate-600 dark:text-slate-400' : 'text-slate-900 dark:text-white font-medium'}`}
-          style={{ fontFamily: 'var(--font-body)' }}
+          style={{
+            margin: 0,
+            fontFamily: 'var(--font-sans)',
+            fontSize: 'var(--text-ui-base)',
+            lineHeight: 1.55,
+            color: 'var(--color-ink)',
+            fontWeight: isUnread ? 500 : 400,
+          }}
         >
           {notification.message}
         </p>
-        <div className="flex items-center gap-2 mt-1">
-          <Icon className={`w-3.5 h-3.5 ${color}`} />
+        <div
+          className="flex items-center"
+          style={{ gap: 8, marginTop: 4 }}
+        >
+          <Icon size={12} strokeWidth={1.5} style={{ color: 'var(--color-ink-soft)' }} aria-hidden="true" />
           <span
-            className="text-xs text-slate-500 dark:text-slate-500"
-            style={{ fontFamily: 'var(--font-body)' }}
+            className="font-mono uppercase"
+            style={{
+              fontSize: 'var(--text-mono-xs)',
+              letterSpacing: '0.04em',
+              color: 'var(--color-ink-soft)',
+            }}
           >
             {formatRelativeTime(notification.createdAt)}
           </span>
         </div>
       </div>
 
-      {/* Delete button */}
       <button
+        type="button"
         onClick={handleDelete}
-        className="flex-shrink-0 p-1.5 rounded-full text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 opacity-0 group-hover:opacity-100 transition-all"
         aria-label="Delete notification"
+        className="opacity-0 group-hover:opacity-100"
+        style={{
+          flexShrink: 0,
+          width: 28,
+          height: 28,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'transparent',
+          color: 'var(--color-ink-muted)',
+          border: 'none',
+          borderRadius: 2,
+          cursor: 'pointer',
+          transition: 'opacity 100ms ease, color 100ms ease',
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-rose)' }}
+        onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-ink-muted)' }}
       >
-        <Trash2 className="w-4 h-4" />
+        <Trash2 size={14} strokeWidth={1.5} />
       </button>
     </div>
   )

@@ -8,18 +8,35 @@ interface SettingRowProps {
 
 export function SettingRow({ label, description, children }: SettingRowProps) {
   return (
-    <div className="flex items-center justify-between gap-4 py-2">
-      <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium text-slate-900 dark:text-white">
+    <div
+      className="flex items-center justify-between"
+      style={{ gap: 'var(--space-4)', padding: 'var(--space-2) 0' }}
+    >
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div
+          style={{
+            fontFamily: 'var(--font-sans)',
+            fontSize: 'var(--text-ui-base)',
+            fontWeight: 500,
+            color: 'var(--color-ink)',
+          }}
+        >
           {label}
         </div>
         {description && (
-          <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          <div
+            style={{
+              fontFamily: 'var(--font-sans)',
+              fontSize: 'var(--text-ui-sm)',
+              color: 'var(--color-ink-muted)',
+              marginTop: 2,
+            }}
+          >
             {description}
           </div>
         )}
       </div>
-      <div className="flex-shrink-0">{children}</div>
+      <div style={{ flexShrink: 0 }}>{children}</div>
     </div>
   )
 }

@@ -24,27 +24,20 @@ export function SettingsPage() {
   } = useSettings()
 
   const navigationItems = [
-    { label: 'Home', href: '/kbw-notes/home', isActive: false },
-    { label: 'Settings', href: '/kbw-notes/settings', isActive: location.pathname === '/kbw-notes/settings' },
+    { label: 'Home',          href: '/kbw-notes/home',          isActive: false },
+    { label: 'Submissions',   href: '/kbw-notes/submissions',   isActive: false },
+    { label: 'Notifications', href: '/kbw-notes/notifications', isActive: false },
+    { label: 'Settings',      href: '/kbw-notes/settings',      isActive: location.pathname === '/kbw-notes/settings' },
   ]
 
-  const handleNavigate = (href: string) => {
-    navigate(href)
-  }
+  const handleNavigate = (href: string) => navigate(href)
+  const handleLogout = async () => { await signOut(); navigate('/') }
+  const handleSignIn = () => navigate('/', { state: { from: location.pathname } })
 
-  const handleLogout = async () => {
-    await signOut()
-    navigate('/')
-  }
-
-  const handleSignIn = () => {
-    navigate('/', { state: { from: location.pathname } })
-  }
-
-  // User display info
   const userDisplay = user
     ? {
         name: user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email ?? 'User',
+        email: user.email ?? undefined,
         avatarUrl: user.user_metadata?.avatar_url,
       }
     : undefined
@@ -57,31 +50,59 @@ export function SettingsPage() {
       onLogout={handleLogout}
       onSignIn={handleSignIn}
     >
-      <div className="space-y-6">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
         <button
+          type="button"
           onClick={() => navigate('/kbw-notes/home')}
-          className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
+          className="font-mono uppercase inline-flex items-center"
+          style={{
+            gap: 6,
+            fontSize: 'var(--text-mono-sm)',
+            fontWeight: 500,
+            letterSpacing: '0.04em',
+            color: 'var(--color-ink-muted)',
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            alignSelf: 'flex-start',
+            padding: 0,
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-ink)' }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-ink-muted)' }}
         >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Home
+          <ArrowLeft size={14} strokeWidth={1.5} />
+          Back to home
         </button>
 
-        <div className="mb-8">
-          <h1
-            className="text-3xl font-bold text-slate-900 dark:text-white"
-            style={{ fontFamily: 'var(--font-heading)' }}
+        <header>
+          <div
+            className="font-mono uppercase"
+            style={{
+              fontSize: 'var(--text-mono-xs)',
+              letterSpacing: '0.08em',
+              color: 'var(--color-accent)',
+              fontWeight: 600,
+              marginBottom: 'var(--space-2)',
+            }}
           >
-            Settings
+            Preferences
+          </div>
+          <h1
+            style={{
+              fontFamily: 'var(--font-serif)',
+              fontWeight: 700,
+              fontSize: 'var(--text-h2)',
+              lineHeight: 1.15,
+              letterSpacing: '-0.02em',
+              color: 'var(--color-ink)',
+              margin: 0,
+            }}
+          >
+            Settings.
           </h1>
-          <p className="mt-1 text-slate-600 dark:text-slate-400">
-            Customize your experience
-          </p>
-        </div>
+        </header>
 
-        <AppearanceSettings
-          theme={appearance.theme}
-          onThemeChange={setTheme}
-        />
+        <AppearanceSettings theme={appearance.theme} onThemeChange={setTheme} />
 
         <ReadingSettings
           defaultSort={reading.defaultSort}

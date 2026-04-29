@@ -27,9 +27,7 @@ export function LoginPage() {
   })()
 
   useEffect(() => {
-    if (user && !isLoading) {
-      navigate(from, { replace: true })
-    }
+    if (user && !isLoading) navigate(from, { replace: true })
   }, [user, isLoading, navigate, from])
 
   const normalizedEmail = email.toLowerCase().trim()
@@ -61,123 +59,283 @@ export function LoginPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
-        <div className="text-slate-500 dark:text-slate-400">Loading...</div>
+      <div
+        style={{
+          minHeight: '100vh',
+          background: 'var(--color-paper)',
+          color: 'var(--color-ink-soft)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontFamily: 'var(--font-mono)',
+          fontSize: 'var(--text-mono-sm)',
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+        }}
+      >
+        Loading…
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-6">
-        <div className="text-center">
-          <h1
-            className="text-3xl font-bold text-slate-900 dark:text-white"
-            style={{ fontFamily: 'var(--font-heading)' }}
+    <div
+      style={{
+        minHeight: '100vh',
+        background: 'var(--color-paper)',
+        color: 'var(--color-ink)',
+        position: 'relative',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 'var(--space-7) var(--space-5)',
+      }}
+    >
+      <div className="paper-grain" aria-hidden="true" />
+
+      <div style={{ width: '100%', maxWidth: 480, position: 'relative', zIndex: 2 }}>
+        {/* Wordmark */}
+        <div style={{ textAlign: 'left', marginBottom: 'var(--space-9)' }}>
+          <div
+            className="font-mono uppercase"
+            style={{
+              fontSize: 'var(--text-mono-xs)',
+              letterSpacing: '0.08em',
+              color: 'var(--color-accent)',
+              fontWeight: 600,
+              marginBottom: 'var(--space-2)',
+            }}
           >
-            Welcome to kbw Notes
+            ── kbw Notes
+          </div>
+          <h1
+            style={{
+              fontFamily: 'var(--font-serif)',
+              fontWeight: 700,
+              fontSize: 'var(--text-h2)',
+              lineHeight: 1.15,
+              letterSpacing: '-0.02em',
+              color: 'var(--color-ink)',
+              margin: 0,
+              fontFeatureSettings: '"ss02" 1',
+            }}
+          >
+            {formState === 'sent' ? 'Check your inbox.' : 'Sign in.'}
           </h1>
-          <p className="mt-2 text-slate-600 dark:text-slate-400">
+          <p
+            style={{
+              fontFamily: 'var(--font-sans)',
+              fontSize: 'var(--text-ui-base)',
+              color: 'var(--color-ink-muted)',
+              margin: 0,
+              marginTop: 'var(--space-2)',
+            }}
+          >
             {formState === 'sent'
-              ? 'Check your inbox for a sign-in link.'
-              : 'Enter your @kbw.vc email to receive a magic link.'}
+              ? 'A sign-in link is on its way if your email is on the invite list.'
+              : 'Invite-only. Enter your @kbw.vc address to receive a magic link.'}
           </p>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-8">
+        <div style={{ borderTop: '1px solid var(--color-hair)', paddingTop: 'var(--space-7)' }}>
           {formState === 'sent' ? (
-            <div className="space-y-4 text-center">
-              <div className="mx-auto w-12 h-12 flex items-center justify-center rounded-full bg-violet-100 dark:bg-violet-950/40">
-                <MailCheck className="h-6 w-6 text-violet-600 dark:text-violet-400" />
+            <div>
+              <div className="flex items-center" style={{ gap: 'var(--space-3)', marginBottom: 'var(--space-4)' }}>
+                <MailCheck size={20} strokeWidth={1.5} style={{ color: 'var(--color-accent)' }} />
+                <span
+                  className="font-mono"
+                  style={{
+                    fontSize: 'var(--text-mono-sm)',
+                    letterSpacing: '0.04em',
+                    color: 'var(--color-ink)',
+                  }}
+                >
+                  {normalizedEmail}
+                </span>
               </div>
-              <p className="text-sm text-slate-700 dark:text-slate-300">
-                If <span className="font-medium">{normalizedEmail}</span> is on the invite list, a sign-in
-                link is on its way. The link expires in a few minutes.
+              <p
+                style={{
+                  fontFamily: 'var(--font-sans)',
+                  fontSize: 'var(--text-ui-base)',
+                  color: 'var(--color-ink-muted)',
+                  margin: 0,
+                  marginBottom: 'var(--space-5)',
+                }}
+              >
+                The link expires in a few minutes. Open it on this device.
               </p>
               <button
                 type="button"
-                onClick={() => {
-                  setFormState('idle')
-                  setEmail('')
+                onClick={() => { setFormState('idle'); setEmail('') }}
+                className="font-mono uppercase"
+                style={{
+                  fontSize: 'var(--text-mono-sm)',
+                  fontWeight: 600,
+                  letterSpacing: '0.04em',
+                  color: 'var(--color-accent)',
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                  textUnderlineOffset: 4,
+                  padding: 0,
                 }}
-                className="text-sm text-violet-600 dark:text-violet-400 hover:underline"
               >
                 Use a different email
               </button>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit}>
               {formState === 'error' && errorMessage && (
-                <div className="p-4 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800">
-                  <p className="text-sm text-red-600 dark:text-red-400">{errorMessage}</p>
+                <div
+                  role="alert"
+                  style={{
+                    padding: 'var(--space-3) var(--space-4)',
+                    background: 'var(--color-rose-tint)',
+                    borderLeft: '2px solid var(--color-rose)',
+                    fontFamily: 'var(--font-sans)',
+                    fontStyle: 'italic',
+                    fontSize: 'var(--text-ui-sm)',
+                    color: 'var(--color-rose)',
+                    marginBottom: 'var(--space-4)',
+                  }}
+                >
+                  {errorMessage}
                 </div>
               )}
 
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Email address
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Mail className="h-5 w-5 text-slate-400" />
-                  </div>
-                  <input
-                    type="email"
-                    id="email"
-                    value={email}
-                    onChange={(e) => {
-                      setEmail(e.target.value)
-                      if (formState === 'error') {
-                        setFormState('idle')
-                        setErrorMessage(null)
-                      }
-                    }}
-                    placeholder="you@kbw.vc"
-                    disabled={formState === 'sending'}
-                    className="block w-full pl-10 pr-3 py-3 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
-                    autoComplete="email"
-                    autoFocus
-                  />
-                </div>
-                {showDomainWarning && (
-                  <p className="mt-2 text-sm text-amber-600 dark:text-amber-400">
-                    Only @kbw.vc emails are allowed
-                  </p>
-                )}
+              <label
+                htmlFor="email"
+                className="font-mono uppercase"
+                style={{
+                  display: 'block',
+                  fontSize: 'var(--text-mono-xs)',
+                  letterSpacing: '0.08em',
+                  color: 'var(--color-ink-soft)',
+                  fontWeight: 600,
+                  marginBottom: 'var(--space-2)',
+                }}
+              >
+                Email address
+              </label>
+              <div style={{ position: 'relative' }}>
+                <Mail
+                  size={16}
+                  strokeWidth={1.5}
+                  style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: 12,
+                    transform: 'translateY(-50%)',
+                    color: 'var(--color-ink-soft)',
+                  }}
+                  aria-hidden="true"
+                />
+                <input
+                  type="email"
+                  id="email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value)
+                    if (formState === 'error') {
+                      setFormState('idle')
+                      setErrorMessage(null)
+                    }
+                  }}
+                  placeholder="you@kbw.vc"
+                  disabled={formState === 'sending'}
+                  autoComplete="email"
+                  autoFocus
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px 12px 40px',
+                    background: 'var(--color-paper-raised)',
+                    color: 'var(--color-ink)',
+                    border: `1px solid ${showDomainWarning ? 'var(--color-rose)' : 'var(--color-hair)'}`,
+                    borderRadius: 0,
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: 'var(--text-mono-base)',
+                    outline: 'none',
+                  }}
+                />
               </div>
+              {showDomainWarning && (
+                <p
+                  className="font-mono uppercase"
+                  style={{
+                    margin: 0,
+                    marginTop: 'var(--space-2)',
+                    fontSize: 'var(--text-mono-xs)',
+                    letterSpacing: '0.04em',
+                    color: 'var(--color-rose)',
+                  }}
+                >
+                  Only @kbw.vc emails are allowed
+                </p>
+              )}
 
               <button
                 type="submit"
                 disabled={formState === 'sending' || !normalizedEmail || showDomainWarning}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium rounded-lg bg-violet-600 hover:bg-violet-700 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="font-mono uppercase"
+                style={{
+                  width: '100%',
+                  marginTop: 'var(--space-5)',
+                  padding: '12px 16px',
+                  fontSize: 'var(--text-mono-sm)',
+                  fontWeight: 600,
+                  letterSpacing: '0.04em',
+                  background: 'var(--color-ink)',
+                  color: 'var(--color-paper)',
+                  border: 'none',
+                  borderRadius: 2,
+                  cursor: formState === 'sending' || !normalizedEmail || showDomainWarning ? 'not-allowed' : 'pointer',
+                  opacity: formState === 'sending' || !normalizedEmail || showDomainWarning ? 0.4 : 1,
+                  transition: 'background-color 100ms ease',
+                }}
+                onMouseEnter={(e) => {
+                  if (formState === 'sending' || !normalizedEmail || showDomainWarning) return
+                  e.currentTarget.style.background = 'var(--color-accent)'
+                }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--color-ink)' }}
               >
-                {formState === 'sending' ? (
-                  <>
-                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    Sending link...
-                  </>
-                ) : (
-                  'Send sign-in link'
-                )}
+                {formState === 'sending' ? 'Sending…' : 'Send sign-in link'}
               </button>
             </form>
           )}
         </div>
 
-        <div className="text-center">
+        <div style={{ marginTop: 'var(--space-7)', textAlign: 'center' }}>
           <button
+            type="button"
             onClick={toggleTheme}
-            className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
+            className="font-mono uppercase"
+            style={{
+              fontSize: 'var(--text-mono-xs)',
+              letterSpacing: '0.04em',
+              color: 'var(--color-ink-soft)',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+            }}
           >
-            {resolvedTheme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            Switch to {resolvedTheme === 'dark' ? 'light' : 'dark'} mode
           </button>
         </div>
 
-        <p className="text-center text-xs text-slate-400 dark:text-slate-500">
-          By signing in, you agree to our Terms of Service and Privacy Policy
+        <hr className="ascii short" aria-hidden="true" />
+
+        <p
+          className="font-mono uppercase"
+          style={{
+            margin: 0,
+            textAlign: 'center',
+            fontSize: 'var(--text-mono-xs)',
+            letterSpacing: '0.04em',
+            color: 'var(--color-ink-soft)',
+          }}
+        >
+          By signing in, you accept our Terms and Privacy Policy.
         </p>
       </div>
     </div>

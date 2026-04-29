@@ -6,7 +6,6 @@ import {
   Save,
   Send,
   Eye,
-  Loader2,
   Check,
   AlertCircle,
   MoreVertical,
@@ -23,13 +22,27 @@ import {
 import { useAuth, useSubmission, useSubmissionDraft } from '../hooks'
 import type { SubmissionFormData } from '../types/submission'
 
+/**
+ * Renders pre-sanitized HTML preview. Caller is responsible for running
+ * the input through DOMPurify before passing it here.
+ */
+function SanitizedPreview({ html }: { html: string }) {
+  return (
+    <div
+      className="prose-article kbw-prose-section"
+      // Input is DOMPurify-sanitized in the parent before reaching here.
+      // eslint-disable-next-line react/no-danger
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  )
+}
+
 export function SubmissionDetailPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { id } = useParams<{ id: string }>()
   const { user, isAdmin, signOut } = useAuth()
-  const { submission, isLoading, error, publish, unpublish, remove } =
-    useSubmission(id)
+  const { submission, isLoading, error, publish, unpublish, remove } = useSubmission(id)
 
   const isPublished = submission?.status === 'published'
   const editsRemaining = submission?.editsRemaining ?? 0
@@ -41,28 +54,16 @@ export function SubmissionDetailPage() {
   const [showPreview, setShowPreview] = useState(false)
 
   const navigationItems = [
-    { label: 'Home', href: '/kbw-notes/home', isActive: false },
-    {
-      label: 'Submissions',
-      href: '/kbw-notes/submissions',
-      isActive: location.pathname.startsWith('/kbw-notes/submissions'),
-    },
+    { label: 'Home',          href: '/kbw-notes/home',          isActive: false },
+    { label: 'Submissions',   href: '/kbw-notes/submissions',   isActive: location.pathname.startsWith('/kbw-notes/submissions') },
+    { label: 'Notifications', href: '/kbw-notes/notifications', isActive: false },
+    { label: 'Settings',      href: '/kbw-notes/settings',      isActive: false },
   ]
 
-  const handleNavigate = (href: string) => {
-    navigate(href)
-  }
+  const handleNavigate = (href: string) => navigate(href)
+  const handleLogout = async () => { await signOut(); navigate('/') }
+  const handleSignIn = () => navigate('/', { state: { from: location.pathname } })
 
-  const handleLogout = async () => {
-    await signOut()
-    navigate('/')
-  }
-
-  const handleSignIn = () => {
-    navigate('/', { state: { from: location.pathname } })
-  }
-
-  // Initial form data from submission
   const initialData = useMemo<SubmissionFormData>(
     () => ({
       title: submission?.title ?? '',
@@ -74,7 +75,6 @@ export function SubmissionDetailPage() {
     [submission]
   )
 
-  // Auto-save draft hook
   const {
     formData,
     updateField,
@@ -86,41 +86,29 @@ export function SubmissionDetailPage() {
   } = useSubmissionDraft({
     submissionId: id ?? '',
     initialData,
-    autoSaveInterval: 30000, // 30 seconds
-    // For non-admins on published posts, every UPDATE counts toward the 3-edit cap.
-    // Auto-save would burn the cap; require an explicit Save click instead.
+    autoSaveInterval: 30000,
     autoSaveEnabled: !isPublished || isAdmin,
   })
 
+  const sanitizedPreviewHtml = useMemo(
+    () => DOMPurify.sanitize(formData.content),
+    [formData.content]
+  )
+
   const handlePublish = async () => {
     if (!submission) return
-
-    // Validate required fields
-    if (!formData.title.trim()) {
-      setPublishError('Please add a title before publishing')
-      return
-    }
-    if (!formData.content.trim()) {
-      setPublishError('Please add some content before publishing')
-      return
-    }
-
+    if (!formData.title.trim()) { setPublishError('Add a title before publishing'); return }
+    if (!formData.content.trim()) { setPublishError('Add some content before publishing'); return }
     setIsPublishing(true)
     setPublishError(null)
-
     try {
-      // Save any pending changes first — check the returned error directly
-      // (not React state, which would be stale until next render)
       const saveErr = await saveNow()
       if (saveErr) {
         setPublishError('Failed to save changes before publishing. Please try again.')
         return
       }
-
       const result = await publish()
-      if (!result) {
-        setPublishError('Failed to publish. Please try again.')
-      }
+      if (!result) setPublishError('Failed to publish. Please try again.')
     } finally {
       setIsPublishing(false)
     }
@@ -134,72 +122,46 @@ export function SubmissionDetailPage() {
 
   const handleDelete = async () => {
     if (!submission) return
-    const confirmed = window.confirm(
-      'Are you sure you want to delete this submission? This cannot be undone.'
-    )
+    const confirmed = window.confirm('Delete this submission? This cannot be undone.')
     if (confirmed) {
       await remove()
       navigate('/kbw-notes/submissions')
     }
   }
 
-  // User display info
   const userDisplay = user
     ? {
-        name:
-          user.user_metadata?.full_name ??
-          user.user_metadata?.name ??
-          user.email ??
-          'User',
+        name: user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email ?? 'User',
+        email: user.email ?? undefined,
         avatarUrl: user.user_metadata?.avatar_url,
       }
     : undefined
 
-  // Require authentication
   if (!user) {
     return (
-      <AppShell
-        navigationItems={navigationItems}
-        user={userDisplay}
-        onNavigate={handleNavigate}
-        onLogout={handleLogout}
-        onSignIn={handleSignIn}
-      >
-        <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-          <h1
-            className="text-2xl font-bold text-slate-900 dark:text-white mb-4"
-            style={{ fontFamily: 'var(--font-heading)' }}
-          >
-            Sign in to edit submissions
-          </h1>
-          <p className="text-slate-600 dark:text-slate-400 mb-6">
-            You need to be logged in to edit blog submissions.
-          </p>
-          <button
-            onClick={handleSignIn}
-            className="px-6 py-3 text-sm font-medium rounded-lg bg-violet-600 text-white hover:bg-violet-700 transition-colors"
-          >
-            Sign In
-          </button>
-        </div>
+      <AppShell {...{ navigationItems, user: userDisplay, onNavigate: handleNavigate, onLogout: handleLogout, onSignIn: handleSignIn }}>
+        <CenteredMessage title="Sign in to edit submissions.">
+          <PrimaryButton onClick={handleSignIn}>Sign in</PrimaryButton>
+        </CenteredMessage>
       </AppShell>
     )
   }
 
   if (isLoading) {
     return (
-      <AppShell
-        navigationItems={navigationItems}
-        user={userDisplay}
-        onNavigate={handleNavigate}
-        onLogout={handleLogout}
-        onSignIn={handleSignIn}
-      >
-        <div className="flex flex-col items-center justify-center py-16">
-          <Loader2 className="w-8 h-8 text-violet-500 animate-spin mb-4" />
-          <p className="text-slate-600 dark:text-slate-400">
-            Loading submission...
-          </p>
+      <AppShell {...{ navigationItems, user: userDisplay, onNavigate: handleNavigate, onLogout: handleLogout, onSignIn: handleSignIn }}>
+        <div
+          style={{
+            padding: 'var(--space-9) 0',
+            textAlign: 'center',
+            fontFamily: 'var(--font-mono)',
+            fontSize: 'var(--text-mono-xs)',
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            color: 'var(--color-ink-soft)',
+          }}
+        >
+          Loading submission…
         </div>
       </AppShell>
     )
@@ -207,159 +169,128 @@ export function SubmissionDetailPage() {
 
   if (error || !submission) {
     return (
-      <AppShell
-        navigationItems={navigationItems}
-        user={userDisplay}
-        onNavigate={handleNavigate}
-        onLogout={handleLogout}
-        onSignIn={handleSignIn}
-      >
-        <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-          <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
-          <h1
-            className="text-2xl font-bold text-slate-900 dark:text-white mb-2"
-            style={{ fontFamily: 'var(--font-heading)' }}
-          >
-            Submission not found
-          </h1>
-          <p className="text-slate-600 dark:text-slate-400 mb-6">
-            {error?.message ?? "This submission doesn't exist or you don't have access to it."}
-          </p>
-          <button
-            onClick={() => navigate('/kbw-notes/submissions')}
-            className="px-4 py-2 text-sm font-medium rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors"
-          >
-            Back to Submissions
-          </button>
-        </div>
+      <AppShell {...{ navigationItems, user: userDisplay, onNavigate: handleNavigate, onLogout: handleLogout, onSignIn: handleSignIn }}>
+        <CenteredMessage
+          icon={AlertCircle}
+          kicker="Not found"
+          title="Submission not found."
+          description={error?.message ?? 'This submission does not exist or you do not have access to it.'}
+        >
+          <PrimaryButton onClick={() => navigate('/kbw-notes/submissions')}>Back to submissions</PrimaryButton>
+        </CenteredMessage>
       </AppShell>
     )
   }
 
   return (
-    <AppShell
-      navigationItems={navigationItems}
-      user={userDisplay}
-      onNavigate={handleNavigate}
-      onLogout={handleLogout}
-      onSignIn={handleSignIn}
-    >
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-3">
+    <AppShell {...{ navigationItems, user: userDisplay, onNavigate: handleNavigate, onLogout: handleLogout, onSignIn: handleSignIn }} containerWidth="wide">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-7)' }}>
+        <div className="flex flex-wrap items-end justify-between" style={{ gap: 'var(--space-4)' }}>
+          <div>
             <button
+              type="button"
               onClick={() => navigate('/kbw-notes/submissions')}
-              className="p-2 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:text-slate-300 dark:hover:bg-slate-800 transition-colors"
+              className="font-mono uppercase inline-flex items-center"
+              style={{
+                gap: 6,
+                fontSize: 'var(--text-mono-xs)',
+                letterSpacing: '0.04em',
+                color: 'var(--color-ink-muted)',
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                marginBottom: 'var(--space-3)',
+              }}
               aria-label="Back to submissions"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft size={14} strokeWidth={1.5} />
+              Submissions
             </button>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1
-                  className="text-xl font-bold text-slate-900 dark:text-white"
-                  style={{ fontFamily: 'var(--font-heading)' }}
-                >
-                  {submission.status === 'draft' ? 'Edit Draft' : 'Edit Post'}
-                </h1>
-                <StatusBadge status={submission.status} />
-              </div>
-              {/* Save status */}
-              <p className="text-xs text-slate-500 mt-0.5">
-                {isSaving ? (
-                  <span className="flex items-center gap-1">
-                    <Loader2 className="w-3 h-3 animate-spin" />
-                    Saving...
-                  </span>
-                ) : isDirty ? (
-                  'Unsaved changes'
-                ) : lastSaved ? (
-                  <span className="flex items-center gap-1">
-                    <Check className="w-3 h-3 text-emerald-500" />
-                    Saved
-                  </span>
-                ) : (
-                  'No changes'
-                )}
-              </p>
-              {isPublished && !isAdmin && (
-                <p className={`text-xs mt-0.5 ${editsRemaining === 0 ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400'}`}>
-                  {editsRemaining === 0
-                    ? 'Edit cap reached. Contact an admin to make further changes.'
-                    : `${editsRemaining} edit${editsRemaining === 1 ? '' : 's'} remaining on this published post`}
-                </p>
-              )}
+            <div className="flex items-center" style={{ gap: 'var(--space-3)' }}>
+              <h1
+                style={{
+                  fontFamily: 'var(--font-serif)',
+                  fontWeight: 700,
+                  fontSize: 'var(--text-h2)',
+                  lineHeight: 1.15,
+                  letterSpacing: '-0.02em',
+                  color: 'var(--color-ink)',
+                  margin: 0,
+                }}
+              >
+                {submission.status === 'draft' ? 'Edit draft.' : 'Edit post.'}
+              </h1>
+              <StatusBadge status={submission.status} />
             </div>
+            <p
+              className="font-mono uppercase"
+              style={{
+                fontSize: 'var(--text-mono-xs)',
+                letterSpacing: '0.04em',
+                color: isSaving ? 'var(--color-ink-muted)' : isDirty ? 'var(--color-amber)' : lastSaved ? 'var(--color-accent)' : 'var(--color-ink-soft)',
+                margin: 0,
+                marginTop: 'var(--space-2)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              {isSaving ? '· Saving…' : isDirty ? '· Unsaved changes' : lastSaved ? <><Check size={12} strokeWidth={1.5} /> Saved</> : '· No changes'}
+            </p>
+            {isPublished && !isAdmin && (
+              <p
+                className="font-mono uppercase"
+                style={{
+                  fontSize: 'var(--text-mono-xs)',
+                  letterSpacing: '0.04em',
+                  color: editsRemaining === 0 ? 'var(--color-rose)' : 'var(--color-amber)',
+                  margin: 0,
+                  marginTop: 4,
+                }}
+              >
+                {editsRemaining === 0
+                  ? '⚠ Edit cap reached — contact an admin'
+                  : `${editsRemaining} edit${editsRemaining === 1 ? '' : 's'} remaining`}
+              </p>
+            )}
           </div>
 
-          {/* Actions */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={saveNow}
-              disabled={!isDirty || isSaving || editLocked}
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              title={editLocked ? 'Edit cap reached for this published post' : undefined}
-            >
-              <Save className="w-4 h-4" />
-              <span className="hidden sm:inline">Save</span>
-            </button>
-
-            <button
-              onClick={() => setShowPreview(!showPreview)}
-              className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border transition-colors ${
-                showPreview
-                  ? 'border-violet-300 bg-violet-50 text-violet-700 dark:border-violet-700 dark:bg-violet-950/30 dark:text-violet-300'
-                  : 'border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-              }`}
-            >
-              <Eye className="w-4 h-4" />
-              <span className="hidden sm:inline">Preview</span>
-            </button>
-
+          <div className="flex items-center" style={{ gap: 'var(--space-2)' }}>
+            <SecondaryButton onClick={() => saveNow()} disabled={!isDirty || isSaving || editLocked} icon={Save}>
+              Save
+            </SecondaryButton>
+            <SecondaryButton onClick={() => setShowPreview(!showPreview)} active={showPreview} icon={Eye}>
+              Preview
+            </SecondaryButton>
             {submission.status === 'draft' ? (
-              <button
-                onClick={handlePublish}
-                disabled={isPublishing}
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg bg-violet-600 text-white hover:bg-violet-700 transition-colors disabled:opacity-50"
-              >
-                {isPublishing ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Send className="w-4 h-4" />
-                )}
-                Publish
-              </button>
+              <PrimaryButton onClick={handlePublish} disabled={isPublishing} icon={Send}>
+                {isPublishing ? 'Publishing…' : 'Publish'}
+              </PrimaryButton>
             ) : isAdmin ? (
-              <div className="relative">
-                <button
-                  onClick={() => setShowMenu(!showMenu)}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                >
-                  <MoreVertical className="w-4 h-4" />
-                </button>
-
+              <div style={{ position: 'relative' }}>
+                <SecondaryButton onClick={() => setShowMenu(!showMenu)} icon={MoreVertical}>
+                  More
+                </SecondaryButton>
                 {showMenu && (
                   <>
+                    <div style={{ position: 'fixed', inset: 0, zIndex: 10 }} onClick={() => setShowMenu(false)} />
                     <div
-                      className="fixed inset-0 z-10"
-                      onClick={() => setShowMenu(false)}
-                    />
-                    <div className="absolute right-0 top-full mt-1 z-20 w-40 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-1">
-                      <button
-                        onClick={handleUnpublish}
-                        className="w-full px-3 py-2 text-left text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
-                      >
-                        <EyeOff className="w-4 h-4" />
-                        Unpublish
-                      </button>
-                      <button
-                        onClick={handleDelete}
-                        className="w-full px-3 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 flex items-center gap-2"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        Delete
-                      </button>
+                      className="drawer-enter"
+                      style={{
+                        position: 'absolute',
+                        right: 0,
+                        top: '100%',
+                        marginTop: 4,
+                        width: 160,
+                        background: 'var(--color-paper-raised)',
+                        border: '1px solid var(--color-hair)',
+                        boxShadow: '6px 6px 0 0 var(--color-hair)',
+                        padding: '4px 0',
+                        zIndex: 20,
+                      }}
+                    >
+                      <DropdownItem onClick={handleUnpublish} icon={EyeOff}>Unpublish</DropdownItem>
+                      <DropdownItem onClick={handleDelete} icon={Trash2} destructive>Delete</DropdownItem>
                     </div>
                   </>
                 )}
@@ -368,138 +299,388 @@ export function SubmissionDetailPage() {
           </div>
         </div>
 
-        {/* Error messages */}
         {(publishError || saveError) && (
-          <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-600 dark:text-red-400">
-            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          <div
+            role="alert"
+            style={{
+              padding: 'var(--space-3) var(--space-4)',
+              background: 'var(--color-rose-tint)',
+              borderLeft: '2px solid var(--color-rose)',
+              fontFamily: 'var(--font-sans)',
+              fontStyle: 'italic',
+              fontSize: 'var(--text-ui-sm)',
+              color: 'var(--color-rose)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--space-2)',
+            }}
+          >
+            <AlertCircle size={14} strokeWidth={1.5} />
             {publishError || saveError?.message}
           </div>
         )}
 
-        {/* Preview Mode */}
         {showPreview ? (
-          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8">
+          <div
+            style={{
+              background: 'var(--color-paper-raised)',
+              border: '1px solid var(--color-hair)',
+              padding: 'var(--space-7)',
+            }}
+          >
             {formData.coverImageUrl && (
-              <div className="aspect-video mb-6 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800">
-                <img
-                  src={formData.coverImageUrl}
-                  alt=""
-                  className="w-full h-full object-cover"
-                />
+              <div
+                style={{
+                  aspectRatio: '16 / 9',
+                  background: 'var(--color-paper-sunken)',
+                  border: '1px solid var(--color-hair)',
+                  marginBottom: 'var(--space-6)',
+                  overflow: 'hidden',
+                }}
+              >
+                <img src={formData.coverImageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               </div>
             )}
             <h1
-              className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-4"
-              style={{ fontFamily: 'var(--font-heading)' }}
+              style={{
+                fontFamily: 'var(--font-serif)',
+                fontWeight: 700,
+                fontSize: 'var(--text-h1)',
+                lineHeight: 1.05,
+                letterSpacing: '-0.03em',
+                color: 'var(--color-ink)',
+                margin: 0,
+                marginBottom: 'var(--space-4)',
+              }}
             >
               {formData.title || 'Untitled'}
             </h1>
             {formData.excerpt && (
               <p
-                className="text-lg text-slate-600 dark:text-slate-400 mb-6"
-                style={{ fontFamily: 'var(--font-body)' }}
+                style={{
+                  fontFamily: 'var(--font-serif)',
+                  fontStyle: 'italic',
+                  fontSize: 22,
+                  lineHeight: 1.4,
+                  color: 'var(--color-ink-muted)',
+                  margin: 0,
+                  marginBottom: 'var(--space-7)',
+                }}
               >
                 {formData.excerpt}
               </p>
             )}
             {formData.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-6">
+              <div className="flex flex-wrap" style={{ gap: 8, marginBottom: 'var(--space-7)' }}>
                 {formData.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="px-2.5 py-0.5 text-sm font-medium bg-indigo-100 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 rounded-full"
+                    className="font-mono uppercase"
+                    style={{
+                      fontSize: 'var(--text-mono-xs)',
+                      color: 'var(--color-ink-muted)',
+                      letterSpacing: '0.04em',
+                      padding: '2px 8px',
+                      border: '1px solid var(--color-hair)',
+                      borderRadius: 2,
+                    }}
                   >
                     {tag}
                   </span>
                 ))}
               </div>
             )}
-            <div
-              className="prose prose-slate dark:prose-invert max-w-none"
-              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(formData.content) }}
-            />
+            <SanitizedPreview html={sanitizedPreviewHtml} />
           </div>
         ) : (
-          /* Edit Mode */
-          <div className="space-y-6">
-            {/* Cover Image */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Cover Image
-              </label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
+            <Field label="Cover image">
               <ImageUploader
                 currentImageUrl={formData.coverImageUrl}
                 onImageUploaded={(url) => updateField('coverImageUrl', url)}
                 onImageRemoved={() => updateField('coverImageUrl', null)}
               />
-            </div>
+            </Field>
 
-            {/* Title */}
-            <div>
-              <label
-                htmlFor="title"
-                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
-              >
-                Title
-              </label>
+            <Field label="Title" htmlFor="title">
               <input
                 id="title"
                 type="text"
                 value={formData.title}
                 onChange={(e) => updateField('title', e.target.value)}
-                placeholder="Enter your post title..."
-                className="w-full px-4 py-3 text-lg font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 text-slate-900 dark:text-white placeholder-slate-400"
-                style={{ fontFamily: 'var(--font-heading)' }}
+                placeholder="Title of the piece."
+                style={{
+                  width: '100%',
+                  padding: 'var(--space-3) var(--space-4)',
+                  fontFamily: 'var(--font-serif)',
+                  fontSize: 'var(--text-section)',
+                  fontWeight: 600,
+                  color: 'var(--color-ink)',
+                  background: 'var(--color-paper-raised)',
+                  border: '1px solid var(--color-hair)',
+                  borderRadius: 0,
+                  outline: 'none',
+                }}
               />
-            </div>
+            </Field>
 
-            {/* Excerpt */}
-            <div>
-              <label
-                htmlFor="excerpt"
-                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
-              >
-                Excerpt
-                <span className="font-normal text-slate-500 ml-1">
-                  (Brief summary for previews)
-                </span>
-              </label>
+            <Field label="Excerpt" htmlFor="excerpt" hint="Brief summary for previews.">
               <textarea
                 id="excerpt"
                 value={formData.excerpt}
                 onChange={(e) => updateField('excerpt', e.target.value)}
-                placeholder="Write a brief summary of your post..."
+                placeholder="A line or two."
                 rows={2}
-                className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 text-slate-900 dark:text-white placeholder-slate-400 resize-none"
-                style={{ fontFamily: 'var(--font-body)' }}
+                style={{
+                  width: '100%',
+                  padding: 'var(--space-3) var(--space-4)',
+                  fontFamily: 'var(--font-sans)',
+                  fontSize: 'var(--text-ui-base)',
+                  color: 'var(--color-ink)',
+                  background: 'var(--color-paper-raised)',
+                  border: '1px solid var(--color-hair)',
+                  borderRadius: 0,
+                  resize: 'vertical',
+                  outline: 'none',
+                }}
               />
-            </div>
+            </Field>
 
-            {/* Tags */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Tags
-              </label>
-              <TagSelector
-                selectedTags={formData.tags}
-                onChange={(tags) => updateField('tags', tags)}
-              />
-            </div>
+            <Field label="Tags">
+              <TagSelector selectedTags={formData.tags} onChange={(tags) => updateField('tags', tags)} />
+            </Field>
 
-            {/* Content Editor */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Content
-              </label>
+            <Field label="Content">
               <SubmissionEditor
                 content={formData.content}
                 onChange={(content) => updateField('content', content)}
-                placeholder="Write your post content here..."
+                placeholder="Write your post content here."
               />
-            </div>
+            </Field>
           </div>
         )}
       </div>
     </AppShell>
+  )
+}
+
+function Field({
+  label,
+  hint,
+  htmlFor,
+  children,
+}: {
+  label: string
+  hint?: string
+  htmlFor?: string
+  children: React.ReactNode
+}) {
+  return (
+    <div>
+      <label
+        htmlFor={htmlFor}
+        className="font-mono uppercase"
+        style={{
+          display: 'block',
+          fontSize: 'var(--text-mono-xs)',
+          letterSpacing: '0.08em',
+          color: 'var(--color-ink-soft)',
+          fontWeight: 600,
+          marginBottom: 'var(--space-2)',
+        }}
+      >
+        {label}
+        {hint && (
+          <span
+            style={{
+              fontFamily: 'var(--font-sans)',
+              fontStyle: 'italic',
+              fontWeight: 400,
+              textTransform: 'none',
+              letterSpacing: 0,
+              marginLeft: 8,
+              color: 'var(--color-ink-soft)',
+            }}
+          >
+            {hint}
+          </span>
+        )}
+      </label>
+      {children}
+    </div>
+  )
+}
+
+function PrimaryButton({
+  onClick,
+  disabled,
+  icon: Icon,
+  children,
+}: {
+  onClick: () => void
+  disabled?: boolean
+  icon?: typeof Send
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="font-mono uppercase inline-flex items-center"
+      style={{
+        gap: 6,
+        fontSize: 'var(--text-mono-sm)',
+        fontWeight: 600,
+        letterSpacing: '0.04em',
+        background: 'var(--color-ink)',
+        color: 'var(--color-paper)',
+        border: 'none',
+        borderRadius: 2,
+        padding: '10px 16px',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.4 : 1,
+      }}
+    >
+      {Icon && <Icon size={14} strokeWidth={1.5} />}
+      {children}
+    </button>
+  )
+}
+
+function SecondaryButton({
+  onClick,
+  disabled,
+  active,
+  icon: Icon,
+  children,
+}: {
+  onClick: () => void
+  disabled?: boolean
+  active?: boolean
+  icon?: typeof Save
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="font-mono uppercase inline-flex items-center"
+      style={{
+        gap: 6,
+        fontSize: 'var(--text-mono-sm)',
+        fontWeight: 600,
+        letterSpacing: '0.04em',
+        background: active ? 'var(--color-accent-tint)' : 'transparent',
+        color: 'var(--color-ink)',
+        border: '1px solid var(--color-hair)',
+        borderRadius: 2,
+        padding: '9px 14px',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.4 : 1,
+      }}
+    >
+      {Icon && <Icon size={14} strokeWidth={1.5} />}
+      {children}
+    </button>
+  )
+}
+
+function DropdownItem({
+  onClick,
+  destructive,
+  icon: Icon,
+  children,
+}: {
+  onClick: () => void
+  destructive?: boolean
+  icon: typeof EyeOff
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex items-center"
+      style={{
+        gap: 8,
+        width: '100%',
+        textAlign: 'left',
+        padding: '8px 12px',
+        fontFamily: 'var(--font-sans)',
+        fontSize: 'var(--text-ui-sm)',
+        fontWeight: 500,
+        color: destructive ? 'var(--color-rose)' : 'var(--color-ink)',
+        background: 'transparent',
+        border: 'none',
+        cursor: 'pointer',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = destructive ? 'var(--color-rose-tint)' : 'var(--color-accent-tint)'
+      }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+    >
+      <Icon size={14} strokeWidth={1.5} />
+      {children}
+    </button>
+  )
+}
+
+function CenteredMessage({
+  icon: Icon,
+  kicker,
+  title,
+  description,
+  children,
+}: {
+  icon?: typeof AlertCircle
+  kicker?: string
+  title: string
+  description?: string
+  children?: React.ReactNode
+}) {
+  return (
+    <div style={{ padding: 'var(--space-9) 0', textAlign: 'center' }}>
+      {Icon && <Icon size={24} strokeWidth={1.5} style={{ color: 'var(--color-rose)', display: 'block', margin: '0 auto var(--space-3)' }} />}
+      {kicker && (
+        <div
+          className="font-mono uppercase"
+          style={{ fontSize: 'var(--text-mono-xs)', letterSpacing: '0.08em', color: 'var(--color-accent)', fontWeight: 600, marginBottom: 'var(--space-2)' }}
+        >
+          {kicker}
+        </div>
+      )}
+      <h1
+        style={{
+          fontFamily: 'var(--font-serif)',
+          fontWeight: 700,
+          fontSize: 'var(--text-h2)',
+          color: 'var(--color-ink)',
+          margin: 0,
+          marginBottom: description ? 'var(--space-3)' : 'var(--space-5)',
+        }}
+      >
+        {title}
+      </h1>
+      {description && (
+        <p
+          style={{
+            fontFamily: 'var(--font-sans)',
+            fontStyle: 'italic',
+            fontSize: 'var(--text-ui-base)',
+            color: 'var(--color-ink-muted)',
+            margin: 0,
+            marginBottom: 'var(--space-5)',
+            maxWidth: '52ch',
+            marginLeft: 'auto',
+            marginRight: 'auto',
+          }}
+        >
+          {description}
+        </p>
+      )}
+      {children}
+    </div>
   )
 }

@@ -1,6 +1,5 @@
 import { useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Loader2 } from 'lucide-react'
 import { AppShell } from '../components/shell'
 import { useAuth, useSubmissions } from '../hooks'
 
@@ -11,35 +10,26 @@ export function NewSubmissionPage() {
   const { create } = useSubmissions()
 
   const navigationItems = [
-    { label: 'Home', href: '/kbw-notes/home', isActive: false },
-    { label: 'Submissions', href: '/kbw-notes/submissions', isActive: location.pathname.startsWith('/kbw-notes/submissions') },
+    { label: 'Home',          href: '/kbw-notes/home',          isActive: false },
+    { label: 'Submissions',   href: '/kbw-notes/submissions',   isActive: location.pathname.startsWith('/kbw-notes/submissions') },
+    { label: 'Notifications', href: '/kbw-notes/notifications', isActive: false },
+    { label: 'Settings',      href: '/kbw-notes/settings',      isActive: false },
   ]
 
-  const handleNavigate = (href: string) => {
-    navigate(href)
-  }
+  const handleNavigate = (href: string) => navigate(href)
+  const handleLogout = async () => { await signOut(); navigate('/') }
+  const handleSignIn = () => navigate('/', { state: { from: location.pathname } })
 
-  const handleLogout = async () => {
-    await signOut()
-    navigate('/')
-  }
-
-  const handleSignIn = () => {
-    navigate('/', { state: { from: location.pathname } })
-  }
-
-  // User display info
   const userDisplay = user
     ? {
         name: user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email ?? 'User',
+        email: user.email ?? undefined,
         avatarUrl: user.user_metadata?.avatar_url,
       }
     : undefined
 
-  // Create new submission and redirect to edit page
   useEffect(() => {
     if (!user) return
-
     const createAndRedirect = async () => {
       const submission = await create()
       if (submission) {
@@ -48,11 +38,9 @@ export function NewSubmissionPage() {
         navigate('/kbw-notes/submissions', { replace: true })
       }
     }
-
     createAndRedirect()
   }, [user, create, navigate])
 
-  // Require authentication
   if (!user) {
     return (
       <AppShell
@@ -62,21 +50,36 @@ export function NewSubmissionPage() {
         onLogout={handleLogout}
         onSignIn={handleSignIn}
       >
-        <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+        <div style={{ padding: 'var(--space-9) 0', textAlign: 'center' }}>
           <h1
-            className="text-2xl font-bold text-slate-900 dark:text-white mb-4"
-            style={{ fontFamily: 'var(--font-heading)' }}
+            style={{
+              fontFamily: 'var(--font-serif)',
+              fontWeight: 700,
+              fontSize: 'var(--text-h2)',
+              color: 'var(--color-ink)',
+              margin: 0,
+              marginBottom: 'var(--space-4)',
+            }}
           >
-            Sign in to create a submission
+            Sign in to create a submission.
           </h1>
-          <p className="text-slate-600 dark:text-slate-400 mb-6">
-            You need to be logged in to create blog submissions.
-          </p>
           <button
+            type="button"
             onClick={handleSignIn}
-            className="px-6 py-3 text-sm font-medium rounded-lg bg-violet-600 text-white hover:bg-violet-700 transition-colors"
+            className="font-mono uppercase"
+            style={{
+              fontSize: 'var(--text-mono-sm)',
+              fontWeight: 600,
+              letterSpacing: '0.04em',
+              background: 'var(--color-ink)',
+              color: 'var(--color-paper)',
+              border: 'none',
+              borderRadius: 2,
+              padding: '10px 16px',
+              cursor: 'pointer',
+            }}
           >
-            Sign In
+            Sign in
           </button>
         </div>
       </AppShell>
@@ -91,9 +94,17 @@ export function NewSubmissionPage() {
       onLogout={handleLogout}
       onSignIn={handleSignIn}
     >
-      <div className="flex flex-col items-center justify-center py-16">
-        <Loader2 className="w-8 h-8 text-violet-500 animate-spin mb-4" />
-        <p className="text-slate-600 dark:text-slate-400">Creating new submission...</p>
+      <div
+        className="font-mono uppercase"
+        style={{
+          padding: 'var(--space-9) 0',
+          textAlign: 'center',
+          fontSize: 'var(--text-mono-xs)',
+          letterSpacing: '0.08em',
+          color: 'var(--color-ink-soft)',
+        }}
+      >
+        Creating new submission…
       </div>
     </AppShell>
   )
