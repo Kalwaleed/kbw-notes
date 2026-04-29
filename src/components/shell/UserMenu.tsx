@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 
 export interface User {
   name: string
+  email?: string
   avatarUrl?: string
 }
 
@@ -11,23 +12,32 @@ export interface UserMenuProps {
   onLogout?: () => void
 }
 
+/**
+ * User dropdown — flat editorial offset shadow (no blur), hairline
+ * borders, mono email below sans name. Sign-out renders in rose.
+ */
 export function UserMenu({ user, onNavigate, onLogout }: UserMenuProps) {
   const [isOpen, setIsOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
-  // Close menu when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setIsOpen(false)
       }
     }
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') setIsOpen(false)
+    }
 
     document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+    document.addEventListener('keydown', handleEscape)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleEscape)
+    }
   }, [])
 
-  // Get initials for avatar fallback
   const initials = user.name
     .split(' ')
     .map((n) => n[0])
@@ -37,73 +47,149 @@ export function UserMenu({ user, onNavigate, onLogout }: UserMenuProps) {
 
   return (
     <div className="relative" ref={menuRef}>
-      {/* Avatar Button */}
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+        className="flex items-center justify-center transition-colors"
+        style={{
+          width: 32,
+          height: 32,
+          borderRadius: '50%',
+          background: 'var(--color-accent-tint)',
+          color: 'var(--color-ink)',
+          fontFamily: 'var(--font-sans)',
+          fontSize: 'var(--text-ui-sm)',
+          fontWeight: 500,
+          border: '1px solid var(--color-hair)',
+          cursor: 'pointer',
+          overflow: 'hidden',
+        }}
         aria-expanded={isOpen}
         aria-haspopup="true"
+        aria-label={`User menu for ${user.name}`}
       >
         {user.avatarUrl ? (
           <img
             src={user.avatarUrl}
             alt={user.name}
-            className="w-8 h-8 rounded-full object-cover"
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
         ) : (
-          <div className="w-8 h-8 rounded-full bg-violet-600 dark:bg-violet-500 flex items-center justify-center text-white text-sm font-medium">
-            {initials}
-          </div>
+          <span>{initials}</span>
         )}
       </button>
 
-      {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-900 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-1 z-50">
-          {/* User Info */}
-          <div className="px-4 py-2 border-b border-slate-200 dark:border-slate-700">
-            <p
-              className="text-sm font-medium text-slate-900 dark:text-white"
-              style={{ fontFamily: 'var(--font-body)' }}
+        <div
+          className="drawer-enter"
+          style={{
+            position: 'absolute',
+            right: 0,
+            marginTop: 8,
+            width: 240,
+            background: 'var(--color-paper-raised)',
+            border: '1px solid var(--color-hair)',
+            boxShadow: '6px 6px 0 0 var(--color-hair)',
+            padding: '8px 0',
+            zIndex: 50,
+          }}
+        >
+          {/* Header row */}
+          <div style={{ padding: '12px 16px' }}>
+            <div
+              style={{
+                fontFamily: 'var(--font-sans)',
+                fontSize: 'var(--text-ui-base)',
+                fontWeight: 500,
+                color: 'var(--color-ink)',
+              }}
             >
               {user.name}
-            </p>
+            </div>
+            {user.email && (
+              <div
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 'var(--text-mono-xs)',
+                  color: 'var(--color-ink-soft)',
+                  marginTop: 2,
+                }}
+              >
+                {user.email}
+              </div>
+            )}
           </div>
 
-          {/* Menu Items */}
-          <button
+          <div style={{ borderTop: '1px solid var(--color-hair)' }} />
+
+          <MenuButton
+            label="Profile"
             onClick={() => {
               setIsOpen(false)
               onNavigate?.('/kbw-notes/profile')
             }}
-            className="w-full text-left px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
-            style={{ fontFamily: 'var(--font-body)' }}
-          >
-            Profile
-          </button>
-          <button
+          />
+          <MenuButton
+            label="Settings"
             onClick={() => {
               setIsOpen(false)
               onNavigate?.('/kbw-notes/settings')
             }}
-            className="w-full text-left px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
-            style={{ fontFamily: 'var(--font-body)' }}
-          >
-            Settings
-          </button>
-          <div className="border-t border-slate-200 dark:border-slate-700 my-1" />
-          <button
+          />
+
+          <div style={{ borderTop: '1px solid var(--color-hair)' }} />
+
+          <MenuButton
+            label="Sign out"
+            destructive
             onClick={() => {
               setIsOpen(false)
               onLogout?.()
             }}
-            className="w-full text-left px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-red-600 dark:hover:text-red-400 transition-colors"
-            style={{ fontFamily: 'var(--font-body)' }}
-          >
-            Logout
-          </button>
+          />
         </div>
       )}
     </div>
+  )
+}
+
+function MenuButton({
+  label,
+  onClick,
+  destructive,
+}: {
+  label: string
+  onClick: () => void
+  destructive?: boolean
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        display: 'block',
+        width: '100%',
+        textAlign: 'left',
+        padding: '10px 16px',
+        fontFamily: 'var(--font-sans)',
+        fontSize: 'var(--text-ui-base)',
+        fontWeight: 500,
+        color: destructive ? 'var(--color-rose)' : 'var(--color-ink)',
+        background: 'transparent',
+        border: 'none',
+        cursor: 'pointer',
+        transition: 'background-color 100ms ease',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = destructive
+          ? 'var(--color-rose-tint)'
+          : 'var(--color-accent-tint)'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = 'transparent'
+      }}
+    >
+      {label}
+    </button>
   )
 }

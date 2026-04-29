@@ -1,7 +1,9 @@
 import { useState } from 'react'
-import { Bell } from 'lucide-react'
+import { Bell, Menu, X } from 'lucide-react'
 import { MainNav } from './MainNav'
 import { UserMenu, type User } from './UserMenu'
+import { FolioBar } from './FolioBar'
+import { ThemeToggle } from './ThemeToggle'
 import { useUnreadCount } from '../../hooks/useNotifications'
 
 export interface NavigationItem {
@@ -17,6 +19,8 @@ export interface AppShellProps {
   onNavigate?: (href: string) => void
   onLogout?: () => void
   onSignIn?: () => void
+  /** Hide the folio bar (e.g., on auth-only screens). Defaults to false. */
+  hideFolio?: boolean
 }
 
 export function AppShell({
@@ -25,6 +29,7 @@ export function AppShell({
   user,
   onNavigate,
   onLogout,
+  hideFolio = false,
 }: AppShellProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const { count: unreadCount } = useUnreadCount()
@@ -43,116 +48,211 @@ export function AppShell({
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+    <div style={{ minHeight: '100vh', background: 'var(--color-paper)', color: 'var(--color-ink)' }}>
+      <div className="paper-grain" aria-hidden="true" />
+
+      {!hideFolio && <FolioBar />}
+
       {/* Header */}
-      <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <button
-              onClick={handleLogoClick}
-              className="font-bold text-xl tracking-tight text-slate-900 dark:text-white hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
-              style={{ fontFamily: 'var(--font-heading)' }}
-            >
-              kbw Notes
-            </button>
+      <header
+        style={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 50,
+          background: 'var(--color-paper)',
+          borderBottom: '1px solid var(--color-hair)',
+        }}
+      >
+        <div
+          className="mx-auto flex items-center justify-between"
+          style={{
+            maxWidth: 'var(--container-feed)',
+            padding: '0 24px',
+            height: 64,
+          }}
+        >
+          {/* Wordmark */}
+          <button
+            type="button"
+            onClick={handleLogoClick}
+            className="transition-colors"
+            style={{
+              fontFamily: 'var(--font-serif)',
+              fontWeight: 700,
+              fontSize: 'var(--text-wordmark)',
+              letterSpacing: '-0.015em',
+              color: 'var(--color-ink)',
+              fontFeatureSettings: '"ss02" 1',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              padding: 0,
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-accent)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-ink)' }}
+          >
+            kbw Notes
+          </button>
 
-            {/* Navigation and User Menu */}
-            <div className="flex items-center gap-6">
-              {/* Desktop Navigation */}
-              <div className="hidden sm:block">
-                <MainNav items={navigationItems} onNavigate={onNavigate} />
-              </div>
-
-              {/* Notification Bell */}
-              {user && (
-                <button
-                  onClick={handleNotificationsClick}
-                  className="relative p-2 text-slate-600 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
-                  aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
-                >
-                  <Bell className="w-5 h-5" />
-                  {unreadCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-xs font-bold text-white bg-violet-500 rounded-full">
-                      {unreadCount > 99 ? '99+' : unreadCount}
-                    </span>
-                  )}
-                </button>
-              )}
-
-              {/* User Menu or Sign In button */}
-              {user ? (
-                <UserMenu user={user} onNavigate={onNavigate} onLogout={onLogout} />
-              ) : (
-                <button
-                  onClick={() => onNavigate?.('/')}
-                  className="px-4 py-2 text-sm font-medium rounded-lg bg-violet-600 text-white hover:bg-violet-700 transition-colors"
-                >
-                  Sign In
-                </button>
-              )}
-
-              {/* Mobile Menu Button */}
-              <button
-                className="sm:hidden p-2 text-slate-600 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-400"
-                aria-label="Open menu"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  {mobileMenuOpen ? (
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  ) : (
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 6h16M4 12h16M4 18h16"
-                    />
-                  )}
-                </svg>
-              </button>
+          {/* Right cluster */}
+          <div className="flex items-center" style={{ gap: 'var(--space-6)' }}>
+            <div className="hidden md:block">
+              <MainNav items={navigationItems} onNavigate={onNavigate} />
             </div>
+
+            <ThemeToggle />
+
+            {user && (
+              <button
+                type="button"
+                onClick={handleNotificationsClick}
+                style={{
+                  position: 'relative',
+                  width: 32,
+                  height: 32,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'transparent',
+                  color: 'var(--color-ink-muted)',
+                  border: 'none',
+                  cursor: 'pointer',
+                  borderRadius: 2,
+                  transition: 'background-color 100ms ease, color 100ms ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'var(--color-accent-tint)'
+                  e.currentTarget.style.color = 'var(--color-ink)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.color = 'var(--color-ink-muted)'
+                }}
+                aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
+              >
+                <Bell size={18} strokeWidth={1.5} />
+                {unreadCount > 0 && (
+                  <span
+                    style={{
+                      position: 'absolute',
+                      top: -2,
+                      right: -2,
+                      minWidth: 16,
+                      height: 16,
+                      padding: '0 4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: 9999,
+                      background: 'var(--color-accent)',
+                      color: 'var(--color-paper)',
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: 'var(--text-mono-xs)',
+                      fontWeight: 600,
+                      letterSpacing: 0,
+                    }}
+                  >
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
+              </button>
+            )}
+
+            {user ? (
+              <UserMenu user={user} onNavigate={onNavigate} onLogout={onLogout} />
+            ) : (
+              <button
+                type="button"
+                onClick={() => onNavigate?.('/')}
+                className="font-mono uppercase"
+                style={{
+                  fontSize: 'var(--text-mono-sm)',
+                  fontWeight: 600,
+                  letterSpacing: '0.04em',
+                  background: 'var(--color-ink)',
+                  color: 'var(--color-paper)',
+                  border: 'none',
+                  borderRadius: 2,
+                  padding: '10px 16px',
+                  cursor: 'pointer',
+                }}
+              >
+                Sign In
+              </button>
+            )}
+
+            {/* Mobile hamburger */}
+            <button
+              type="button"
+              className="md:hidden"
+              style={{
+                width: 32,
+                height: 32,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'transparent',
+                color: 'var(--color-ink)',
+                border: 'none',
+                cursor: 'pointer',
+              }}
+              aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={mobileMenuOpen}
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              {mobileMenuOpen ? <X size={20} strokeWidth={1.5} /> : <Menu size={20} strokeWidth={1.5} />}
+            </button>
           </div>
         </div>
 
-        {/* Mobile Menu */}
+        {/* Mobile menu sheet */}
         {mobileMenuOpen && (
-          <div className="sm:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-            <div className="px-4 py-3 space-y-2">
-              {navigationItems.map((item) => (
-                <button
-                  key={item.href}
-                  onClick={() => handleMobileNavigate(item.href)}
-                  className={`
-                    block w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors
-                    ${
-                      item.isActive
-                        ? 'bg-violet-50 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400'
-                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-                    }
-                  `}
-                  style={{ fontFamily: 'var(--font-body)' }}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
+          <div
+            className="md:hidden drawer-enter"
+            style={{
+              borderTop: '1px solid var(--color-hair)',
+              borderBottom: '1px solid var(--color-hair)',
+              background: 'var(--color-paper)',
+            }}
+          >
+            {navigationItems.map((item, idx) => (
+              <button
+                key={item.href}
+                type="button"
+                onClick={() => handleMobileNavigate(item.href)}
+                className="font-mono uppercase"
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  textAlign: 'left',
+                  padding: '14px 24px',
+                  fontSize: 'var(--text-mono-base)',
+                  fontWeight: 500,
+                  letterSpacing: '0.04em',
+                  color: item.isActive ? 'var(--color-ink)' : 'var(--color-ink-muted)',
+                  background: 'transparent',
+                  border: 'none',
+                  borderTop: idx === 0 ? 'none' : '1px solid var(--color-hair)',
+                  cursor: 'pointer',
+                }}
+              >
+                {item.label}
+              </button>
+            ))}
           </div>
         )}
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Main */}
+      <main
+        className="mx-auto"
+        style={{
+          maxWidth: 'var(--container-feed)',
+          padding: 'var(--space-8) 24px',
+          position: 'relative',
+          zIndex: 2,
+        }}
+      >
         {children}
       </main>
     </div>

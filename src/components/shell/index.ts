@@ -6,3 +6,6 @@ export type { MainNavProps, NavItem } from './MainNav'
 
 export { UserMenu } from './UserMenu'
 export type { UserMenuProps, User } from './UserMenu'
+
+export { FolioBar } from './FolioBar'
+export { ThemeToggle } from './ThemeToggle'
