@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Profile } from '../lib/database.types'
+import { isLocalAuthBypassEnabled, localDevProfile } from '../lib/localDev'
 
 export interface ProfileUpdate {
   display_name: string
@@ -23,14 +24,20 @@ function validateProfileComplete(): boolean {
 }
 
 export function useProfile(userId: string | undefined) {
-  const [profile, setProfile] = useState<Profile | null>(null)
-  const [isLoading, setIsLoading] = useState(!!userId)
+  const [profile, setProfile] = useState<Profile | null>(isLocalAuthBypassEnabled ? localDevProfile : null)
+  const [isLoading, setIsLoading] = useState(!!userId && !isLocalAuthBypassEnabled)
   const [error, setError] = useState<string | null>(null)
-  const [localProfileComplete, setLocalProfileComplete] = useState<boolean>(validateProfileComplete)
+  const [localProfileComplete, setLocalProfileComplete] = useState<boolean>(
+    isLocalAuthBypassEnabled ? true : validateProfileComplete
+  )
 
   // Fetch profile
   useEffect(() => {
     if (!userId) {
+      return
+    }
+
+    if (isLocalAuthBypassEnabled) {
       return
     }
 
@@ -72,6 +79,18 @@ export function useProfile(userId: string | undefined) {
     async (updates: ProfileUpdate) => {
       if (!userId) {
         return { error: 'No user ID provided' }
+      }
+
+      if (isLocalAuthBypassEnabled) {
+        setProfile({
+          ...localDevProfile,
+          display_name: updates.display_name,
+          bio: updates.bio ?? null,
+          website: updates.website ?? null,
+          updated_at: new Date().toISOString(),
+        })
+        setLocalProfileComplete(true)
+        return { error: null }
       }
 
       setError(null)
@@ -124,6 +143,19 @@ export function useProfile(userId: string | undefined) {
     async (profileData: ProfileUpdate & { avatar_url?: string | null }) => {
       if (!userId) {
         return { error: 'No user ID provided' }
+      }
+
+      if (isLocalAuthBypassEnabled) {
+        setProfile({
+          ...localDevProfile,
+          display_name: profileData.display_name,
+          avatar_url: profileData.avatar_url ?? null,
+          bio: profileData.bio ?? null,
+          website: profileData.website ?? null,
+          updated_at: new Date().toISOString(),
+        })
+        setLocalProfileComplete(true)
+        return { error: null }
       }
 
       setError(null)

@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from './useAuth'
+import { isLocalAuthBypassEnabled } from '../lib/localDev'
 
 interface UseImageUploadOptions {
   bucket?: string
@@ -99,6 +100,16 @@ export function useImageUpload({
       setError(null)
 
       try {
+        if (isLocalAuthBypassEnabled) {
+          setProgress(100)
+          return await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader()
+            reader.onload = () => resolve(String(reader.result))
+            reader.onerror = () => reject(new Error('Failed to read local image'))
+            reader.readAsDataURL(file)
+          })
+        }
+
         // Derive extension from validated MIME type (not user-controlled filename)
         const mimeExtMap: Record<string, string> = {
           'image/jpeg': 'jpg',

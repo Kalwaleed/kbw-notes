@@ -2,6 +2,16 @@ import DOMPurify from 'dompurify'
 import { supabase } from '../supabase'
 import { PUBLISHED_EDIT_CAP, type Submission, type SubmissionFormData, type SubmissionStatus } from '../../types/submission'
 import type { SubmissionRow, TablesUpdate } from '../database.types'
+import {
+  createLocalDevSubmission,
+  deleteLocalDevSubmission,
+  fetchLocalDevSubmission,
+  fetchLocalDevSubmissions,
+  isLocalAuthBypassEnabled,
+  publishLocalDevSubmission,
+  unpublishLocalDevSubmission,
+  updateLocalDevSubmission,
+} from '../localDev'
 
 type SubmissionRowWithEditCount = SubmissionRow & { edit_count?: number | null }
 
@@ -17,6 +27,10 @@ export async function fetchSubmissions({
   authorId,
   status = 'all',
 }: FetchSubmissionsOptions): Promise<Submission[]> {
+  if (isLocalAuthBypassEnabled) {
+    return fetchLocalDevSubmissions({ authorId, status })
+  }
+
   let query = supabase
     .from('submissions')
     .select('*')
@@ -40,6 +54,10 @@ export async function fetchSubmissions({
  * Fetch a single submission by ID
  */
 export async function fetchSubmission(id: string): Promise<Submission | null> {
+  if (isLocalAuthBypassEnabled) {
+    return fetchLocalDevSubmission(id)
+  }
+
   const { data, error } = await supabase
     .from('submissions')
     .select('*')
@@ -60,6 +78,10 @@ export async function fetchSubmission(id: string): Promise<Submission | null> {
  * Create a new submission (draft)
  */
 export async function createSubmission(authorId: string): Promise<Submission> {
+  if (isLocalAuthBypassEnabled) {
+    return createLocalDevSubmission(authorId)
+  }
+
   const { data, error } = await supabase
     .from('submissions')
     .insert({
@@ -87,6 +109,10 @@ export async function updateSubmission(
   id: string,
   data: Partial<SubmissionFormData>
 ): Promise<Submission> {
+  if (isLocalAuthBypassEnabled) {
+    return updateLocalDevSubmission(id, data)
+  }
+
   const updateData: TablesUpdate<'submissions'> = {}
 
   if (data.title !== undefined) updateData.title = data.title
@@ -113,6 +139,10 @@ export async function updateSubmission(
  * Publish a submission (changes status to 'published')
  */
 export async function publishSubmission(id: string): Promise<Submission> {
+  if (isLocalAuthBypassEnabled) {
+    return publishLocalDevSubmission(id)
+  }
+
   const { data, error } = await supabase
     .from('submissions')
     .update({
@@ -134,6 +164,10 @@ export async function publishSubmission(id: string): Promise<Submission> {
  * Unpublish a submission (changes status back to 'draft')
  */
 export async function unpublishSubmission(id: string): Promise<Submission> {
+  if (isLocalAuthBypassEnabled) {
+    return unpublishLocalDevSubmission(id)
+  }
+
   const { data, error } = await supabase
     .from('submissions')
     .update({
@@ -155,6 +189,11 @@ export async function unpublishSubmission(id: string): Promise<Submission> {
  * Delete a submission
  */
 export async function deleteSubmission(id: string): Promise<void> {
+  if (isLocalAuthBypassEnabled) {
+    deleteLocalDevSubmission(id)
+    return
+  }
+
   const { error } = await supabase.from('submissions').delete().eq('id', id)
 
   if (error) {

@@ -1,6 +1,7 @@
 import { createContext, useState, useEffect, useCallback, type ReactNode } from 'react'
 import { supabase } from '../lib/supabase'
 import type { User, Session } from '@supabase/supabase-js'
+import { isLocalAuthBypassEnabled, localDevSession, localDevUser } from '../lib/localDev'
 
 const ALLOWED_DOMAIN = 'kbw.vc'
 
@@ -23,12 +24,19 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [session, setSession] = useState<Session | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [user, setUser] = useState<User | null>(isLocalAuthBypassEnabled ? localDevUser : null)
+  const [session, setSession] = useState<Session | null>(isLocalAuthBypassEnabled ? localDevSession : null)
+  const [isLoading, setIsLoading] = useState(!isLocalAuthBypassEnabled)
   const [error, setError] = useState<Error | null>(null)
 
   useEffect(() => {
+    if (isLocalAuthBypassEnabled) {
+      setSession(localDevSession)
+      setUser(localDevUser)
+      setIsLoading(false)
+      return
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       setUser(session?.user ?? null)
@@ -52,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .normalize('NFKC')
       .toLowerCase()
       .trim()
-      .replace(/​|‌|‍|‎|‏|﻿|­|͏|؜|ᅟ|ᅠ|឴|឵|᠋|᠌|᠍|[⁠-⁯]/g, '')
+      .replace(/\u00AD|\u034F|\u061C|\u115F|\u1160|\u17B4|\u17B5|[\u180B-\u180D\u200B-\u200F\u2060-\u206F\uFEFF]/g, '')
 
     const strictEmailRegex = /^[a-z0-9._%+-]+@kbw\.vc$/
     if (!strictEmailRegex.test(normalizedEmail)) return false
@@ -72,6 +80,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const requestMagicLink = useCallback(async (email: string): Promise<AuthResult> => {
     setError(null)
     const normalizedEmail = email.toLowerCase().trim()
+
+    if (isLocalAuthBypassEnabled) {
+      return { success: true }
+    }
 
     if (!isEmailAllowed(normalizedEmail)) {
       return { success: false, error: 'Only @kbw.vc emails are allowed' }
@@ -104,6 +116,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     setError(null)
+    if (isLocalAuthBypassEnabled) {
+      setSession(localDevSession)
+      setUser(localDevUser)
+      return
+    }
+
     try {
       const { error } = await supabase.auth.signOut()
       if (error) throw error

@@ -1,6 +1,7 @@
 import { supabase } from '../supabase'
 import type { Notification, NotificationCounts } from '../../types/notification'
 import type { NotificationRow } from '../database.types'
+import { isLocalAuthBypassEnabled, localDevNotifications } from '../localDev'
 
 /** NotificationRow extended with the joined profiles relation */
 type DbNotification = NotificationRow & {
@@ -41,6 +42,10 @@ export async function fetchNotifications(
   limit = 50,
   offset = 0
 ): Promise<Notification[]> {
+  if (isLocalAuthBypassEnabled) {
+    return localDevNotifications.slice(offset, offset + limit)
+  }
+
   // Get current user for explicit filtering (defense-in-depth, RLS is backup)
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
@@ -83,6 +88,10 @@ export async function fetchNotifications(
  * Requires authentication - uses explicit user_id filter for defense-in-depth
  */
 export async function fetchUnreadCount(): Promise<number> {
+  if (isLocalAuthBypassEnabled) {
+    return localDevNotifications.filter((notification) => !notification.isRead).length
+  }
+
   // Get current user for explicit filtering
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
@@ -107,6 +116,11 @@ export async function fetchUnreadCount(): Promise<number> {
  * Requires authentication - uses explicit user_id filter for defense-in-depth
  */
 export async function fetchNotificationCounts(): Promise<NotificationCounts> {
+  if (isLocalAuthBypassEnabled) {
+    const unread = localDevNotifications.filter((notification) => !notification.isRead).length
+    return { total: localDevNotifications.length, unread }
+  }
+
   // Get current user for explicit filtering
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
@@ -144,6 +158,8 @@ export async function fetchNotificationCounts(): Promise<NotificationCounts> {
  * Requires authentication - uses explicit user_id filter for defense-in-depth
  */
 export async function markAsRead(notificationId: string): Promise<void> {
+  if (isLocalAuthBypassEnabled) return
+
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
     throw new Error('Must be logged in to mark notifications as read')
@@ -164,6 +180,8 @@ export async function markAsRead(notificationId: string): Promise<void> {
  * Mark all notifications as read for the current user
  */
 export async function markAllAsRead(): Promise<void> {
+  if (isLocalAuthBypassEnabled) return
+
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
     throw new Error('Must be logged in to mark notifications as read')
@@ -185,6 +203,8 @@ export async function markAllAsRead(): Promise<void> {
  * Requires authentication - uses explicit user_id filter for defense-in-depth
  */
 export async function deleteNotification(notificationId: string): Promise<void> {
+  if (isLocalAuthBypassEnabled) return
+
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
     throw new Error('Must be logged in to delete notifications')

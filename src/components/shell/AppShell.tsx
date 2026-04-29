@@ -196,13 +196,10 @@ export function AppShell({
             {/* Mobile hamburger */}
             <button
               type="button"
-              className="md:hidden"
+              className="flex items-center justify-center md:hidden"
               style={{
                 width: 32,
                 height: 32,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
                 background: 'transparent',
                 color: 'var(--color-ink)',
                 border: 'none',
