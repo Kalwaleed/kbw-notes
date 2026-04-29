@@ -31,7 +31,6 @@ function SanitizedPreview({ html }: { html: string }) {
     <div
       className="prose-article kbw-prose-section"
       // Input is DOMPurify-sanitized in the parent before reaching here.
-      // eslint-disable-next-line react/no-danger
       dangerouslySetInnerHTML={{ __html: html }}
     />
   )

@@ -79,7 +79,6 @@ function ArticleProse({ html }: { html: string }) {
     <article
       className="prose-article kbw-prose-section"
       // Input is sanitized by DOMPurify in the parent before reaching here.
-      // eslint-disable-next-line react/no-danger
       dangerouslySetInnerHTML={{ __html: html }}
     />
   )
