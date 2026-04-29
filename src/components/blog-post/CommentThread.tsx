@@ -1,20 +1,17 @@
 import { useState } from 'react'
 import type { Comment } from './types'
-import { Heart, MessageCircle, Flag, ShieldCheck, Clock, Trash2 } from 'lucide-react'
+import { Heart, MessageCircle, Flag, Clock, Trash2 } from 'lucide-react'
 import { CommentForm } from './CommentForm'
 
 interface CommentThreadProps {
   comment: Comment
   depth?: number
-  /** Current user's ID (for determining edit/delete permissions) */
   currentUserId?: string
-  /** Whether the current user has reacted to this comment */
   hasReacted?: boolean
   onReply?: (commentId: string, content: string) => Promise<void>
   onDelete?: (commentId: string) => Promise<void>
   onReact?: (commentId: string) => void
   onReport?: (commentId: string) => void
-  /** Set of comment IDs the user has reacted to (for nested comments) */
   userReactions?: Set<string>
 }
 
@@ -22,13 +19,15 @@ function formatRelativeTime(dateString: string): string {
   const date = new Date(dateString)
   const now = new Date()
   const diffMs = now.getTime() - date.getTime()
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-
-  if (diffDays === 0) return 'today'
-  if (diffDays === 1) return 'yesterday'
-  if (diffDays < 7) return `${diffDays} days ago`
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  const minutes = Math.floor(diffMs / 60_000)
+  if (minutes < 1) return 'now'
+  if (minutes < 60) return `${minutes}m ago`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.floor(hours / 24)
+  if (days < 7) return `${days}d ago`
+  if (days < 30) return `${Math.floor(days / 7)}w ago`
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase()
 }
 
 export function CommentThread({
@@ -65,7 +64,7 @@ export function CommentThread({
   }
 
   const handleDelete = async () => {
-    if (!window.confirm('Are you sure you want to delete this comment?')) return
+    if (!window.confirm('Delete this comment?')) return
     setIsDeleting(true)
     try {
       await onDelete?.(comment.id)
@@ -74,133 +73,194 @@ export function CommentThread({
     }
   }
 
-  // Determine if nested comment has user reaction
-  const getNestedHasReacted = (commentId: string) => {
-    return userReactions?.has(commentId) ?? false
-  }
+  const getNestedHasReacted = (commentId: string) => userReactions?.has(commentId) ?? false
 
   return (
-    <div className={`${isNested ? 'ml-6 sm:ml-10 border-l-2 border-slate-200 dark:border-slate-700 pl-4 sm:pl-6' : ''}`}>
-      <div className="py-4" style={{ padding: 'var(--density-py, 1rem) 0' }}>
-        {/* Comment header */}
-        <div className="flex items-start gap-3">
-          {/* User avatar or anonymous fallback */}
+    <div
+      style={{
+        paddingLeft: isNested ? 'var(--space-7)' : 0,
+        borderLeft: isNested ? '2px solid var(--color-accent)' : 'none',
+        marginLeft: isNested ? 'var(--space-2)' : 0,
+      }}
+    >
+      <div
+        style={{
+          padding: 'var(--space-4) 0',
+          borderTop: isNested && depth === 1 ? 'none' : '1px solid var(--color-hair)',
+        }}
+      >
+        <div className="flex items-start" style={{ gap: 'var(--space-3)' }}>
           {hasUserAvatar ? (
             <img
               src={comment.commenter.avatarUrl!}
               alt={comment.commenter.name}
-              className="w-8 h-8 sm:w-10 sm:h-10 rounded-full shrink-0 object-cover"
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: '50%',
+                objectFit: 'cover',
+                flexShrink: 0,
+                border: '1px solid var(--color-hair)',
+                position: 'sticky',
+                top: 96,
+              }}
             />
           ) : (
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-slate-400 to-slate-500 shrink-0 flex items-center justify-center">
-              <span className="text-white font-medium text-sm">
-                {comment.commenter.name.charAt(0).toUpperCase()}
-              </span>
+            <div
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: '50%',
+                background: 'var(--color-accent-tint)',
+                color: 'var(--color-ink)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontFamily: 'var(--font-sans)',
+                fontSize: 'var(--text-mono-xs)',
+                fontWeight: 500,
+                flexShrink: 0,
+                border: '1px solid var(--color-hair)',
+              }}
+            >
+              {comment.commenter.name.charAt(0).toUpperCase()}
             </div>
           )}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-bold text-slate-900 dark:text-white text-sm sm:text-base">
+
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {/* Top row: author · timestamp */}
+            <div className="flex items-center flex-wrap" style={{ gap: 'var(--space-2)' }}>
+              <span
+                style={{
+                  fontFamily: 'var(--font-sans)',
+                  fontSize: 'var(--text-ui-base)',
+                  fontWeight: 500,
+                  color: 'var(--color-ink)',
+                }}
+              >
                 {comment.commenter.name}
               </span>
               {isOwnComment && (
-                <span className="px-1.5 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 text-xs font-medium">
+                <span
+                  className="font-mono uppercase"
+                  style={{
+                    fontSize: 'var(--text-mono-xs)',
+                    fontWeight: 600,
+                    letterSpacing: '0.04em',
+                    color: 'var(--color-accent)',
+                    padding: '1px 6px',
+                    border: '1px solid var(--color-accent)',
+                    borderRadius: 2,
+                  }}
+                >
                   You
                 </span>
               )}
-              <span className="text-slate-400 dark:text-slate-500 text-xs sm:text-sm">
+              <span style={{ color: 'var(--color-ink-soft)', fontFamily: 'var(--font-mono)', fontSize: 'var(--text-mono-sm)' }}>·</span>
+              <span
+                className="font-mono"
+                style={{
+                  fontSize: 'var(--text-mono-sm)',
+                  color: 'var(--color-ink-soft)',
+                  letterSpacing: '0.02em',
+                }}
+              >
                 {formatRelativeTime(comment.createdAt)}
               </span>
-              {comment.isModerated && !isDeleted && (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 text-xs">
-                  <ShieldCheck className="w-3 h-3" strokeWidth={2} />
-                  <span className="hidden sm:inline">Verified</span>
-                </span>
-              )}
-              {isPendingReview && !isDeleted && (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs">
-                  <Clock className="w-3 h-3" strokeWidth={2} />
-                  <span className="hidden sm:inline">Pending Review</span>
-                </span>
-              )}
             </div>
 
-            {/* Comment content */}
-            <p className={`mt-2 text-sm sm:text-base leading-relaxed ${
-              isDeleted
-                ? 'text-slate-400 dark:text-slate-500 italic'
-                : 'text-slate-700 dark:text-slate-300'
-            }`}>
-              {comment.content}
-            </p>
-
-            {/* Comment actions */}
-            {!isDeleted && (
-              <div className="mt-3 flex items-center gap-1 sm:gap-2 flex-wrap">
-                <button
-                  onClick={() => onReact?.(comment.id)}
-                  className={`inline-flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-full text-xs sm:text-sm transition-colors ${
-                    hasReacted
-                      ? 'text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/20'
-                      : 'text-slate-500 dark:text-slate-400 hover:bg-violet-50 dark:hover:bg-violet-900/20 hover:text-violet-600 dark:hover:text-violet-400'
-                  }`}
-                  aria-label={hasReacted ? 'Unlike comment' : 'Like comment'}
-                  aria-pressed={hasReacted}
-                >
-                  <Heart
-                    className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${hasReacted ? 'fill-current' : ''}`}
-                    strokeWidth={1.5}
-                  />
-                  {comment.reactions > 0 && (
-                    <span className="font-medium">{comment.reactions}</span>
-                  )}
-                </button>
-
-                {canNestFurther && (
-                  <button
-                    onClick={() => setIsReplying(!isReplying)}
-                    className={`inline-flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-full text-xs sm:text-sm transition-colors ${
-                      isReplying
-                        ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20'
-                        : 'text-slate-500 dark:text-slate-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:text-indigo-600 dark:hover:text-indigo-400'
-                    }`}
-                    aria-label="Reply to comment"
-                    aria-expanded={isReplying}
-                  >
-                    <MessageCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" strokeWidth={1.5} />
-                    <span>Reply</span>
-                  </button>
-                )}
-
-                {/* Delete button - only for own comments */}
-                {isOwnComment && (
-                  <button
-                    onClick={handleDelete}
-                    disabled={isDeleting}
-                    className="inline-flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-full text-xs sm:text-sm text-slate-400 dark:text-slate-500 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 dark:hover:text-red-400 transition-colors disabled:opacity-50"
-                    aria-label="Delete comment"
-                  >
-                    <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" strokeWidth={1.5} />
-                    <span className="hidden sm:inline">Delete</span>
-                  </button>
-                )}
-
-                {/* Report button - available to all */}
-                <button
-                  onClick={() => onReport?.(comment.id)}
-                  className="inline-flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-full text-xs sm:text-sm text-slate-400 dark:text-slate-500 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 dark:hover:text-red-400 transition-colors ml-auto"
-                  aria-label="Report comment"
-                >
-                  <Flag className="w-3.5 h-3.5 sm:w-4 sm:h-4" strokeWidth={1.5} />
-                </button>
+            {/* Pending moderation note */}
+            {isPendingReview && !isDeleted && (
+              <div
+                style={{
+                  marginTop: 'var(--space-2)',
+                  padding: 'var(--space-2) var(--space-3)',
+                  background: 'var(--color-amber-tint)',
+                  borderLeft: '2px solid var(--color-amber)',
+                  fontFamily: 'var(--font-sans)',
+                  fontStyle: 'italic',
+                  fontSize: 'var(--text-ui-sm)',
+                  color: 'var(--color-amber)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                }}
+              >
+                <Clock size={12} strokeWidth={1.5} aria-hidden="true" />
+                Awaiting moderation — visible only to you.
               </div>
             )}
 
-            {/* Reply form */}
+            {/* Body */}
+            <p
+              style={{
+                marginTop: 'var(--space-2)',
+                marginBottom: 0,
+                fontFamily: 'var(--font-sans)',
+                fontSize: 'var(--text-ui-lg)',
+                lineHeight: 1.55,
+                color: isDeleted ? 'var(--color-ink-soft)' : 'var(--color-ink)',
+                fontStyle: isDeleted ? 'italic' : 'normal',
+                maxWidth: '72ch',
+              }}
+            >
+              {comment.content}
+            </p>
+
+            {/* Actions */}
+            {!isDeleted && (
+              <div
+                className="flex items-center flex-wrap"
+                style={{ gap: 'var(--space-4)', marginTop: 'var(--space-3)' }}
+              >
+                <ActionLink
+                  onClick={() => onReact?.(comment.id)}
+                  active={hasReacted}
+                  ariaLabel={hasReacted ? 'Unlike comment' : 'Like comment'}
+                  ariaPressed={hasReacted}
+                >
+                  <Heart size={14} strokeWidth={1.5} fill={hasReacted ? 'currentColor' : 'none'} />
+                  {comment.reactions > 0 ? `Liked · ${comment.reactions}` : 'Like'}
+                </ActionLink>
+
+                {canNestFurther && (
+                  <ActionLink
+                    onClick={() => setIsReplying(!isReplying)}
+                    active={isReplying}
+                    ariaLabel="Reply to comment"
+                    ariaExpanded={isReplying}
+                  >
+                    <MessageCircle size={14} strokeWidth={1.5} />
+                    Reply
+                  </ActionLink>
+                )}
+
+                <ActionLink
+                  onClick={() => onReport?.(comment.id)}
+                  ariaLabel="Report comment"
+                >
+                  <Flag size={14} strokeWidth={1.5} />
+                  Report
+                </ActionLink>
+
+                {isOwnComment && (
+                  <ActionLink
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                    destructive
+                    ariaLabel="Delete comment"
+                  >
+                    <Trash2 size={14} strokeWidth={1.5} />
+                    Delete
+                  </ActionLink>
+                )}
+              </div>
+            )}
+
             {isReplying && (
-              <div className="mt-4">
+              <div style={{ marginTop: 'var(--space-4)' }}>
                 <CommentForm
-                  placeholder="Write a reply..."
+                  placeholder="Write a reply."
                   isReply
                   isSubmitting={isSubmitting}
                   autoFocus
@@ -213,9 +273,8 @@ export function CommentThread({
         </div>
       </div>
 
-      {/* Nested replies */}
       {comment.replies && comment.replies.length > 0 && (
-        <div className="space-y-0">
+        <div>
           {comment.replies.map((reply) => (
             <CommentThread
               key={reply.id}
@@ -233,5 +292,61 @@ export function CommentThread({
         </div>
       )}
     </div>
+  )
+}
+
+function ActionLink({
+  onClick,
+  active,
+  destructive,
+  disabled,
+  ariaLabel,
+  ariaPressed,
+  ariaExpanded,
+  children,
+}: {
+  onClick: () => void
+  active?: boolean
+  destructive?: boolean
+  disabled?: boolean
+  ariaLabel: string
+  ariaPressed?: boolean
+  ariaExpanded?: boolean
+  children: React.ReactNode
+}) {
+  const baseColor = active
+    ? 'var(--color-accent)'
+    : 'var(--color-ink-muted)'
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={ariaLabel}
+      {...(ariaPressed !== undefined ? { 'aria-pressed': ariaPressed } : {})}
+      {...(ariaExpanded !== undefined ? { 'aria-expanded': ariaExpanded } : {})}
+      className="font-mono uppercase flex items-center"
+      style={{
+        gap: 6,
+        background: 'transparent',
+        border: 'none',
+        color: baseColor,
+        fontSize: 'var(--text-mono-sm)',
+        fontWeight: 500,
+        letterSpacing: '0.04em',
+        padding: '4px 0',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.4 : 1,
+        transition: 'color 100ms ease',
+      }}
+      onMouseEnter={(e) => {
+        if (disabled) return
+        e.currentTarget.style.color = destructive ? 'var(--color-rose)' : 'var(--color-ink)'
+      }}
+      onMouseLeave={(e) => { e.currentTarget.style.color = baseColor }}
+    >
+      {children}
+    </button>
   )
 }
