@@ -251,6 +251,56 @@ export function AppShell({
                 {item.label}
               </button>
             ))}
+
+            {user && (
+              <>
+                <div style={{ borderTop: '1px solid var(--color-hair)' }} />
+                <button
+                  type="button"
+                  onClick={() => handleMobileNavigate('/kbw-notes/profile')}
+                  className="font-mono uppercase"
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    textAlign: 'left',
+                    padding: '14px 24px',
+                    fontSize: 'var(--text-mono-base)',
+                    fontWeight: 500,
+                    letterSpacing: '0.04em',
+                    color: 'var(--color-ink-muted)',
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Profile
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false)
+                    onLogout?.()
+                  }}
+                  className="font-mono uppercase"
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    textAlign: 'left',
+                    padding: '14px 24px',
+                    fontSize: 'var(--text-mono-base)',
+                    fontWeight: 500,
+                    letterSpacing: '0.04em',
+                    color: 'var(--color-rose)',
+                    background: 'transparent',
+                    border: 'none',
+                    borderTop: '1px solid var(--color-hair)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Sign out
+                </button>
+              </>
+            )}
           </div>
         )}
       </header>

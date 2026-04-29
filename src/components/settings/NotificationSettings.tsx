@@ -16,7 +16,7 @@ export function NotificationSettings() {
       title="Notifications"
       description="Manage how you receive updates"
       disabled={true}
-      disabledMessage="Sign in required"
+      disabledMessage="Coming soon"
     >
       <SettingRow
         label="Email Digest"

@@ -78,14 +78,40 @@ export function BlogPostCard({
       >
         {isLead && (
           <div
-            aria-hidden="true"
             style={{
               aspectRatio: '16 / 9',
               background: 'var(--color-paper-sunken)',
               border: '1px solid var(--color-hair)',
               marginBottom: 'var(--space-5)',
+              overflow: 'hidden',
             }}
-          />
+          >
+            {post.coverImageUrl && (
+              <img
+                src={post.coverImageUrl}
+                alt=""
+                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              />
+            )}
+          </div>
+        )}
+
+        {!isLead && post.coverImageUrl && (
+          <div
+            style={{
+              aspectRatio: '16 / 9',
+              background: 'var(--color-paper-sunken)',
+              border: '1px solid var(--color-hair)',
+              marginBottom: 'var(--space-4)',
+              overflow: 'hidden',
+            }}
+          >
+            <img
+              src={post.coverImageUrl}
+              alt=""
+              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            />
+          </div>
         )}
 
         {/* Folio number */}

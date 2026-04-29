@@ -30,6 +30,7 @@ export async function fetchBlogPosts({
       id,
       title,
       excerpt,
+      cover_image_url,
       published_at,
       tags,
       author:profiles!author_id (
@@ -116,6 +117,7 @@ export async function fetchBlogPosts({
       id: post.id,
       title: post.title,
       excerpt: post.excerpt ?? '',
+      coverImageUrl: post.cover_image_url ?? null,
       publishedAt: post.published_at!,
       tags: post.tags ?? [],
       author: {

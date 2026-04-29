@@ -14,7 +14,7 @@ export function PrivacySettings() {
       title="Privacy"
       description="Control who can see your information"
       disabled={true}
-      disabledMessage="Sign in required"
+      disabledMessage="Coming soon"
     >
       <SettingRow
         label="Profile Visibility"

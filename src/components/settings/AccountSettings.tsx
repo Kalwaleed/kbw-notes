@@ -1,14 +1,16 @@
 import { SettingsSection } from './SettingsSection'
 import { SettingRow } from './SettingRow'
 import { Download, Trash2, User } from 'lucide-react'
+import { useAuth } from '../../hooks/useAuth'
 
 export function AccountSettings() {
+  const { user } = useAuth()
   return (
     <SettingsSection
       title="Account"
       description="Manage your account and data."
       disabled={true}
-      disabledMessage="Sign in required"
+      disabledMessage="Coming soon"
     >
       <SettingRow
         label="Connected account"
@@ -26,7 +28,7 @@ export function AccountSettings() {
           }}
         >
           <User size={14} strokeWidth={1.5} />
-          Not signed in
+          {user?.email ?? 'Not signed in'}
         </div>
       </SettingRow>
 
