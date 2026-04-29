@@ -1,8 +1,14 @@
 import type { BlogFeedProps } from './types'
 import { BlogPostCard } from './BlogPostCard'
-import { Loader2 } from 'lucide-react'
 import { useEffect, useRef, useCallback } from 'react'
 
+/**
+ * Asymmetric feed grid. The first card spans two columns ("the lead").
+ * Subsequent cards orbit it, one per cell. There is intentionally no
+ * three-equal-card row: the lead is always larger than the rest.
+ *
+ * Below md: single column.
+ */
 export function BlogFeed({
   blogPosts,
   onViewPost,
@@ -15,7 +21,6 @@ export function BlogFeed({
 }: BlogFeedProps) {
   const loadMoreRef = useRef<HTMLDivElement>(null)
 
-  // Infinite scroll observer
   const handleObserver = useCallback(
     (entries: IntersectionObserverEntry[]) => {
       const [target] = entries
@@ -41,85 +46,108 @@ export function BlogFeed({
 
   return (
     <div className="w-full">
-      {/* Feed Grid */}
-      <div className="grid gap-6 md:gap-8" style={{ gap: 'var(--density-gap, 1.5rem)' }}>
-        {blogPosts.map((post, index) => (
-          <div
-            key={post.id}
-            className="animate-in fade-in slide-in-from-bottom-4 duration-500"
-            style={{ animationDelay: `${index * 100}ms`, animationFillMode: 'both' }}
-          >
+      {blogPosts.length > 0 && (
+        <div
+          className="kbw-feed-grid"
+          style={{
+            display: 'grid',
+            gap: 'var(--space-5)',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+          }}
+        >
+          {blogPosts.map((post, index) => (
             <BlogPostCard
+              key={post.id}
               post={post}
+              variant={index === 0 ? 'lead' : 'default'}
               onView={() => onViewPost?.(post.id)}
               onLike={() => onLike?.(post.id)}
               onBookmark={() => onBookmark?.(post.id)}
               onShare={() => onShare?.(post.id)}
             />
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
-      {/* Empty State */}
+      {/* The lead card spans two cols on >= md breakpoints. */}
+      <style>{`
+        .kbw-feed-grid > article:first-child { grid-column: span 1; }
+        @media (min-width: 768px) {
+          .kbw-feed-grid > article:first-child { grid-column: span 2; }
+        }
+      `}</style>
+
+      {/* Empty state */}
       {blogPosts.length === 0 && !isLoading && (
-        <div className="text-center py-16">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-            <svg
-              className="w-8 h-8 text-slate-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
-              />
-            </svg>
-          </div>
+        <div
+          className="text-center"
+          style={{
+            padding: 'var(--space-10) var(--space-5)',
+          }}
+        >
           <h3
-            className="text-lg font-semibold text-slate-900 dark:text-white mb-2"
-            style={{ fontFamily: 'var(--font-heading)' }}
+            style={{
+              fontFamily: 'var(--font-serif)',
+              fontSize: 'var(--text-section)',
+              fontWeight: 600,
+              color: 'var(--color-ink)',
+              margin: 0,
+              marginBottom: 'var(--space-3)',
+            }}
           >
             No posts yet
           </h3>
           <p
-            className="text-slate-500 dark:text-slate-400"
-            style={{ fontFamily: 'var(--font-body)' }}
+            style={{
+              fontFamily: 'var(--font-sans)',
+              fontSize: 'var(--text-ui-base)',
+              fontStyle: 'italic',
+              color: 'var(--color-ink-muted)',
+              margin: 0,
+            }}
           >
-            Check back soon for new content.
+            Check back soon for new editions.
           </p>
         </div>
       )}
 
-      {/* Infinite Scroll Trigger */}
-      <div ref={loadMoreRef} className="h-4" />
+      {/* Infinite-scroll trigger */}
+      <div ref={loadMoreRef} style={{ height: 4 }} />
 
-      {/* Loading Indicator */}
+      {/* Loading row — skeletal hairlines, no spinner. */}
       {isLoading && (
-        <div className="flex justify-center py-8">
-          <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400">
-            <Loader2 className="w-5 h-5 animate-spin" />
-            <span
-              className="text-sm"
-              style={{ fontFamily: 'var(--font-body)' }}
-            >
-              Loading more posts...
-            </span>
-          </div>
+        <div
+          className="flex items-center justify-center"
+          style={{
+            gap: 'var(--space-3)',
+            padding: 'var(--space-7) 0',
+            fontFamily: 'var(--font-mono)',
+            fontSize: 'var(--text-mono-xs)',
+            letterSpacing: '0.08em',
+            color: 'var(--color-ink-soft)',
+            textTransform: 'uppercase',
+          }}
+        >
+          <span className="skeleton" style={{ display: 'inline-block', width: 32, height: 1 }} />
+          <span>Loading more posts…</span>
+          <span className="skeleton" style={{ display: 'inline-block', width: 32, height: 1 }} />
         </div>
       )}
 
-      {/* End of Feed */}
+      {/* End of feed marker */}
       {!hasMore && blogPosts.length > 0 && (
-        <div className="text-center py-8">
-          <p
-            className="text-sm text-slate-400 dark:text-slate-500"
-            style={{ fontFamily: 'var(--font-body)' }}
-          >
-            You've reached the end
-          </p>
+        <div
+          className="text-center"
+          style={{
+            padding: 'var(--space-7) 0',
+            fontFamily: 'var(--font-mono)',
+            fontSize: 'var(--text-mono-xs)',
+            letterSpacing: '0.08em',
+            color: 'var(--color-ink-soft)',
+            textTransform: 'uppercase',
+          }}
+        >
+          ── END OF FEED ──
         </div>
       )}
     </div>

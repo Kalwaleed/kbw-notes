@@ -11,8 +11,21 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
-        <div className="text-slate-500 dark:text-slate-400">Loading...</div>
+      <div
+        style={{
+          minHeight: '100vh',
+          background: 'var(--color-paper)',
+          color: 'var(--color-ink-soft)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontFamily: 'var(--font-mono)',
+          fontSize: 'var(--text-mono-sm)',
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+        }}
+      >
+        Loading…
       </div>
     )
   }

@@ -1,8 +1,6 @@
 // Settings types for the application
 
 export type Theme = 'light' | 'dark' | 'system'
-export type FontSize = 'small' | 'medium' | 'large'
-export type Density = 'compact' | 'comfortable' | 'spacious'
 export type SortOrder = 'newest' | 'oldest' | 'popular'
 export type PostsPerPage = 6 | 12 | 24
 export type EmailDigest = 'daily' | 'weekly' | 'never'
@@ -10,8 +8,6 @@ export type Visibility = 'public' | 'private'
 
 export interface AppearanceSettings {
   theme: Theme
-  fontSize: FontSize
-  density: Density
 }
 
 export interface ReadingSettings {
@@ -46,8 +42,6 @@ export interface AllSettings {
 // Default values
 export const defaultAppearanceSettings: AppearanceSettings = {
   theme: 'system',
-  fontSize: 'medium',
-  density: 'comfortable',
 }
 
 export const defaultReadingSettings: ReadingSettings = {

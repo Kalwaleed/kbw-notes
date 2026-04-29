@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { Globe } from 'lucide-react'
 import { useAuth, useProfile, useSettings } from '../hooks'
 
-// Inner component that receives pre-loaded data
 function ProfileSetupForm({
   initialDisplayName,
   initialBio,
@@ -24,14 +24,12 @@ function ProfileSetupForm({
   const location = useLocation()
   const { resolvedTheme, toggleTheme } = useSettings()
 
-  // Form state - initialized with values from parent
   const [displayName, setDisplayName] = useState(initialDisplayName)
   const [bio, setBio] = useState(initialBio)
   const [website, setWebsite] = useState(initialWebsite)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Only redirect if this is a fresh login (not intentional edit)
   const isIntentionalEdit = location.state?.from === '/kbw-notes/profile' || document.referrer.includes('/kbw-notes/profile')
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -45,7 +43,6 @@ function ProfileSetupForm({
 
     setIsSubmitting(true)
 
-    // Validate website URL protocol to prevent javascript: XSS
     const trimmedWebsite = website.trim()
     if (trimmedWebsite && !/^https?:\/\//i.test(trimmedWebsite)) {
       setError('Website must start with http:// or https://')
@@ -60,192 +57,286 @@ function ProfileSetupForm({
       avatar_url: avatarUrl,
     }
 
-    // Try update first, then create if no profile exists
-    let result
-    if (profile) {
-      result = await updateProfile(profileData)
-    } else {
-      result = await createProfile(profileData)
-    }
+    const result = profile
+      ? await updateProfile(profileData)
+      : await createProfile(profileData)
 
     setIsSubmitting(false)
 
     if (result.error) {
       setError(result.error)
     } else {
-      // Go back to profile if editing, otherwise go home
       const redirectTo = location.state?.from === '/kbw-notes/profile' ? '/kbw-notes/profile' : '/kbw-notes/home'
       navigate(redirectTo)
     }
   }
 
-  const bioLength = bio.length
   const bioMaxLength = 280
   const isFormValid = displayName.trim().length >= 2
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-6">
-        {/* Header */}
-        <div className="text-center">
-          <h1
-            className="text-3xl font-bold text-slate-900 dark:text-white"
-            style={{ fontFamily: 'var(--font-heading)' }}
-          >
-            {isIntentionalEdit ? 'Edit Profile' : 'Complete Your Profile'}
-          </h1>
-          <p className="mt-2 text-slate-600 dark:text-slate-400">
-            {isIntentionalEdit ? 'Update your profile information' : 'Tell us a bit about yourself'}
-          </p>
-        </div>
+    <div
+      style={{
+        minHeight: '100vh',
+        background: 'var(--color-paper)',
+        color: 'var(--color-ink)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 'var(--space-7) var(--space-5)',
+        position: 'relative',
+      }}
+    >
+      <div className="paper-grain" aria-hidden="true" />
 
-        {/* Form Card */}
+      <div style={{ width: '100%', maxWidth: 520, position: 'relative', zIndex: 2 }}>
+        <header style={{ marginBottom: 'var(--space-7)' }}>
+          <div
+            className="font-mono uppercase"
+            style={{ fontSize: 'var(--text-mono-xs)', letterSpacing: '0.08em', color: 'var(--color-accent)', fontWeight: 600, marginBottom: 'var(--space-2)' }}
+          >
+            ── kbw Notes
+          </div>
+          <h1
+            style={{
+              fontFamily: 'var(--font-serif)',
+              fontWeight: 700,
+              fontSize: 'var(--text-h2)',
+              lineHeight: 1.15,
+              letterSpacing: '-0.02em',
+              color: 'var(--color-ink)',
+              margin: 0,
+            }}
+          >
+            {isIntentionalEdit ? 'Edit your profile.' : 'Complete your profile.'}
+          </h1>
+          <p
+            style={{
+              fontFamily: 'var(--font-sans)',
+              fontSize: 'var(--text-ui-base)',
+              color: 'var(--color-ink-muted)',
+              margin: 0,
+              marginTop: 'var(--space-2)',
+            }}
+          >
+            {isIntentionalEdit ? 'Update what other readers see.' : 'Tell us a bit about yourself.'}
+          </p>
+        </header>
+
         <form
           onSubmit={handleSubmit}
-          className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 space-y-6"
+          style={{
+            background: 'var(--color-paper-raised)',
+            border: '1px solid var(--color-hair)',
+            padding: 'var(--space-6)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 'var(--space-5)',
+          }}
         >
-          {/* Avatar Display (read-only) */}
-          <div className="flex justify-center">
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
             {avatarUrl ? (
               <img
                 src={avatarUrl}
                 alt="Profile"
-                className="w-24 h-24 rounded-full object-cover border-4 border-violet-100 dark:border-violet-900"
+                style={{ width: 96, height: 96, borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--color-hair)' }}
               />
             ) : (
-              <div className="w-24 h-24 rounded-full bg-violet-600 flex items-center justify-center text-white text-3xl font-medium">
+              <div
+                style={{
+                  width: 96,
+                  height: 96,
+                  borderRadius: '50%',
+                  background: 'var(--color-accent-tint)',
+                  color: 'var(--color-ink)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontFamily: 'var(--font-serif)',
+                  fontSize: 36,
+                  fontWeight: 600,
+                  border: '1px solid var(--color-hair)',
+                }}
+              >
                 {displayName.charAt(0).toUpperCase() || '?'}
               </div>
             )}
           </div>
 
-          {/* Display Name */}
-          <div>
-            <label
-              htmlFor="displayName"
-              className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
-            >
-              Display Name <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              id="displayName"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="How should we call you?"
-              className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
-              required
-              minLength={2}
-            />
-          </div>
+          <FieldLabel htmlFor="displayName">Display name</FieldLabel>
+          <Input
+            id="displayName"
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+            placeholder="How should we call you?"
+            required
+            minLength={2}
+          />
 
-          {/* Bio */}
           <div>
-            <label
-              htmlFor="bio"
-              className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
-            >
-              Bio
-            </label>
+            <FieldLabel htmlFor="bio">Bio</FieldLabel>
             <textarea
               id="bio"
               value={bio}
               onChange={(e) => setBio(e.target.value.slice(0, bioMaxLength))}
-              placeholder="Tell us a bit about yourself..."
+              placeholder="A line or two."
               rows={3}
-              className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent resize-none"
+              style={{
+                width: '100%',
+                padding: 'var(--space-3) var(--space-4)',
+                background: 'var(--color-paper)',
+                color: 'var(--color-ink)',
+                border: '1px solid var(--color-hair)',
+                borderRadius: 0,
+                fontFamily: 'var(--font-sans)',
+                fontSize: 'var(--text-ui-base)',
+                lineHeight: 1.5,
+                resize: 'vertical',
+                outline: 'none',
+              }}
             />
-            <div className="mt-1 text-right text-sm text-slate-400 dark:text-slate-500">
-              {bioLength}/{bioMaxLength}
+            <div
+              className="font-mono"
+              style={{ fontSize: 'var(--text-mono-xs)', textAlign: 'right', color: 'var(--color-ink-soft)', marginTop: 4, letterSpacing: '0.02em' }}
+            >
+              {bio.length} / {bioMaxLength}
             </div>
           </div>
 
-          {/* Website */}
           <div>
-            <label
-              htmlFor="website"
-              className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
-            >
-              Website
-            </label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-                  />
-                </svg>
-              </span>
+            <FieldLabel htmlFor="website">Website</FieldLabel>
+            <div style={{ position: 'relative' }}>
+              <Globe
+                size={16}
+                strokeWidth={1.5}
+                style={{ position: 'absolute', top: '50%', left: 12, transform: 'translateY(-50%)', color: 'var(--color-ink-soft)' }}
+                aria-hidden="true"
+              />
               <input
                 type="url"
                 id="website"
                 value={website}
                 onChange={(e) => setWebsite(e.target.value)}
                 placeholder="https://yoursite.com"
-                className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                style={{
+                  width: '100%',
+                  padding: '10px 16px 10px 40px',
+                  background: 'var(--color-paper)',
+                  color: 'var(--color-ink)',
+                  border: '1px solid var(--color-hair)',
+                  borderRadius: 0,
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 'var(--text-mono-base)',
+                  outline: 'none',
+                }}
               />
             </div>
           </div>
 
-          {/* Error Message */}
           {error && (
-            <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm">
+            <div
+              role="alert"
+              style={{
+                padding: 'var(--space-3) var(--space-4)',
+                background: 'var(--color-rose-tint)',
+                borderLeft: '2px solid var(--color-rose)',
+                fontFamily: 'var(--font-sans)',
+                fontStyle: 'italic',
+                fontSize: 'var(--text-ui-sm)',
+                color: 'var(--color-rose)',
+              }}
+            >
               {error}
             </div>
           )}
 
-          {/* Submit Button */}
           <button
             type="submit"
             disabled={!isFormValid || isSubmitting}
-            className="w-full px-4 py-3 text-sm font-medium rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            className="font-mono uppercase"
+            style={{
+              width: '100%',
+              padding: '12px 16px',
+              fontSize: 'var(--text-mono-sm)',
+              fontWeight: 600,
+              letterSpacing: '0.04em',
+              background: 'var(--color-ink)',
+              color: 'var(--color-paper)',
+              border: 'none',
+              borderRadius: 2,
+              cursor: !isFormValid || isSubmitting ? 'not-allowed' : 'pointer',
+              opacity: !isFormValid || isSubmitting ? 0.4 : 1,
+              transition: 'background-color 100ms ease',
+            }}
+            onMouseEnter={(e) => {
+              if (!isFormValid || isSubmitting) return
+              e.currentTarget.style.background = 'var(--color-accent)'
+            }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--color-ink)' }}
           >
-            {isSubmitting ? (
-              <span className="flex items-center justify-center gap-2">
-                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                    fill="none"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
-                Saving...
-              </span>
-            ) : (
-              isIntentionalEdit ? 'Save Changes' : 'Complete Setup'
-            )}
+            {isSubmitting ? 'Saving…' : isIntentionalEdit ? 'Save changes' : 'Complete setup'}
           </button>
         </form>
 
-        {/* Theme Toggle */}
-        <div className="text-center">
+        <div style={{ marginTop: 'var(--space-5)', textAlign: 'center' }}>
           <button
             type="button"
             onClick={toggleTheme}
-            className="text-sm text-slate-500 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
+            className="font-mono uppercase"
+            style={{
+              fontSize: 'var(--text-mono-xs)',
+              letterSpacing: '0.04em',
+              color: 'var(--color-ink-soft)',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+            }}
           >
-            {resolvedTheme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            Switch to {resolvedTheme === 'dark' ? 'light' : 'dark'} mode
           </button>
         </div>
       </div>
     </div>
+  )
+}
+
+function FieldLabel({ htmlFor, children }: { htmlFor: string; children: React.ReactNode }) {
+  return (
+    <label
+      htmlFor={htmlFor}
+      className="font-mono uppercase"
+      style={{
+        display: 'block',
+        fontSize: 'var(--text-mono-xs)',
+        letterSpacing: '0.08em',
+        color: 'var(--color-ink-soft)',
+        fontWeight: 600,
+        marginBottom: 'var(--space-2)',
+      }}
+    >
+      {children}
+    </label>
+  )
+}
+
+function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <input
+      type="text"
+      {...props}
+      style={{
+        width: '100%',
+        padding: '10px 16px',
+        background: 'var(--color-paper)',
+        color: 'var(--color-ink)',
+        border: '1px solid var(--color-hair)',
+        borderRadius: 0,
+        fontFamily: 'var(--font-sans)',
+        fontSize: 'var(--text-ui-base)',
+        outline: 'none',
+        ...props.style,
+      }}
+    />
   )
 }
 
@@ -254,10 +345,8 @@ export function ProfileSetupPage() {
   const { user, isLoading: authLoading } = useAuth()
   const { profile, isLoading: profileLoading, updateProfile, createProfile } = useProfile(user?.id)
 
-  // Get avatar from Google OAuth
   const avatarUrl = user?.user_metadata?.avatar_url || null
 
-  // Redirect if not authenticated
   useEffect(() => {
     if (!authLoading && !user) {
       navigate('/', { state: { from: '/kbw-notes/profile/setup' } })
@@ -268,13 +357,25 @@ export function ProfileSetupPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
-        <div className="text-slate-500 dark:text-slate-400">Loading...</div>
+      <div
+        style={{
+          minHeight: '100vh',
+          background: 'var(--color-paper)',
+          color: 'var(--color-ink-soft)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontFamily: 'var(--font-mono)',
+          fontSize: 'var(--text-mono-sm)',
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+        }}
+      >
+        Loading…
       </div>
     )
   }
 
-  // Compute initial values for form (only computed once when loading finishes)
   const initialDisplayName = profile?.display_name || user?.user_metadata?.full_name || user?.user_metadata?.name || ''
   const initialBio = profile?.bio || ''
   const initialWebsite = profile?.website || ''

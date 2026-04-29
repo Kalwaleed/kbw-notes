@@ -75,9 +75,9 @@ describe('BlogPostCard', () => {
       expect(avatar).toHaveAttribute('src', mockPostWithAvatar.author.avatarUrl)
     })
 
-    it('displays formatted date (e.g., "Jan 6, 2026")', () => {
+    it('displays formatted date in editorial mono format (e.g., "06 JAN 2026")', () => {
       render(<BlogPostCard post={mockPost} />)
-      expect(screen.getByText('Jan 6, 2026')).toBeInTheDocument()
+      expect(screen.getByText('06 JAN 2026')).toBeInTheDocument()
     })
 
     it('displays all tags as badges', () => {

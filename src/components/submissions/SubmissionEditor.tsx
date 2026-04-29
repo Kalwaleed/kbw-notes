@@ -31,7 +31,7 @@ interface SubmissionEditorProps {
 export function SubmissionEditor({
   content,
   onChange,
-  placeholder = 'Write your post here...',
+  placeholder = 'Write your post here.',
 }: SubmissionEditorProps) {
   const isUpdatingRef = useRef(false)
 
@@ -39,37 +39,27 @@ export function SubmissionEditor({
     extensions: [
       StarterKit.configure({
         codeBlock: false,
-        heading: {
-          levels: [1, 2, 3],
-        },
+        heading: { levels: [1, 2, 3] },
       }),
-      Placeholder.configure({
-        placeholder,
-      }),
+      Placeholder.configure({ placeholder }),
       Image.configure({
-        HTMLAttributes: {
-          class: 'rounded-lg max-w-full',
-        },
+        HTMLAttributes: { class: '' }, // no rounded corners — matches prose-article
       }),
-      CodeBlockLowlight.configure({
-        lowlight,
-      }),
+      CodeBlockLowlight.configure({ lowlight }),
     ],
     content,
     onUpdate: ({ editor }) => {
-      if (!isUpdatingRef.current) {
-        onChange(editor.getHTML())
-      }
+      if (!isUpdatingRef.current) onChange(editor.getHTML())
     },
     editorProps: {
       attributes: {
-        class:
-          'prose prose-slate dark:prose-invert max-w-none focus:outline-none min-h-[300px] px-4 py-3',
+        // Use the same prose-article style so what-you-edit ≈ what-renders.
+        class: 'tiptap focus:outline-none',
+        style: 'min-height: 320px; padding: 16px 20px;',
       },
     },
   })
 
-  // Update editor content when prop changes (e.g., from auto-save restore)
   useEffect(() => {
     if (editor && content !== editor.getHTML()) {
       isUpdatingRef.current = true
@@ -87,120 +77,85 @@ export function SubmissionEditor({
 
   if (!editor) {
     return (
-      <div className="animate-pulse bg-slate-100 dark:bg-slate-800 rounded-lg h-[400px]" />
+      <div
+        className="skeleton"
+        style={{ height: 400, background: 'var(--color-paper-raised)', border: '1px solid var(--color-hair)' }}
+      />
     )
   }
 
   return (
-    <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-white dark:bg-slate-900">
-      {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-1 p-2 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
-        <ToolbarButton
-          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-          isActive={editor.isActive('heading', { level: 1 })}
-          title="Heading 1"
-        >
-          <Heading1 className="w-4 h-4" />
+    <div
+      style={{
+        border: '1px solid var(--color-hair)',
+        background: 'var(--color-paper-raised)',
+      }}
+    >
+      <div
+        className="flex flex-wrap items-center"
+        style={{
+          gap: 4,
+          padding: 8,
+          borderBottom: '1px solid var(--color-hair)',
+          background: 'var(--color-paper-sunken)',
+        }}
+      >
+        <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} isActive={editor.isActive('heading', { level: 1 })} title="Heading 1">
+          <Heading1 size={14} strokeWidth={1.5} />
         </ToolbarButton>
-        <ToolbarButton
-          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-          isActive={editor.isActive('heading', { level: 2 })}
-          title="Heading 2"
-        >
-          <Heading2 className="w-4 h-4" />
+        <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} isActive={editor.isActive('heading', { level: 2 })} title="Heading 2">
+          <Heading2 size={14} strokeWidth={1.5} />
         </ToolbarButton>
-        <ToolbarButton
-          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-          isActive={editor.isActive('heading', { level: 3 })}
-          title="Heading 3"
-        >
-          <Heading3 className="w-4 h-4" />
-        </ToolbarButton>
-
-        <ToolbarDivider />
-
-        <ToolbarButton
-          onClick={() => editor.chain().focus().toggleBold().run()}
-          isActive={editor.isActive('bold')}
-          title="Bold (Cmd+B)"
-        >
-          <Bold className="w-4 h-4" />
-        </ToolbarButton>
-        <ToolbarButton
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-          isActive={editor.isActive('italic')}
-          title="Italic (Cmd+I)"
-        >
-          <Italic className="w-4 h-4" />
-        </ToolbarButton>
-        <ToolbarButton
-          onClick={() => editor.chain().focus().toggleCode().run()}
-          isActive={editor.isActive('code')}
-          title="Inline Code"
-        >
-          <Code className="w-4 h-4" />
+        <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} isActive={editor.isActive('heading', { level: 3 })} title="Heading 3">
+          <Heading3 size={14} strokeWidth={1.5} />
         </ToolbarButton>
 
         <ToolbarDivider />
 
-        <ToolbarButton
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
-          isActive={editor.isActive('bulletList')}
-          title="Bullet List"
-        >
-          <List className="w-4 h-4" />
+        <ToolbarButton onClick={() => editor.chain().focus().toggleBold().run()} isActive={editor.isActive('bold')} title="Bold (Cmd+B)">
+          <Bold size={14} strokeWidth={1.5} />
         </ToolbarButton>
-        <ToolbarButton
-          onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          isActive={editor.isActive('orderedList')}
-          title="Numbered List"
-        >
-          <ListOrdered className="w-4 h-4" />
+        <ToolbarButton onClick={() => editor.chain().focus().toggleItalic().run()} isActive={editor.isActive('italic')} title="Italic (Cmd+I)">
+          <Italic size={14} strokeWidth={1.5} />
         </ToolbarButton>
-        <ToolbarButton
-          onClick={() => editor.chain().focus().toggleBlockquote().run()}
-          isActive={editor.isActive('blockquote')}
-          title="Quote"
-        >
-          <Quote className="w-4 h-4" />
+        <ToolbarButton onClick={() => editor.chain().focus().toggleCode().run()} isActive={editor.isActive('code')} title="Inline code">
+          <Code size={14} strokeWidth={1.5} />
         </ToolbarButton>
-        <ToolbarButton
-          onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-          isActive={editor.isActive('codeBlock')}
-          title="Code Block"
-        >
-          <Code className="w-4 h-4" />
+
+        <ToolbarDivider />
+
+        <ToolbarButton onClick={() => editor.chain().focus().toggleBulletList().run()} isActive={editor.isActive('bulletList')} title="Bulleted list">
+          <List size={14} strokeWidth={1.5} />
+        </ToolbarButton>
+        <ToolbarButton onClick={() => editor.chain().focus().toggleOrderedList().run()} isActive={editor.isActive('orderedList')} title="Numbered list">
+          <ListOrdered size={14} strokeWidth={1.5} />
+        </ToolbarButton>
+        <ToolbarButton onClick={() => editor.chain().focus().toggleBlockquote().run()} isActive={editor.isActive('blockquote')} title="Blockquote">
+          <Quote size={14} strokeWidth={1.5} />
+        </ToolbarButton>
+        <ToolbarButton onClick={() => editor.chain().focus().toggleCodeBlock().run()} isActive={editor.isActive('codeBlock')} title="Code block">
+          <Code size={14} strokeWidth={1.5} />
         </ToolbarButton>
 
         <ToolbarDivider />
 
         <MiniImageUploader onImageUploaded={handleImageInsert} />
 
-        <div className="flex-1" />
+        <div style={{ flex: 1 }} />
 
-        <ToolbarButton
-          onClick={() => editor.chain().focus().undo().run()}
-          disabled={!editor.can().undo()}
-          title="Undo (Cmd+Z)"
-        >
-          <Undo className="w-4 h-4" />
+        <ToolbarButton onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} title="Undo (Cmd+Z)">
+          <Undo size={14} strokeWidth={1.5} />
         </ToolbarButton>
-        <ToolbarButton
-          onClick={() => editor.chain().focus().redo().run()}
-          disabled={!editor.can().redo()}
-          title="Redo (Cmd+Shift+Z)"
-        >
-          <Redo className="w-4 h-4" />
+        <ToolbarButton onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} title="Redo (Cmd+Shift+Z)">
+          <Redo size={14} strokeWidth={1.5} />
         </ToolbarButton>
       </div>
 
-      {/* Editor Content */}
       <EditorContent editor={editor} />
     </div>
   )
 }
 
-// Toolbar Button Component
 interface ToolbarButtonProps {
   onClick: () => void
   isActive?: boolean
@@ -209,24 +164,38 @@ interface ToolbarButtonProps {
   children: React.ReactNode
 }
 
-function ToolbarButton({
-  onClick,
-  isActive,
-  disabled,
-  title,
-  children,
-}: ToolbarButtonProps) {
+function ToolbarButton({ onClick, isActive, disabled, title, children }: ToolbarButtonProps) {
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className={`p-2 rounded-lg transition-colors ${
-        isActive
-          ? 'bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300'
-          : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-300 dark:hover:bg-slate-800'
-      } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+      aria-label={title}
+      style={{
+        width: 28,
+        height: 28,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: isActive ? 'var(--color-accent-tint)' : 'transparent',
+        color: isActive ? 'var(--color-ink)' : 'var(--color-ink-muted)',
+        border: 'none',
+        borderRadius: 2,
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.4 : 1,
+        transition: 'background-color 100ms ease, color 100ms ease',
+      }}
+      onMouseEnter={(e) => {
+        if (disabled || isActive) return
+        e.currentTarget.style.background = 'var(--color-accent-tint)'
+        e.currentTarget.style.color = 'var(--color-ink)'
+      }}
+      onMouseLeave={(e) => {
+        if (disabled || isActive) return
+        e.currentTarget.style.background = 'transparent'
+        e.currentTarget.style.color = 'var(--color-ink-muted)'
+      }}
     >
       {children}
     </button>
@@ -234,5 +203,5 @@ function ToolbarButton({
 }
 
 function ToolbarDivider() {
-  return <div className="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-1" />
+  return <div style={{ width: 1, height: 20, background: 'var(--color-hair)', margin: '0 4px' }} />
 }

@@ -12,22 +12,34 @@ export function ToggleSwitch({ checked, onChange, disabled = false }: ToggleSwit
       aria-checked={checked}
       disabled={disabled}
       onClick={() => onChange(!checked)}
-      className={`
-        relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent
-        transition-colors duration-200 ease-in-out
-        focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-900
-        ${checked ? 'bg-violet-600' : 'bg-slate-200 dark:bg-slate-700'}
-        ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
-      `}
+      style={{
+        position: 'relative',
+        display: 'inline-flex',
+        height: 24,
+        width: 44,
+        flexShrink: 0,
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        borderRadius: 2,
+        border: `1px solid ${checked ? 'var(--color-accent)' : 'var(--color-hair)'}`,
+        background: checked ? 'var(--color-accent)' : 'var(--color-paper-sunken)',
+        opacity: disabled ? 0.4 : 1,
+        transition: 'background-color 100ms ease, border-color 100ms ease',
+        padding: 0,
+      }}
     >
       <span className="sr-only">Toggle setting</span>
       <span
         aria-hidden="true"
-        className={`
-          pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0
-          transition duration-200 ease-in-out
-          ${checked ? 'translate-x-5' : 'translate-x-0'}
-        `}
+        style={{
+          position: 'absolute',
+          top: 1,
+          left: checked ? 22 : 1,
+          height: 20,
+          width: 20,
+          background: 'var(--color-paper)',
+          border: '1px solid var(--color-hair)',
+          transition: 'left 150ms ease',
+        }}
       />
     </button>
   )

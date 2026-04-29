@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react'
-import { Upload, X, Image, Loader2 } from 'lucide-react'
+import { Upload, X, Image as ImageIcon } from 'lucide-react'
 import { useImageUpload } from '../../hooks/useImageUpload'
 
 interface ImageUploaderProps {
@@ -32,13 +32,10 @@ export function ImageUploader({
       e.preventDefault()
       setIsDragging(false)
       clearError()
-
       const files = e.dataTransfer.files
       if (files.length > 0) {
         const url = await uploadImage(files[0])
-        if (url) {
-          onImageUploaded(url)
-        }
+        if (url) onImageUploaded(url)
       }
     },
     [uploadImage, onImageUploaded, clearError]
@@ -50,34 +47,53 @@ export function ImageUploader({
       const files = e.target.files
       if (files && files.length > 0) {
         const url = await uploadImage(files[0])
-        if (url) {
-          onImageUploaded(url)
-        }
+        if (url) onImageUploaded(url)
       }
-      // Reset input so same file can be selected again
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
-      }
+      if (fileInputRef.current) fileInputRef.current.value = ''
     },
     [uploadImage, onImageUploaded, clearError]
   )
 
   if (currentImageUrl) {
     return (
-      <div className="relative group">
-        <div className="aspect-video bg-slate-100 dark:bg-slate-800 rounded-lg overflow-hidden">
+      <div className="group" style={{ position: 'relative' }}>
+        <div
+          style={{
+            aspectRatio: '16 / 9',
+            background: 'var(--color-paper-sunken)',
+            border: '1px solid var(--color-hair)',
+            overflow: 'hidden',
+          }}
+        >
           <img
             src={currentImageUrl}
             alt="Cover"
-            className="w-full h-full object-cover"
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
         </div>
         <button
+          type="button"
           onClick={onImageRemoved}
-          className="absolute top-2 right-2 p-1.5 rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
           aria-label="Remove cover image"
+          className="opacity-0 group-hover:opacity-100"
+          style={{
+            position: 'absolute',
+            top: 8,
+            right: 8,
+            width: 28,
+            height: 28,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'var(--color-ink)',
+            color: 'var(--color-paper)',
+            border: '1px solid var(--color-hair)',
+            borderRadius: 2,
+            cursor: 'pointer',
+            transition: 'opacity 100ms ease',
+          }}
         >
-          <X className="w-4 h-4" />
+          <X size={14} strokeWidth={1.5} />
         </button>
       </div>
     )
@@ -90,33 +106,63 @@ export function ImageUploader({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
-        className={`relative flex flex-col items-center justify-center gap-3 p-6 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
-          isDragging
-            ? 'border-violet-500 bg-violet-50 dark:bg-violet-950/20'
-            : 'border-slate-300 dark:border-slate-700 hover:border-violet-400 hover:bg-slate-50 dark:hover:bg-slate-800/50'
-        } ${isUploading ? 'pointer-events-none' : ''}`}
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 'var(--space-3)',
+          padding: 'var(--space-7)',
+          border: `1px dashed ${isDragging ? 'var(--color-accent)' : 'var(--color-hair)'}`,
+          background: isDragging ? 'var(--color-accent-tint)' : 'var(--color-paper-raised)',
+          cursor: 'pointer',
+          pointerEvents: isUploading ? 'none' : 'auto',
+          transition: 'background-color 100ms ease, border-color 100ms ease',
+        }}
       >
         {isUploading ? (
           <>
-            <Loader2 className="w-8 h-8 text-violet-500 animate-spin" />
-            <p className="text-sm text-slate-600 dark:text-slate-400">
-              Uploading... {progress}%
+            <div className="skeleton" style={{ width: 32, height: 4 }} />
+            <p
+              className="font-mono uppercase"
+              style={{
+                margin: 0,
+                fontSize: 'var(--text-mono-xs)',
+                letterSpacing: '0.04em',
+                color: 'var(--color-ink-muted)',
+              }}
+            >
+              Uploading… {progress}%
             </p>
           </>
         ) : (
           <>
-            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800">
-              <Image className="w-6 h-6 text-slate-400" />
-            </div>
-            <div className="text-center">
-              <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                <span className="text-violet-600 dark:text-violet-400">
+            <ImageIcon size={24} strokeWidth={1.5} style={{ color: 'var(--color-ink-soft)' }} />
+            <div style={{ textAlign: 'center' }}>
+              <p
+                style={{
+                  margin: 0,
+                  fontFamily: 'var(--font-sans)',
+                  fontSize: 'var(--text-ui-base)',
+                  color: 'var(--color-ink)',
+                }}
+              >
+                <span style={{ color: 'var(--color-accent)', textDecoration: 'underline', textDecorationThickness: 1, textUnderlineOffset: 3 }}>
                   Click to upload
                 </span>{' '}
                 or drag and drop
               </p>
-              <p className="text-xs text-slate-500 mt-1">
-                PNG, JPG, GIF or WebP (max 5MB)
+              <p
+                className="font-mono uppercase"
+                style={{
+                  margin: 0,
+                  marginTop: 4,
+                  fontSize: 'var(--text-mono-xs)',
+                  letterSpacing: '0.04em',
+                  color: 'var(--color-ink-soft)',
+                }}
+              >
+                PNG · JPG · GIF · WebP · max 5MB
               </p>
             </div>
           </>
@@ -124,7 +170,16 @@ export function ImageUploader({
       </div>
 
       {error && (
-        <p className="mt-2 text-sm text-red-600 dark:text-red-400">
+        <p
+          role="alert"
+          style={{
+            marginTop: 8,
+            fontFamily: 'var(--font-sans)',
+            fontStyle: 'italic',
+            fontSize: 'var(--text-ui-sm)',
+            color: 'var(--color-rose)',
+          }}
+        >
           {error.message}
         </p>
       )}
@@ -134,13 +189,12 @@ export function ImageUploader({
         type="file"
         accept="image/jpeg,image/png,image/gif,image/webp"
         onChange={handleFileSelect}
-        className="hidden"
+        style={{ display: 'none' }}
       />
     </div>
   )
 }
 
-// Mini version for inline use in editor toolbar
 interface MiniImageUploaderProps {
   onImageUploaded: (url: string) => void
 }
@@ -154,35 +208,64 @@ export function MiniImageUploader({ onImageUploaded }: MiniImageUploaderProps) {
       const files = e.target.files
       if (files && files.length > 0) {
         const url = await uploadImage(files[0])
-        if (url) {
-          onImageUploaded(url)
-        }
+        if (url) onImageUploaded(url)
       }
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
-      }
+      if (fileInputRef.current) fileInputRef.current.value = ''
     },
     [uploadImage, onImageUploaded]
   )
 
   return (
-    <div className="relative">
+    <div style={{ position: 'relative' }}>
       <button
+        type="button"
         onClick={() => fileInputRef.current?.click()}
         disabled={isUploading}
-        className="p-2 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:text-slate-300 dark:hover:bg-slate-800 transition-colors disabled:opacity-50"
         aria-label="Insert image"
         title="Insert image"
+        style={{
+          width: 28,
+          height: 28,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'transparent',
+          color: 'var(--color-ink-muted)',
+          border: 'none',
+          borderRadius: 2,
+          cursor: isUploading ? 'not-allowed' : 'pointer',
+          opacity: isUploading ? 0.4 : 1,
+        }}
+        onMouseEnter={(e) => {
+          if (isUploading) return
+          e.currentTarget.style.background = 'var(--color-accent-tint)'
+          e.currentTarget.style.color = 'var(--color-ink)'
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'transparent'
+          e.currentTarget.style.color = 'var(--color-ink-muted)'
+        }}
       >
-        {isUploading ? (
-          <Loader2 className="w-5 h-5 animate-spin" />
-        ) : (
-          <Upload className="w-5 h-5" />
-        )}
+        <Upload size={14} strokeWidth={1.5} />
       </button>
 
       {error && (
-        <div className="absolute top-full left-0 mt-1 p-2 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded text-xs text-red-600 dark:text-red-400 whitespace-nowrap">
+        <div
+          role="alert"
+          style={{
+            position: 'absolute',
+            top: '100%',
+            left: 0,
+            marginTop: 4,
+            padding: '4px 8px',
+            background: 'var(--color-rose-tint)',
+            border: '1px solid var(--color-rose)',
+            fontFamily: 'var(--font-sans)',
+            fontSize: 'var(--text-ui-sm)',
+            color: 'var(--color-rose)',
+            whiteSpace: 'nowrap',
+          }}
+        >
           {error.message}
         </div>
       )}
@@ -192,7 +275,7 @@ export function MiniImageUploader({ onImageUploaded }: MiniImageUploaderProps) {
         type="file"
         accept="image/jpeg,image/png,image/gif,image/webp"
         onChange={handleFileSelect}
-        className="hidden"
+        style={{ display: 'none' }}
       />
     </div>
   )

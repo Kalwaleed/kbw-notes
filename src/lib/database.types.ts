@@ -149,6 +149,30 @@ export type Database = {
           },
         ]
       }
+      editions: {
+        Row: {
+          edition_date: string
+          id: string
+          is_current: boolean
+          run_number: number
+          started_at: string
+        }
+        Insert: {
+          edition_date: string
+          id?: string
+          is_current?: boolean
+          run_number: number
+          started_at?: string
+        }
+        Update: {
+          edition_date?: string
+          id?: string
+          is_current?: boolean
+          run_number?: number
+          started_at?: string
+        }
+        Relationships: []
+      }
       invited_emails: {
         Row: {
           created_at: string
@@ -421,6 +445,16 @@ export type Database = {
     }
     Functions: {
       hook_restrict_email_domain: { Args: { event: Json }; Returns: Json }
+      advance_edition: {
+        Args: Record<string, never>
+        Returns: {
+          edition_date: string
+          id: string
+          is_current: boolean
+          run_number: number
+          started_at: string
+        }
+      }
     }
     Enums: {
       notification_type:
@@ -572,3 +606,4 @@ export type Profile = Tables<'profiles'>
 export type CommentRow = Tables<'comments'>
 export type SubmissionRow = Tables<'submissions'>
 export type NotificationRow = Tables<'notifications'>
+export type EditionRow = Tables<'editions'>

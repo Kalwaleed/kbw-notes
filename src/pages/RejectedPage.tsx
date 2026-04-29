@@ -1,41 +1,99 @@
 import { Link } from 'react-router-dom'
 
+/**
+ * Rejection page — typographic statement, not a chromatic alarm.
+ * Rose rule, serif headline, mono detail.
+ */
 export function RejectedPage() {
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 overflow-hidden"
-      style={{ background: 'radial-gradient(ellipse at center, rgba(79, 70, 229, 0.15) 0%, #020617 70%)' }}
+    <div
+      style={{
+        minHeight: '100vh',
+        background: 'var(--color-paper)',
+        color: 'var(--color-ink)',
+        position: 'relative',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 'var(--space-7) var(--space-5)',
+      }}
     >
-      {/* Pulsing overlay */}
-      <div className="absolute inset-0 pointer-events-none animate-[rejected-alarm_2s_ease-in-out_infinite]" />
+      <div className="paper-grain" aria-hidden="true" />
 
-      {/* REJECTED text */}
-      <h1
-        className="relative text-6xl sm:text-8xl md:text-9xl font-black tracking-tighter select-none animate-[rejected-slam_0.8s_cubic-bezier(0.22,1,0.36,1)_forwards]"
+      <div
         style={{
-          fontFamily: 'var(--font-heading)',
-          background: `linear-gradient(135deg, var(--color-primary-400), var(--color-primary-600), var(--color-primary-300))`,
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
-          textShadow: 'none',
-          filter: 'drop-shadow(0 0 40px rgba(139, 92, 246, 0.5))',
+          width: '100%',
+          maxWidth: 560,
+          position: 'relative',
+          zIndex: 2,
+          borderTop: '2px solid var(--color-rose)',
+          paddingTop: 'var(--space-7)',
         }}
+        className="animate-rejected-slam"
       >
-        REJECTED!
-      </h1>
+        <div
+          className="font-mono uppercase"
+          style={{
+            fontSize: 'var(--text-mono-xs)',
+            letterSpacing: '0.08em',
+            color: 'var(--color-rose)',
+            fontWeight: 600,
+            marginBottom: 'var(--space-3)',
+          }}
+        >
+          Access · denied
+        </div>
 
-      {/* Subtitle */}
-      <p className="mt-8 text-slate-400 text-lg text-center max-w-md animate-[fadeIn_1s_ease-in_0.8s_both]">
-        You are not on the invite list.
-      </p>
+        <h1
+          style={{
+            fontFamily: 'var(--font-serif)',
+            fontWeight: 700,
+            fontSize: 'var(--text-h1)',
+            lineHeight: 1.05,
+            letterSpacing: '-0.03em',
+            color: 'var(--color-ink)',
+            margin: 0,
+            marginBottom: 'var(--space-5)',
+          }}
+        >
+          You are not on the invite list.
+        </h1>
 
-      {/* Back link */}
-      <Link
-        to="/"
-        className="mt-8 text-sm text-violet-400 hover:text-violet-300 transition-colors animate-[fadeIn_1s_ease-in_1.2s_both]"
-      >
-        Go back
-      </Link>
+        <p
+          style={{
+            fontFamily: 'var(--font-sans)',
+            fontStyle: 'italic',
+            fontSize: 'var(--text-ui-lg)',
+            lineHeight: 1.5,
+            color: 'var(--color-ink-muted)',
+            margin: 0,
+            marginBottom: 'var(--space-7)',
+            maxWidth: '52ch',
+          }}
+        >
+          kbw Notes is invite-only. If you believe this is an error,
+          contact whoever sent you here and ask them to add your address.
+        </p>
+
+        <hr className="ascii short" aria-hidden="true" />
+
+        <Link
+          to="/"
+          className="font-mono uppercase"
+          style={{
+            display: 'inline-block',
+            fontSize: 'var(--text-mono-sm)',
+            fontWeight: 600,
+            letterSpacing: '0.04em',
+            color: 'var(--color-accent)',
+            textDecoration: 'underline',
+            textDecorationThickness: 1,
+            textUnderlineOffset: 4,
+          }}
+        >
+          ← Back to sign-in
+        </Link>
+      </div>
     </div>
   )
 }

@@ -1,56 +1,42 @@
 import { useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Settings } from 'lucide-react'
 import { AppShell } from '../components/shell'
 import { BlogFeed } from '../components/blog-feed'
-import { useAuth, useProfile, useBlogPosts, usePostEngagement, useSettings } from '../hooks'
+import { useAuth, useProfile, useBlogPosts, usePostEngagement } from '../hooks'
 
 export function HomePage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { resolvedTheme, toggleTheme } = useSettings()
   const { user, signOut, isLoading: authLoading } = useAuth()
   const { profileComplete, isLoading: profileLoading } = useProfile(user?.id)
   const { posts, isLoading, hasMore, loadMore, updatePost } = useBlogPosts({ limit: 6 })
 
-  // Redirect to profile setup if user is logged in but profile is incomplete
   useEffect(() => {
     if (!authLoading && !profileLoading && user && !profileComplete) {
       navigate('/kbw-notes/profile/setup')
     }
   }, [authLoading, profileLoading, user, profileComplete, navigate])
+
   const { toggleLike, toggleBookmark } = usePostEngagement()
 
   const navigationItems = [
-    { label: 'Submissions', href: '/kbw-notes/submissions', isActive: location.pathname === '/kbw-notes/submissions' },
+    { label: 'Home',          href: '/kbw-notes/home',          isActive: location.pathname === '/kbw-notes/home' },
+    { label: 'Submissions',   href: '/kbw-notes/submissions',   isActive: location.pathname === '/kbw-notes/submissions' },
     { label: 'Notifications', href: '/kbw-notes/notifications', isActive: location.pathname === '/kbw-notes/notifications' },
-    { label: 'Settings', href: '/kbw-notes/settings', isActive: location.pathname === '/kbw-notes/settings' },
+    { label: 'Settings',      href: '/kbw-notes/settings',      isActive: location.pathname === '/kbw-notes/settings' },
   ]
 
-  const handleNavigate = (href: string) => {
-    navigate(href)
-  }
+  const handleNavigate = (href: string) => navigate(href)
+  const handleLogout = async () => { await signOut(); navigate('/') }
+  const handleSignIn = () => navigate('/', { state: { from: location.pathname } })
 
-  const handleLogout = async () => {
-    await signOut()
-    navigate('/')
-  }
-
-  const handleSignIn = () => {
-    navigate('/', { state: { from: location.pathname } })
-  }
-
-  const handleViewPost = (id: string) => {
-    navigate(`/kbw-notes/post/${id}`)
-  }
+  const handleViewPost = (id: string) => navigate(`/kbw-notes/post/${id}`)
 
   const handleLike = (id: string) => {
     if (!user) {
       navigate('/', { state: { from: location.pathname } })
       return
     }
-
-    // Optimistic update
     const post = posts.find((p) => p.id === id)
     if (post) {
       updatePost(id, {
@@ -58,13 +44,9 @@ export function HomePage() {
         likeCount: post.isLiked ? post.likeCount - 1 : post.likeCount + 1,
       })
     }
-
     toggleLike(id, (isLiked) => {
-      // Sync with server response (in case of mismatch)
       const currentPost = posts.find((p) => p.id === id)
-      if (currentPost && currentPost.isLiked !== isLiked) {
-        updatePost(id, { isLiked })
-      }
+      if (currentPost && currentPost.isLiked !== isLiked) updatePost(id, { isLiked })
     })
   }
 
@@ -73,48 +55,36 @@ export function HomePage() {
       navigate('/', { state: { from: location.pathname } })
       return
     }
-
-    // Optimistic update
     const post = posts.find((p) => p.id === id)
-    if (post) {
-      updatePost(id, { isBookmarked: !post.isBookmarked })
-    }
-
+    if (post) updatePost(id, { isBookmarked: !post.isBookmarked })
     toggleBookmark(id, (isBookmarked) => {
-      // Sync with server response
       const currentPost = posts.find((p) => p.id === id)
-      if (currentPost && currentPost.isBookmarked !== isBookmarked) {
-        updatePost(id, { isBookmarked })
-      }
+      if (currentPost && currentPost.isBookmarked !== isBookmarked) updatePost(id, { isBookmarked })
     })
   }
 
   const handleShare = async (id: string) => {
     const post = posts.find((p) => p.id === id)
     const url = `${window.location.origin}/kbw-notes/post/${id}`
-
     if (navigator.share) {
       try {
         await navigator.share({
-          title: post?.title ?? 'Check out this post',
+          title: post?.title ?? 'kbw Notes',
           text: post?.excerpt,
           url,
         })
       } catch {
-        // User cancelled or share failed - copy to clipboard as fallback
         await navigator.clipboard.writeText(url)
       }
     } else {
-      // Fallback: copy link to clipboard
       await navigator.clipboard.writeText(url)
-      // Could add a toast notification here
     }
   }
 
-  // User display info
   const userDisplay = user
     ? {
         name: user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email ?? 'User',
+        email: user.email ?? undefined,
         avatarUrl: user.user_metadata?.avatar_url,
       }
     : undefined
@@ -127,38 +97,48 @@ export function HomePage() {
       onLogout={handleLogout}
       onSignIn={handleSignIn}
     >
-      <div className="space-y-6">
-        {/* Page Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1
-              className="text-3xl font-bold text-slate-900 dark:text-white"
-              style={{ fontFamily: 'var(--font-heading)' }}
-            >
-              kbw Notes
-            </h1>
-            <p className="mt-1 text-slate-600 dark:text-slate-400">
-              Tech discoveries, projects, and insights
-            </p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-7)' }}>
+        <header>
+          <div
+            className="font-mono uppercase"
+            style={{
+              fontSize: 'var(--text-mono-xs)',
+              letterSpacing: '0.08em',
+              color: 'var(--color-accent)',
+              fontWeight: 600,
+              marginBottom: 'var(--space-2)',
+            }}
+          >
+            Edition feed
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={toggleTheme}
-              className="px-4 py-2 text-sm font-medium rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors"
-            >
-              {resolvedTheme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-            </button>
-            <button
-              onClick={() => navigate('/kbw-notes/settings')}
-              className="p-2 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors"
-              aria-label="Settings"
-            >
-              <Settings className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
+          <h1
+            style={{
+              fontFamily: 'var(--font-serif)',
+              fontWeight: 700,
+              fontSize: 'var(--text-h2)',
+              lineHeight: 1.15,
+              letterSpacing: '-0.02em',
+              color: 'var(--color-ink)',
+              margin: 0,
+            }}
+          >
+            Notes from the desk.
+          </h1>
+          <p
+            style={{
+              fontFamily: 'var(--font-sans)',
+              fontSize: 'var(--text-ui-base)',
+              fontStyle: 'italic',
+              color: 'var(--color-ink-muted)',
+              margin: 0,
+              marginTop: 'var(--space-2)',
+              maxWidth: '52ch',
+            }}
+          >
+            Essays, technical write-ups, and operating notes. Lead piece sets the run.
+          </p>
+        </header>
 
-        {/* Blog Feed */}
         <BlogFeed
           blogPosts={posts}
           onViewPost={handleViewPost}

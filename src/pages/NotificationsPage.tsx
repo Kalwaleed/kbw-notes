@@ -1,12 +1,11 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import { AppShell } from '../components/shell'
 import { NotificationsList } from '../components/notifications'
-import { useAuth, useNotifications, useSettings } from '../hooks'
+import { useAuth, useNotifications } from '../hooks'
 
 export function NotificationsPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { resolvedTheme, toggleTheme } = useSettings()
   const { user, signOut } = useAuth()
   const {
     notifications,
@@ -19,27 +18,20 @@ export function NotificationsPage() {
   } = useNotifications()
 
   const navigationItems = [
-    { label: 'Home', href: '/kbw-notes/home', isActive: false },
+    { label: 'Home',          href: '/kbw-notes/home',          isActive: false },
+    { label: 'Submissions',   href: '/kbw-notes/submissions',   isActive: false },
     { label: 'Notifications', href: '/kbw-notes/notifications', isActive: location.pathname === '/kbw-notes/notifications' },
+    { label: 'Settings',      href: '/kbw-notes/settings',      isActive: false },
   ]
 
-  const handleNavigate = (href: string) => {
-    navigate(href)
-  }
+  const handleNavigate = (href: string) => navigate(href)
+  const handleLogout = async () => { await signOut(); navigate('/') }
+  const handleSignIn = () => navigate('/', { state: { from: location.pathname } })
 
-  const handleLogout = async () => {
-    await signOut()
-    navigate('/')
-  }
-
-  const handleSignIn = () => {
-    navigate('/', { state: { from: location.pathname } })
-  }
-
-  // User display info
   const userDisplay = user
     ? {
         name: user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email ?? 'User',
+        email: user.email ?? undefined,
         avatarUrl: user.user_metadata?.avatar_url,
       }
     : undefined
@@ -52,26 +44,34 @@ export function NotificationsPage() {
       onLogout={handleLogout}
       onSignIn={handleSignIn}
     >
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1
-              className="text-3xl font-bold text-slate-900 dark:text-white"
-              style={{ fontFamily: 'var(--font-heading)' }}
-            >
-              Notifications
-            </h1>
-            <p className="mt-1 text-slate-600 dark:text-slate-400">
-              Your activity and updates
-            </p>
-          </div>
-          <button
-            onClick={toggleTheme}
-            className="px-4 py-2 text-sm font-medium rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors"
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-7)' }}>
+        <header>
+          <div
+            className="font-mono uppercase"
+            style={{
+              fontSize: 'var(--text-mono-xs)',
+              letterSpacing: '0.08em',
+              color: 'var(--color-accent)',
+              fontWeight: 600,
+              marginBottom: 'var(--space-2)',
+            }}
           >
-            {resolvedTheme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-          </button>
-        </div>
+            Inbox
+          </div>
+          <h1
+            style={{
+              fontFamily: 'var(--font-serif)',
+              fontWeight: 700,
+              fontSize: 'var(--text-h2)',
+              lineHeight: 1.15,
+              letterSpacing: '-0.02em',
+              color: 'var(--color-ink)',
+              margin: 0,
+            }}
+          >
+            Notifications.
+          </h1>
+        </header>
 
         <NotificationsList
           notifications={notifications}

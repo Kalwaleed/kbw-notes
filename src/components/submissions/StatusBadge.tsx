@@ -5,31 +5,31 @@ interface StatusBadgeProps {
   size?: 'sm' | 'md'
 }
 
-const statusConfig: Record<
-  SubmissionStatus,
-  { label: string; bgClass: string; textClass: string }
-> = {
-  draft: {
-    label: 'Draft',
-    bgClass: 'bg-slate-100 dark:bg-slate-800',
-    textClass: 'text-slate-600 dark:text-slate-400',
-  },
-  published: {
-    label: 'Published',
-    bgClass: 'bg-emerald-100 dark:bg-emerald-950/50',
-    textClass: 'text-emerald-700 dark:text-emerald-400',
-  },
+/**
+ * Hairline-bordered uppercase mono pill. Uses accent for published,
+ * muted ink for draft. No chromatic differentiation — type does the work.
+ */
+const statusConfig: Record<SubmissionStatus, { label: string; color: string }> = {
+  draft:     { label: 'Draft',     color: 'var(--color-ink-muted)' },
+  published: { label: 'Published', color: 'var(--color-accent)' },
 }
 
 export function StatusBadge({ status, size = 'sm' }: StatusBadgeProps) {
   const config = statusConfig[status]
-
-  const sizeClasses = size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-2.5 py-1 text-sm'
+  const fontSize = size === 'sm' ? 'var(--text-mono-xs)' : 'var(--text-mono-sm)'
 
   return (
     <span
-      className={`inline-flex items-center font-medium rounded-full ${sizeClasses} ${config.bgClass} ${config.textClass}`}
-      style={{ fontFamily: 'var(--font-body)' }}
+      className="inline-flex items-center font-mono uppercase"
+      style={{
+        fontSize,
+        fontWeight: 600,
+        letterSpacing: '0.04em',
+        color: config.color,
+        padding: size === 'sm' ? '2px 8px' : '3px 10px',
+        border: `1px solid ${config.color}`,
+        borderRadius: 2,
+      }}
     >
       {config.label}
     </span>
