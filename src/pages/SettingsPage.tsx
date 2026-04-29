@@ -17,8 +17,6 @@ export function SettingsPage() {
   const {
     appearance,
     setTheme,
-    setFontSize,
-    setDensity,
     reading,
     setDefaultSort,
     setPostsPerPage,
@@ -82,11 +80,7 @@ export function SettingsPage() {
 
         <AppearanceSettings
           theme={appearance.theme}
-          fontSize={appearance.fontSize}
-          density={appearance.density}
           onThemeChange={setTheme}
-          onFontSizeChange={setFontSize}
-          onDensityChange={setDensity}
         />
 
         <ReadingSettings
