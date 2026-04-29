@@ -6,6 +6,11 @@ After UAT finds gaps, spawn one debug agent per gap. Each agent investigates aut
 Orchestrator stays lean: parse gaps, spawn agents, collect results, update UAT.
 </purpose>
 
+<available_agent_types>
+Valid GSD subagent types (use exact names — do not fall back to 'general-purpose'):
+- gsd-debugger — Diagnoses and fixes issues
+</available_agent_types>
+
 <paths>
 DEBUG_DIR=.planning/debug
 
@@ -50,6 +55,12 @@ gaps = [
 </step>
 
 <step name="report_plan">
+**Read worktree config:**
+
+```bash
+USE_WORKTREES=$(gsd-sdk query config-get workflow.use_worktrees 2>/dev/null || echo "true")
+```
+
 **Report diagnosis plan to user:**
 
 ```
@@ -73,14 +84,22 @@ This runs in parallel - all gaps investigated simultaneously.
 </step>
 
 <step name="spawn_agents">
+**Load agent skills:**
+
+```bash
+AGENT_SKILLS_DEBUGGER=$(gsd-sdk query agent-skills gsd-debugger)
+EXPECTED_BASE=$(git rev-parse HEAD)
+```
+
 **Spawn debug agents in parallel:**
 
 For each gap, fill the debug-subagent-prompt template and spawn:
 
 ```
 Task(
-  prompt=filled_debug_subagent_prompt,
-  subagent_type="general-purpose",
+  prompt=filled_debug_subagent_prompt + "\n\n<worktree_branch_check>\nFIRST ACTION: run git merge-base HEAD {EXPECTED_BASE} — if result differs from {EXPECTED_BASE}, run git reset --hard {EXPECTED_BASE} to correct the branch base (safe — runs before any agent work). Then verify: if [ \"$(git rev-parse HEAD)\" != \"{EXPECTED_BASE}\" ]; then echo \"ERROR: Could not correct worktree base\"; exit 1; fi. Fixes EnterWorktree creating branches from main on all platforms.\n</worktree_branch_check>\n\n<files_to_read>\n- {phase_dir}/{phase_num}-UAT.md\n- .planning/STATE.md\n</files_to_read>\n${AGENT_SKILLS_DEBUGGER}",
+  subagent_type="gsd-debugger",
+  ${USE_WORKTREES !== "false" ? 'isolation="worktree",' : ''}
   description="Debug: {truth_short}"
 )
 ```
@@ -156,21 +175,9 @@ For each gap in the Gaps section, add artifacts and missing fields:
 
 Update status in frontmatter to "diagnosed".
 
-**Check planning config:**
-
-```bash
-COMMIT_PLANNING_DOCS=$(cat .planning/config.json 2>/dev/null | grep -o '"commit_docs"[[:space:]]*:[[:space:]]*[^,}]*' | grep -o 'true\|false' || echo "true")
-git check-ignore -q .planning 2>/dev/null && COMMIT_PLANNING_DOCS=false
-```
-
-**If `COMMIT_PLANNING_DOCS=false`:** Skip git operations
-
-**If `COMMIT_PLANNING_DOCS=true` (default):**
-
 Commit the updated UAT.md:
 ```bash
-git add ".planning/phases/XX-name/{phase}-UAT.md"
-git commit -m "docs({phase}): add root causes from diagnosis"
+gsd-sdk query commit "docs({phase_num}): add root causes from diagnosis" ".planning/phases/XX-name/{phase_num}-UAT.md"
 ```
 </step>
 
@@ -213,7 +220,7 @@ Agents only diagnose—plan-phase --gaps handles fixes (no fix application).
 
 **Agent times out:**
 - Check DEBUG-{slug}.md for partial progress
-- Can resume with /gsd:debug
+- Can resume with /gsd-debug
 
 **All agents fail:**
 - Something systemic (permissions, git, etc.)
