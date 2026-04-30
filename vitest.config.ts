@@ -3,6 +3,9 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
+  define: {
+    'import.meta.env.VITE_LOCAL_AUTH_BYPASS': JSON.stringify('false'),
+  },
   test: {
     globals: true,
     environment: 'jsdom',

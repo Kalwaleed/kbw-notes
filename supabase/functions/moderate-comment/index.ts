@@ -400,7 +400,7 @@ Deno.serve(async (req) => {
         return await insertPendingComment()
       }
       moderationResult = validated.data
-    } catch (parseErr) {
+    } catch {
       console.error('Failed to parse moderation response:', moderationText.substring(0, 200))
       return await insertPendingComment()
     }
