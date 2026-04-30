@@ -15,6 +15,10 @@ vi.mock('./pages/SettingsPage', () => ({
   SettingsPage: () => <div data-testid="settings-page">Settings</div>,
 }))
 
+vi.mock('./pages/SubmissionsPage', () => ({
+  SubmissionsPage: () => <div data-testid="submissions-page">Submissions</div>,
+}))
+
 vi.mock('./pages/RejectedPage', () => ({
   RejectedPage: () => <div data-testid="rejected-page">Rejected</div>,
 }))
@@ -57,10 +61,16 @@ describe('public reader routes', () => {
     expect(router.state.location.pathname).toBe('/kbw-notes/post/post-1')
   })
 
+  it('renders public submissions directly', async () => {
+    const router = renderAt('/kbw-notes/submissions')
+
+    await screen.findByTestId('submissions-page')
+    expect(router.state.location.pathname).toBe('/kbw-notes/submissions')
+  })
+
   it.each([
     '/kbw-notes/profile',
     '/kbw-notes/profile/setup',
-    '/kbw-notes/submissions',
     '/kbw-notes/submissions/new',
     '/kbw-notes/notifications',
   ])('does not expose %s', async (path) => {

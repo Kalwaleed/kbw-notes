@@ -11,6 +11,7 @@ describe('AppShell public reader chrome', () => {
         hideFolio
         navigationItems={[
           { label: 'Home', href: '/kbw-notes/home', isActive: true },
+          { label: 'Submissions', href: '/kbw-notes/submissions' },
           { label: 'Settings', href: '/kbw-notes/settings' },
         ]}
         user={{ name: 'Test User', email: 'test@kbw.vc' }}
@@ -28,7 +29,7 @@ describe('AppShell public reader chrome', () => {
     expect(screen.queryByRole('button', { name: /user menu/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /notifications/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^profile$/i })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /^submissions$/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^submissions$/i })).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: /open menu/i }))
     expect(screen.getAllByRole('button', { name: /^home$/i }).length).toBeGreaterThan(0)

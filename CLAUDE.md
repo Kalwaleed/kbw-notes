@@ -103,10 +103,11 @@ Public reader routes are defined in `src/router.tsx`:
 - `/kbw-notes` — Redirects to `/kbw-notes/home` (index route)
 - `/kbw-notes/home` — Blog feed (reads from `submissions` table, NOT `blog_posts`)
 - `/kbw-notes/post/:id` — Single post view with comments
+- `/kbw-notes/submissions` — Anonymous public draft intake
 - `/kbw-notes/settings` — Anonymous local reading/appearance preferences
 - `*` — 404 catch-all
 
-Identity, notification, profile, and submission-management pages are not exposed in routing or navigation. Keep database RLS write protections in place before reintroducing any authenticated UI.
+Identity, notification, profile, and submission-management/admin pages are not exposed in routing or navigation. Public submissions write to `reader_submissions` through `submit_reader_submission(...)`; they do not publish content or grant edit access. Keep database RLS write protections in place before reintroducing any authenticated UI.
 
 ### Design System
 

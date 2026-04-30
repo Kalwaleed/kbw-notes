@@ -61,7 +61,7 @@ describe('SettingsPage', () => {
     expect(screen.queryByLabelText('Notification settings')).not.toBeInTheDocument()
     expect(screen.queryByLabelText('Privacy settings')).not.toBeInTheDocument()
     expect(screen.queryByLabelText('Account settings')).not.toBeInTheDocument()
-    expect(screen.queryByText('Submissions')).not.toBeInTheDocument()
+    expect(screen.getByText('Submissions')).toBeInTheDocument()
     expect(screen.queryByText('Notifications')).not.toBeInTheDocument()
     expect(screen.queryByText('Profile')).not.toBeInTheDocument()
   })

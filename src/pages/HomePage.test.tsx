@@ -46,7 +46,7 @@ describe('HomePage', () => {
 
     expect(screen.getByRole('heading', { name: 'Notes from the desk.' })).toBeInTheDocument()
     expect(screen.getByTestId('blog-feed')).toBeInTheDocument()
-    expect(screen.queryByText('Submissions')).not.toBeInTheDocument()
+    expect(screen.getByText('Submissions')).toBeInTheDocument()
     expect(screen.queryByText('Notifications')).not.toBeInTheDocument()
     expect(screen.queryByText('Profile')).not.toBeInTheDocument()
   })

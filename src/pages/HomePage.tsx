@@ -10,6 +10,7 @@ export function HomePage() {
 
   const navigationItems = [
     { label: 'Home',          href: '/kbw-notes/home',          isActive: location.pathname === '/kbw-notes/home' },
+    { label: 'Submissions',   href: '/kbw-notes/submissions',   isActive: location.pathname === '/kbw-notes/submissions' },
     { label: 'Settings',      href: '/kbw-notes/settings',      isActive: location.pathname === '/kbw-notes/settings' },
   ]
 

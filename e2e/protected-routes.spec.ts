@@ -12,15 +12,23 @@ test.describe('Public reader routes', () => {
     await expect(page.getByRole('heading', { name: 'Notes from the desk.' })).toBeVisible()
     await expect(page.getByRole('button', { name: /sign in/i })).toHaveCount(0)
     await expect(page.getByRole('button', { name: /sign out/i })).toHaveCount(0)
-    await expect(page.getByRole('button', { name: /^submissions$/i })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: /^submissions$/i })).toBeVisible()
     await expect(page.getByRole('button', { name: /^notifications$/i })).toHaveCount(0)
     await expect(page.getByRole('button', { name: /^profile$/i })).toHaveCount(0)
+  })
+
+  test('/kbw-notes/submissions renders anonymous intake', async ({ page }) => {
+    await page.goto('/kbw-notes/submissions')
+    await expect(page.getByRole('heading', { name: 'Submit a note.' })).toBeVisible()
+    await expect(page.getByLabel(/name/i)).toBeVisible()
+    await expect(page.getByLabel(/post body/i)).toBeVisible()
+    await expect(page.getByRole('button', { name: /^submit$/i })).toBeVisible()
+    await expect(page.getByRole('button', { name: /sign in/i })).toHaveCount(0)
   })
 
   for (const path of [
     '/kbw-notes/profile',
     '/kbw-notes/profile/setup',
-    '/kbw-notes/submissions',
     '/kbw-notes/submissions/new',
     '/kbw-notes/submissions/00000000-0000-0000-0000-000000000000',
     '/kbw-notes/notifications',

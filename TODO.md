@@ -9,9 +9,10 @@
 
 **What was changed:**
 - `/` redirects to `/kbw-notes/home`
-- `/kbw-notes/home`, `/kbw-notes/post/:id`, and `/kbw-notes/settings` are public
+- `/kbw-notes/home`, `/kbw-notes/post/:id`, `/kbw-notes/submissions`, and `/kbw-notes/settings` are public
 - Sign-in route, protected route wrapper, and sign-in UI were removed
-- Profile, submissions, and notifications are not exposed in navigation or routing
+- Profile, submission management, and notifications are not exposed in navigation or routing
+- Public submissions write pending rows to `reader_submissions`
 - `editions` is anonymously readable for the folio bar
 - Anonymous commenting enabled (no login required)
 - Auth checks removed from comment forms

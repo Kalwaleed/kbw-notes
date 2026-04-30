@@ -21,6 +21,7 @@ export function SettingsPage() {
 
   const navigationItems = [
     { label: 'Home',          href: '/kbw-notes/home',          isActive: false },
+    { label: 'Submissions',   href: '/kbw-notes/submissions',   isActive: false },
     { label: 'Settings',      href: '/kbw-notes/settings',      isActive: location.pathname === '/kbw-notes/settings' },
   ]
 

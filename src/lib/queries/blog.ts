@@ -1,6 +1,10 @@
 import { supabase } from '../supabase'
 import type { BlogPost } from '../../types/blog'
 
+// One-time public reset requested on 2026-04-30: hide legacy published rows
+// unless/until the matching cleanup migration is applied to the database.
+const PUBLIC_FEED_RESET_AT = '2026-04-30T10:00:28.000Z'
+
 export interface FetchPostsOptions {
   limit?: number
   cursor?: string // publishedAt timestamp for cursor-based pagination
@@ -42,6 +46,7 @@ export async function fetchBlogPosts({
     )
     .eq('status', 'published')
     .not('published_at', 'is', null)
+    .gte('published_at', PUBLIC_FEED_RESET_AT)
     .lte('published_at', new Date().toISOString())
     .order('published_at', { ascending: false })
     .limit(limit + 1) // Fetch one extra to check if there are more
@@ -212,6 +217,7 @@ export async function fetchBlogPost(postId: string): Promise<{
     )
     .eq('id', postId)
     .eq('status', 'published')
+    .gte('published_at', PUBLIC_FEED_RESET_AT)
     .single()
 
   if (error) {
