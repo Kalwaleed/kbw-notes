@@ -1,9 +1,142 @@
 import { supabase } from '../supabase'
 import type { BlogPost } from '../../types/blog'
+import { isLocalAuthBypassEnabled, localDevUser } from '../localDev'
 
 // One-time public reset requested on 2026-04-30: hide legacy published rows
 // unless/until the matching cleanup migration is applied to the database.
 const PUBLIC_FEED_RESET_AT = '2026-04-30T10:00:28.000Z'
+const LOCAL_DEV_SAMPLE_POSTS: Array<BlogPost & { content: string }> = [
+  {
+    id: 'local-post-001',
+    title: 'The Advantage Is the Operating System',
+    excerpt: 'Capital is abundant. The scarce layer is the operating system that turns capital, access, and timing into repeatable execution.',
+    content: `
+      <p>Capital is rarely the constraint by itself. The constraint is the operating system around it: how opportunities are sourced, filtered, staffed, governed, and compounded after the first transaction closes.</p>
+      <h2>Control Before Optionality</h2>
+      <p>Minority exposure can produce mark-to-market gains, but it rarely produces platform control. The more durable position is ownership of the bottleneck: distribution, approvals, data, brand trust, or the operating team that can repeatedly convert intent into revenue.</p>
+      <h2>What Compounds</h2>
+      <p>The strongest platforms turn each transaction into better access for the next transaction. They do not just accumulate assets. They accumulate permissions, judgment, and execution speed.</p>
+      <h3>Practical Test</h3>
+      <p>If a deal does not improve future sourcing, governance, or margin protection, it is probably a trade, not a platform move.</p>
+    `,
+    coverImageUrl: null,
+    author: {
+      id: localDevUser.id,
+      name: 'KBW Notes',
+      avatarUrl: null,
+    },
+    publishedAt: '2026-04-30T10:35:00.000Z',
+    tags: ['strategy', 'platforms', 'capital'],
+    likeCount: 18,
+    commentCount: 0,
+    isLiked: false,
+    isBookmarked: false,
+  },
+  {
+    id: 'local-post-002',
+    title: 'A Useful AI Tool Has a P&L Shape',
+    excerpt: 'The first test for AI inside an operating company is not whether it feels impressive. It is whether the tool has a measurable cost, speed, or quality delta.',
+    content: `
+      <p>Most AI pilots fail because they are evaluated as demos instead of operating instruments. A useful tool has a P&amp;L shape. It removes a cost line, compresses a cycle time, raises conversion, or protects margin.</p>
+      <h2>The Wrong Question</h2>
+      <p>“Can AI do this?” is too loose. The sharper question is: “Can this workflow move from three hours to twenty minutes without increasing review risk?” That gives the team a measurable standard.</p>
+      <h2>Where to Start</h2>
+      <p>Start with repeated workflows that already have human review: document intake, meeting synthesis, vendor comparisons, customer response drafts, and data cleanup. The review layer already exists, which lowers implementation risk.</p>
+      <h3>Deployment Rule</h3>
+      <p>If the same prompt is used twice, turn it into a controlled workflow with inputs, outputs, owner, and failure handling.</p>
+    `,
+    coverImageUrl: null,
+    author: {
+      id: localDevUser.id,
+      name: 'KBW Notes',
+      avatarUrl: null,
+    },
+    publishedAt: '2026-04-30T10:30:00.000Z',
+    tags: ['ai', 'operations', 'automation'],
+    likeCount: 12,
+    commentCount: 0,
+    isLiked: false,
+    isBookmarked: false,
+  },
+  {
+    id: 'local-post-003',
+    title: 'Premium Positioning Is an Operating Choice',
+    excerpt: 'Premium brands are not built by aesthetic decisions alone. They are built by refusing shortcuts that would train the market to expect discount economics.',
+    content: `
+      <p>Premium positioning looks like brand from the outside, but internally it is an operating discipline. It determines what you refuse, how you price, how quickly you respond, and which compromises are never normalized.</p>
+      <h2>Margin Is a Signal</h2>
+      <p>Discounting may solve a quarterly pressure point, but it can also teach the market to wait. A premium platform has to protect price integrity even when demand is soft, then use product quality, service reliability, and scarcity to justify that protection.</p>
+      <h2>Execution Details Matter</h2>
+      <p>Every touchpoint either supports the premium claim or weakens it: onboarding, handover, maintenance, event programming, communication cadence, and how exceptions are handled.</p>
+      <h3>The Test</h3>
+      <p>If a customer can feel operational looseness after purchase, the brand promise was overdrawn.</p>
+    `,
+    coverImageUrl: null,
+    author: {
+      id: localDevUser.id,
+      name: 'KBW Notes',
+      avatarUrl: null,
+    },
+    publishedAt: '2026-04-30T10:25:00.000Z',
+    tags: ['brand', 'real-estate', 'margin'],
+    likeCount: 21,
+    commentCount: 0,
+    isLiked: false,
+    isBookmarked: false,
+  },
+  {
+    id: 'local-post-004',
+    title: 'The MENA Gap Is Not Demand',
+    excerpt: 'In many categories, demand already exists. The open space is institutional-grade execution: trust, governance, distribution, and repeatability.',
+    content: `
+      <p>The MENA opportunity is often described as a demand story. That is incomplete. In many categories, the demand is visible; what remains underbuilt is the institutional machinery around the demand.</p>
+      <h2>Execution Is the Gap</h2>
+      <p>Consumers, corporates, and governments are moving faster than many category operators. That creates room for platforms that can combine local trust, global standards, and repeatable delivery.</p>
+      <h2>Why Timing Matters</h2>
+      <p>Vision 2030 has changed the tempo of market formation. Regulatory clarity, infrastructure spend, tourism, sport, and demographic energy are converging. The window rewards builders who can move before categories harden.</p>
+      <h3>Investor Discipline</h3>
+      <p>Do not underwrite the region in aggregate. Underwrite the exact bottleneck a company controls.</p>
+    `,
+    coverImageUrl: null,
+    author: {
+      id: localDevUser.id,
+      name: 'KBW Notes',
+      avatarUrl: null,
+    },
+    publishedAt: '2026-04-30T10:20:00.000Z',
+    tags: ['mena', 'vision-2030', 'markets'],
+    likeCount: 16,
+    commentCount: 0,
+    isLiked: false,
+    isBookmarked: false,
+  },
+  {
+    id: 'local-post-005',
+    title: 'Meetings Should End in a System Update',
+    excerpt: 'If a meeting does not change an owner, deadline, metric, decision, or document, the work was not finished.',
+    content: `
+      <p>A meeting is not a unit of progress. It is a coordination cost that only earns its place when it changes the system: an owner, deadline, metric, decision, document, or operating rule.</p>
+      <h2>The Minimum Output</h2>
+      <p>Every serious meeting should leave behind a written artifact. It can be brief, but it should make the next action unambiguous. Who owns it? What moves? By when? What happens if it slips?</p>
+      <h2>Why This Compounds</h2>
+      <p>Clear follow-through creates institutional memory. Over time, the organization becomes easier to run because decisions stop living inside private recollection.</p>
+      <h3>Rule</h3>
+      <p>If the same discussion repeats three times, the problem is not alignment. The problem is missing process ownership.</p>
+    `,
+    coverImageUrl: null,
+    author: {
+      id: localDevUser.id,
+      name: 'KBW Notes',
+      avatarUrl: null,
+    },
+    publishedAt: '2026-04-30T10:15:00.000Z',
+    tags: ['operator-notes', 'management', 'systems'],
+    likeCount: 9,
+    commentCount: 0,
+    isLiked: false,
+    isBookmarked: false,
+  },
+]
 
 export interface FetchPostsOptions {
   limit?: number
@@ -26,6 +159,22 @@ export async function fetchBlogPosts({
   cursor,
   userId,
 }: FetchPostsOptions = {}): Promise<FetchPostsResult> {
+  if (isLocalAuthBypassEnabled) {
+    const posts = [...LOCAL_DEV_SAMPLE_POSTS].sort(
+      (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+    )
+    const visiblePosts = cursor
+      ? posts.filter((post) => post.publishedAt < cursor)
+      : posts
+    const page = visiblePosts.slice(0, limit)
+    const hasMore = visiblePosts.length > limit
+    return {
+      posts: page,
+      nextCursor: hasMore ? page[page.length - 1]?.publishedAt ?? null : null,
+      hasMore,
+    }
+  }
+
   // Build query for published submissions with author info
   let query = supabase
     .from('submissions')
@@ -198,6 +347,20 @@ export async function fetchBlogPost(postId: string): Promise<{
     avatarUrl: string | null
   }
 } | null> {
+  if (isLocalAuthBypassEnabled) {
+    const post = LOCAL_DEV_SAMPLE_POSTS.find((samplePost) => samplePost.id === postId)
+    if (!post) return null
+    return {
+      id: post.id,
+      title: post.title,
+      excerpt: post.excerpt,
+      content: post.content,
+      publishedAt: post.publishedAt,
+      tags: post.tags,
+      author: post.author,
+    }
+  }
+
   const { data, error } = await supabase
     .from('submissions')
     .select(
