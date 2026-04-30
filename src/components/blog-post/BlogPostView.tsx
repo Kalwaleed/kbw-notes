@@ -394,6 +394,37 @@ export function BlogPostView({
           </p>
         )}
 
+        {blogPost.coverImageUrl && (
+          <figure
+            style={{
+              margin: 0,
+              marginBottom: 'var(--space-8)',
+              borderTop: '1px solid var(--color-hair)',
+              borderBottom: '1px solid var(--color-hair)',
+              padding: 'var(--space-3) 0',
+            }}
+          >
+            <div
+              style={{
+                aspectRatio: '16 / 9',
+                background: 'var(--color-paper-sunken)',
+                overflow: 'hidden',
+              }}
+            >
+              <img
+                src={blogPost.coverImageUrl}
+                alt=""
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  display: 'block',
+                }}
+              />
+            </div>
+          </figure>
+        )}
+
         <ArticleProse html={decoratedHtml} />
 
         <hr className="ascii" aria-hidden="true" />

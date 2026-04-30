@@ -19,7 +19,7 @@ const LOCAL_DEV_SAMPLE_POSTS: Array<BlogPost & { content: string }> = [
       <h3>Practical Test</h3>
       <p>If a deal does not improve future sourcing, governance, or margin protection, it is probably a trade, not a platform move.</p>
     `,
-    coverImageUrl: null,
+    coverImageUrl: 'https://picsum.photos/id/1011/1600/900',
     author: {
       id: localDevUser.id,
       name: 'KBW Notes',
@@ -45,7 +45,7 @@ const LOCAL_DEV_SAMPLE_POSTS: Array<BlogPost & { content: string }> = [
       <h3>Deployment Rule</h3>
       <p>If the same prompt is used twice, turn it into a controlled workflow with inputs, outputs, owner, and failure handling.</p>
     `,
-    coverImageUrl: null,
+    coverImageUrl: 'https://picsum.photos/id/180/1600/900',
     author: {
       id: localDevUser.id,
       name: 'KBW Notes',
@@ -71,7 +71,7 @@ const LOCAL_DEV_SAMPLE_POSTS: Array<BlogPost & { content: string }> = [
       <h3>The Test</h3>
       <p>If a customer can feel operational looseness after purchase, the brand promise was overdrawn.</p>
     `,
-    coverImageUrl: null,
+    coverImageUrl: 'https://picsum.photos/id/1031/1600/900',
     author: {
       id: localDevUser.id,
       name: 'KBW Notes',
@@ -97,7 +97,7 @@ const LOCAL_DEV_SAMPLE_POSTS: Array<BlogPost & { content: string }> = [
       <h3>Investor Discipline</h3>
       <p>Do not underwrite the region in aggregate. Underwrite the exact bottleneck a company controls.</p>
     `,
-    coverImageUrl: null,
+    coverImageUrl: 'https://picsum.photos/id/1018/1600/900',
     author: {
       id: localDevUser.id,
       name: 'KBW Notes',
@@ -123,7 +123,7 @@ const LOCAL_DEV_SAMPLE_POSTS: Array<BlogPost & { content: string }> = [
       <h3>Rule</h3>
       <p>If the same discussion repeats three times, the problem is not alignment. The problem is missing process ownership.</p>
     `,
-    coverImageUrl: null,
+    coverImageUrl: 'https://picsum.photos/id/1076/1600/900',
     author: {
       id: localDevUser.id,
       name: 'KBW Notes',
@@ -338,6 +338,7 @@ export async function fetchBlogPost(postId: string): Promise<{
   id: string
   title: string
   excerpt: string
+  coverImageUrl: string | null
   content: string
   publishedAt: string
   tags: string[]
@@ -354,6 +355,7 @@ export async function fetchBlogPost(postId: string): Promise<{
       id: post.id,
       title: post.title,
       excerpt: post.excerpt,
+      coverImageUrl: post.coverImageUrl ?? null,
       content: post.content,
       publishedAt: post.publishedAt,
       tags: post.tags,
@@ -368,6 +370,7 @@ export async function fetchBlogPost(postId: string): Promise<{
       id,
       title,
       excerpt,
+      cover_image_url,
       content,
       published_at,
       tags,
@@ -396,6 +399,7 @@ export async function fetchBlogPost(postId: string): Promise<{
     id: data.id,
     title: data.title,
     excerpt: data.excerpt ?? '',
+    coverImageUrl: data.cover_image_url ?? null,
     content: data.content ?? '',
     publishedAt: data.published_at!,
     tags: data.tags ?? [],

@@ -6,6 +6,7 @@ export interface ReaderSubmissionInput {
   title: string
   excerpt: string
   content: string
+  coverImageUrl?: string
   tags: string[]
 }
 
@@ -27,6 +28,7 @@ export async function submitReaderSubmission(input: ReaderSubmissionInput): Prom
     p_excerpt: input.excerpt.trim(),
     p_content: input.content.trim(),
     p_tags: normalizeTags(input.tags),
+    p_cover_image_url: input.coverImageUrl?.trim() || null,
   } as never)
 
   if (error) {
