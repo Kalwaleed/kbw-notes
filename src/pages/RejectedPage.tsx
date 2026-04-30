@@ -71,8 +71,8 @@ export function RejectedPage() {
             maxWidth: '52ch',
           }}
         >
-          kbw Notes is invite-only. If you believe this is an error,
-          contact whoever sent you here and ask them to add your address.
+          This legacy invite-only auth link is no longer part of the public reader.
+          Return to the notes archive.
         </p>
 
         <hr className="ascii short" aria-hidden="true" />
@@ -91,7 +91,7 @@ export function RejectedPage() {
             textUnderlineOffset: 4,
           }}
         >
-          ← Back to sign-in
+          ← Back to notes
         </Link>
       </div>
     </div>

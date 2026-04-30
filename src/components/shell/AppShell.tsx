@@ -1,10 +1,8 @@
 import { useState } from 'react'
-import { Bell, Menu, X } from 'lucide-react'
+import { Menu, X } from 'lucide-react'
 import { MainNav } from './MainNav'
-import { UserMenu, type User } from './UserMenu'
 import { FolioBar } from './FolioBar'
 import { ThemeToggle } from './ThemeToggle'
-import { useUnreadCount } from '../../hooks/useNotifications'
 
 export interface NavigationItem {
   label: string
@@ -12,10 +10,16 @@ export interface NavigationItem {
   isActive?: boolean
 }
 
+export interface ShellUser {
+  name: string
+  email?: string
+  avatarUrl?: string
+}
+
 export interface AppShellProps {
   children: React.ReactNode
   navigationItems: NavigationItem[]
-  user?: User
+  user?: ShellUser
   onNavigate?: (href: string) => void
   onLogout?: () => void
   onSignIn?: () => void
@@ -29,9 +33,7 @@ export interface AppShellProps {
 export function AppShell({
   children,
   navigationItems,
-  user,
   onNavigate,
-  onLogout,
   hideFolio = false,
   containerWidth = 'feed',
 }: AppShellProps) {
@@ -44,7 +46,6 @@ export function AppShell({
         : 'var(--container-feed)'
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const { count: unreadCount } = useUnreadCount()
 
   const handleLogoClick = () => {
     onNavigate?.('/kbw-notes/home')
@@ -53,10 +54,6 @@ export function AppShell({
   const handleMobileNavigate = (href: string) => {
     setMobileMenuOpen(false)
     onNavigate?.(href)
-  }
-
-  const handleNotificationsClick = () => {
-    onNavigate?.('/kbw-notes/notifications')
   }
 
   return (
@@ -114,85 +111,6 @@ export function AppShell({
 
             <ThemeToggle />
 
-            {user && (
-              <button
-                type="button"
-                onClick={handleNotificationsClick}
-                style={{
-                  position: 'relative',
-                  width: 32,
-                  height: 32,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: 'transparent',
-                  color: 'var(--color-ink-muted)',
-                  border: 'none',
-                  cursor: 'pointer',
-                  borderRadius: 2,
-                  transition: 'background-color 100ms ease, color 100ms ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'var(--color-accent-tint)'
-                  e.currentTarget.style.color = 'var(--color-ink)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent'
-                  e.currentTarget.style.color = 'var(--color-ink-muted)'
-                }}
-                aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
-              >
-                <Bell size={18} strokeWidth={1.5} />
-                {unreadCount > 0 && (
-                  <span
-                    style={{
-                      position: 'absolute',
-                      top: -2,
-                      right: -2,
-                      minWidth: 16,
-                      height: 16,
-                      padding: '0 4px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      borderRadius: 9999,
-                      background: 'var(--color-accent)',
-                      color: 'var(--color-paper)',
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: 'var(--text-mono-xs)',
-                      fontWeight: 600,
-                      letterSpacing: 0,
-                    }}
-                  >
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </span>
-                )}
-              </button>
-            )}
-
-            {user ? (
-              <UserMenu user={user} onNavigate={onNavigate} onLogout={onLogout} />
-            ) : (
-              <button
-                type="button"
-                onClick={() => onNavigate?.('/')}
-                className="font-mono uppercase"
-                style={{
-                  fontSize: 'var(--text-mono-sm)',
-                  fontWeight: 600,
-                  letterSpacing: '0.04em',
-                  background: 'var(--color-ink)',
-                  color: 'var(--color-paper)',
-                  border: 'none',
-                  borderRadius: 2,
-                  padding: '10px 16px',
-                  cursor: 'pointer',
-                }}
-              >
-                Sign In
-              </button>
-            )}
-
             {/* Mobile hamburger */}
             <button
               type="button"
@@ -249,55 +167,6 @@ export function AppShell({
               </button>
             ))}
 
-            {user && (
-              <>
-                <div style={{ borderTop: '1px solid var(--color-hair)' }} />
-                <button
-                  type="button"
-                  onClick={() => handleMobileNavigate('/kbw-notes/profile')}
-                  className="font-mono uppercase"
-                  style={{
-                    display: 'block',
-                    width: '100%',
-                    textAlign: 'left',
-                    padding: '14px 24px',
-                    fontSize: 'var(--text-mono-base)',
-                    fontWeight: 500,
-                    letterSpacing: '0.04em',
-                    color: 'var(--color-ink-muted)',
-                    background: 'transparent',
-                    border: 'none',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Profile
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMobileMenuOpen(false)
-                    onLogout?.()
-                  }}
-                  className="font-mono uppercase"
-                  style={{
-                    display: 'block',
-                    width: '100%',
-                    textAlign: 'left',
-                    padding: '14px 24px',
-                    fontSize: 'var(--text-mono-base)',
-                    fontWeight: 500,
-                    letterSpacing: '0.04em',
-                    color: 'var(--color-rose)',
-                    background: 'transparent',
-                    border: 'none',
-                    borderTop: '1px solid var(--color-hair)',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Sign out
-                </button>
-              </>
-            )}
           </div>
         )}
       </header>

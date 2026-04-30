@@ -1,19 +1,15 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { AppShell } from '../components/shell'
-import { useAuth, useSettings } from '../hooks'
+import { useSettings } from '../hooks'
 import {
   AppearanceSettings,
   ReadingSettings,
-  NotificationSettings,
-  PrivacySettings,
-  AccountSettings,
 } from '../components/settings'
 
 export function SettingsPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { user, signOut } = useAuth()
   const {
     appearance,
     setTheme,
@@ -25,30 +21,15 @@ export function SettingsPage() {
 
   const navigationItems = [
     { label: 'Home',          href: '/kbw-notes/home',          isActive: false },
-    { label: 'Submissions',   href: '/kbw-notes/submissions',   isActive: false },
-    { label: 'Notifications', href: '/kbw-notes/notifications', isActive: false },
     { label: 'Settings',      href: '/kbw-notes/settings',      isActive: location.pathname === '/kbw-notes/settings' },
   ]
 
   const handleNavigate = (href: string) => navigate(href)
-  const handleLogout = async () => { await signOut(); navigate('/') }
-  const handleSignIn = () => navigate('/', { state: { from: location.pathname } })
-
-  const userDisplay = user
-    ? {
-        name: user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email ?? 'User',
-        email: user.email ?? undefined,
-        avatarUrl: user.user_metadata?.avatar_url,
-      }
-    : undefined
 
   return (
     <AppShell
       navigationItems={navigationItems}
-      user={userDisplay}
       onNavigate={handleNavigate}
-      onLogout={handleLogout}
-      onSignIn={handleSignIn}
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
         <button
@@ -112,12 +93,6 @@ export function SettingsPage() {
           onPostsPerPageChange={setPostsPerPage}
           onAutoExpandCommentsChange={setAutoExpandComments}
         />
-
-        <NotificationSettings />
-
-        <PrivacySettings />
-
-        <AccountSettings />
       </div>
     </AppShell>
   )

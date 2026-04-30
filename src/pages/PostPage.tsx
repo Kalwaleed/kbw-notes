@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useParams, useLocation } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth, useComments } from '../hooks'
 import { AppShell } from '../components/shell'
 import { BlogPostView } from '../components/blog-post'
@@ -16,9 +16,8 @@ function computeReadingTime(html: string): number {
 
 export function PostPage() {
   const navigate = useNavigate()
-  const location = useLocation()
   const { id: postId } = useParams<{ id: string }>()
-  const { user, signOut } = useAuth()
+  const { user } = useAuth()
   const [post, setPost] = useState<PostData | null>(null)
   const [postLoading, setPostLoading] = useState(true)
   const [postError, setPostError] = useState<string | null>(null)
@@ -69,22 +68,10 @@ export function PostPage() {
 
   const navigationItems = [
     { label: 'Home',          href: '/kbw-notes/home',          isActive: false },
-    { label: 'Submissions',   href: '/kbw-notes/submissions',   isActive: false },
-    { label: 'Notifications', href: '/kbw-notes/notifications', isActive: false },
     { label: 'Settings',      href: '/kbw-notes/settings',      isActive: false },
   ]
 
-  const userDisplay = user
-    ? {
-        name: user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email ?? 'User',
-        email: user.email ?? undefined,
-        avatarUrl: user.user_metadata?.avatar_url,
-      }
-    : undefined
-
   const handleNavigate = (href: string) => navigate(href)
-  const handleLogout = async () => { await signOut(); navigate('/') }
-  const handleSignIn = () => navigate('/', { state: { from: location.pathname } })
 
   const handleShareTwitter = () => {
     const url = window.location.href
@@ -106,10 +93,7 @@ export function PostPage() {
   const handleDelete = async (commentId: string) => { await deleteComment(commentId) }
 
   const handleReact = async (commentId: string) => {
-    if (!user) {
-      navigate('/', { state: { from: location.pathname } })
-      return
-    }
+    if (!user) return
     try { await likeComment(commentId) } catch (err) {
       console.error('Failed to like comment:', err)
       alert(err instanceof Error ? err.message : 'Failed to like comment')
@@ -118,16 +102,12 @@ export function PostPage() {
 
   const handleReport = () => { /* TODO: reports table */ }
   const handleLoadMore = async () => { /* TODO: pagination */ }
-  const handleLoginClick = () => navigate('/', { state: { from: location.pathname } })
 
   if (postLoading) {
     return (
       <AppShell
         navigationItems={navigationItems}
-        user={userDisplay}
         onNavigate={handleNavigate}
-        onLogout={handleLogout}
-        onSignIn={handleSignIn}
         containerWidth="wide"
       >
         <div
@@ -151,10 +131,7 @@ export function PostPage() {
     return (
       <AppShell
         navigationItems={navigationItems}
-        user={userDisplay}
         onNavigate={handleNavigate}
-        onLogout={handleLogout}
-        onSignIn={handleSignIn}
         containerWidth="wide"
       >
         <div style={{ padding: 'var(--space-9) 0', textAlign: 'center' }}>
@@ -204,10 +181,7 @@ export function PostPage() {
   return (
     <AppShell
       navigationItems={navigationItems}
-      user={userDisplay}
       onNavigate={handleNavigate}
-      onLogout={handleLogout}
-      onSignIn={handleSignIn}
       containerWidth="wide"
     >
       <BlogPostView
@@ -226,10 +200,9 @@ export function PostPage() {
         onAddComment={handleAddComment}
         onReply={handleReply}
         onDelete={handleDelete}
-        onReact={handleReact}
+        onReact={user ? handleReact : undefined}
         onReport={handleReport}
         onLoadMore={handleLoadMore}
-        onLoginClick={handleLoginClick}
       />
     </AppShell>
   )

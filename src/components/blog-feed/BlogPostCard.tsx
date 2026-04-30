@@ -282,26 +282,30 @@ export function BlogPostCard({
         </div>
 
         <div className="flex items-center" style={{ gap: 4 }}>
-          <IconButton
-            label={post.isLiked ? 'Unlike' : 'Like'}
-            active={post.isLiked}
-            onClick={(e) => {
-              e.stopPropagation()
-              onLike?.()
-            }}
-          >
-            <Heart size={16} strokeWidth={1.5} fill={post.isLiked ? 'currentColor' : 'none'} />
-          </IconButton>
-          <IconButton
-            label={post.isBookmarked ? 'Remove bookmark' : 'Bookmark'}
-            active={post.isBookmarked}
-            onClick={(e) => {
-              e.stopPropagation()
-              onBookmark?.()
-            }}
-          >
-            <Bookmark size={16} strokeWidth={1.5} fill={post.isBookmarked ? 'currentColor' : 'none'} />
-          </IconButton>
+          {onLike && (
+            <IconButton
+              label={post.isLiked ? 'Unlike' : 'Like'}
+              active={post.isLiked}
+              onClick={(e) => {
+                e.stopPropagation()
+                onLike()
+              }}
+            >
+              <Heart size={16} strokeWidth={1.5} fill={post.isLiked ? 'currentColor' : 'none'} />
+            </IconButton>
+          )}
+          {onBookmark && (
+            <IconButton
+              label={post.isBookmarked ? 'Remove bookmark' : 'Bookmark'}
+              active={post.isBookmarked}
+              onClick={(e) => {
+                e.stopPropagation()
+                onBookmark()
+              }}
+            >
+              <Bookmark size={16} strokeWidth={1.5} fill={post.isBookmarked ? 'currentColor' : 'none'} />
+            </IconButton>
+          )}
           <IconButton
             label="Share"
             onClick={(e) => {

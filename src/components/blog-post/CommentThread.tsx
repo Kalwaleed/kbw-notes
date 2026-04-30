@@ -213,15 +213,17 @@ export function CommentThread({
                 className="flex items-center flex-wrap"
                 style={{ gap: 'var(--space-4)', marginTop: 'var(--space-3)' }}
               >
-                <ActionLink
-                  onClick={() => onReact?.(comment.id)}
-                  active={hasReacted}
-                  ariaLabel={hasReacted ? 'Unlike comment' : 'Like comment'}
-                  ariaPressed={hasReacted}
-                >
-                  <Heart size={14} strokeWidth={1.5} fill={hasReacted ? 'currentColor' : 'none'} />
-                  {comment.reactions > 0 ? `Liked · ${comment.reactions}` : 'Like'}
-                </ActionLink>
+                {onReact && (
+                  <ActionLink
+                    onClick={() => onReact(comment.id)}
+                    active={hasReacted}
+                    ariaLabel={hasReacted ? 'Unlike comment' : 'Like comment'}
+                    ariaPressed={hasReacted}
+                  >
+                    <Heart size={14} strokeWidth={1.5} fill={hasReacted ? 'currentColor' : 'none'} />
+                    {comment.reactions > 0 ? `Liked · ${comment.reactions}` : 'Like'}
+                  </ActionLink>
+                )}
 
                 {canNestFurther && (
                   <ActionLink

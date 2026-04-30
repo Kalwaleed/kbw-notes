@@ -1,6 +1,5 @@
 export { HomePage } from './HomePage'
 export { PostPage } from './PostPage'
-export { LoginPage } from './LoginPage'
 export { ProfileSetupPage } from './ProfileSetupPage'
 export { SettingsPage } from './SettingsPage'
 export { SubmissionsPage } from './SubmissionsPage'

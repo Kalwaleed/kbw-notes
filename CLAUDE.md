@@ -85,11 +85,10 @@ Components in `src/components/` are presentational — they receive data via pro
 
 ### Auth Architecture
 
-Auth uses React Context, not scattered hooks:
+The reader app is public. Auth remains in the codebase only for future internal/admin capabilities and protected database writes:
 
 - `AuthProvider` in `src/contexts/AuthContext.tsx` — wraps the app, maintains a single `onAuthStateChange` subscription shared by all consumers
 - `useAuth` hook (`src/hooks/useAuth.ts`) — thin wrapper that reads from AuthContext
-- `KbwNotesLayout` (`src/components/auth/KbwNotesLayout.tsx`) — wraps all `/kbw-notes/*` routes, contains `ProtectedRoute` which redirects unauthenticated users to `/`
 - **Invite-only magic links** (no passwords): emails must exist in the `invited_emails` table. The `request-magic-link` Edge Function atomically rate-limits, validates `@kbw.vc`, checks `invited_emails`, and triggers a Supabase magic-link email via `auth.signInWithOtp`. The function never returns the token; the client only learns whether the request was accepted at the transport layer. All attempts (denied/rate-limited/sent) are logged to `auth_audit`. The legacy `auto-sign-in` URL returns `410 Gone` and logs a `legacy_endpoint` event so we can confirm no stale clients remain before deleting it.
 - Always returns `200 { ok: true }` to the client to prevent enumeration of the invite list.
 - Domain lock at the auth hook layer (migration 015) plus invited-email allowlist (migrations 016, 017) and admin-only invite-management RLS (migration 018) — all enforced server-side.
@@ -97,23 +96,17 @@ Auth uses React Context, not scattered hooks:
 
 ### Routing
 
-All authenticated routes are nested under `/kbw-notes` in `src/router.tsx`, wrapped by `KbwNotesLayout`:
+Public reader routes are defined in `src/router.tsx`:
 
-- `/` — Login page (unauthenticated, magic link only)
+- `/` — Redirects to `/kbw-notes/home`
 - `/rejected` — Shown to users whose email is not in `invited_emails`
 - `/kbw-notes` — Redirects to `/kbw-notes/home` (index route)
 - `/kbw-notes/home` — Blog feed (reads from `submissions` table, NOT `blog_posts`)
 - `/kbw-notes/post/:id` — Single post view with comments
-- `/kbw-notes/submissions` — Draft listing
-- `/kbw-notes/submissions/new` — Create new submission
-- `/kbw-notes/submissions/:id` — Edit existing submission
-- `/kbw-notes/profile` — User profile
-- `/kbw-notes/profile/setup` — Profile setup (first-time users)
-- `/kbw-notes/settings` — User settings
-- `/kbw-notes/notifications` — Notifications
+- `/kbw-notes/settings` — Anonymous local reading/appearance preferences
 - `*` — 404 catch-all
 
-All navigation paths from `AppShell` and `UserMenu` must use the `/kbw-notes/` prefix.
+Identity, notification, profile, and submission-management pages are not exposed in routing or navigation. Keep database RLS write protections in place before reintroducing any authenticated UI.
 
 ### Design System
 

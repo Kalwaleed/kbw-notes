@@ -1,36 +1,41 @@
 import { test, expect } from '@playwright/test'
 
-// Every /kbw-notes/* route is wrapped in KbwNotesLayout, which uses
-// ProtectedRoute to bounce unauthenticated visitors back to "/" with the
-// original location preserved in router state. This covers the routing
-// surface that adversarial review found stale ("Playwright expects /login
-// and OAuth buttons" — neither exists anymore).
+test.describe('Public reader routes', () => {
+  test('/ redirects to the public feed', async ({ page }) => {
+    await page.goto('/')
+    await expect(page).toHaveURL('/kbw-notes/home', { timeout: 10000 })
+    await expect(page.getByRole('heading', { name: 'Notes from the desk.' })).toBeVisible()
+  })
 
-const PROTECTED_PATHS = [
-  '/kbw-notes',
-  '/kbw-notes/home',
-  '/kbw-notes/profile',
-  '/kbw-notes/profile/setup',
-  '/kbw-notes/settings',
-  '/kbw-notes/submissions',
-  '/kbw-notes/submissions/new',
-  '/kbw-notes/submissions/00000000-0000-0000-0000-000000000000',
-  '/kbw-notes/notifications',
-]
+  test('/kbw-notes/home renders without sign-in controls', async ({ page }) => {
+    await page.goto('/kbw-notes/home')
+    await expect(page.getByRole('heading', { name: 'Notes from the desk.' })).toBeVisible()
+    await expect(page.getByRole('button', { name: /sign in/i })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: /sign out/i })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: /^submissions$/i })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: /^notifications$/i })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: /^profile$/i })).toHaveCount(0)
+  })
 
-test.describe('Protected routes (unauthenticated)', () => {
-  for (const path of PROTECTED_PATHS) {
-    test(`${path} redirects to /`, async ({ page }) => {
+  for (const path of [
+    '/kbw-notes/profile',
+    '/kbw-notes/profile/setup',
+    '/kbw-notes/submissions',
+    '/kbw-notes/submissions/new',
+    '/kbw-notes/submissions/00000000-0000-0000-0000-000000000000',
+    '/kbw-notes/notifications',
+  ]) {
+    test(`${path} is not exposed`, async ({ page }) => {
       await page.goto(path)
-      await expect(page).toHaveURL('/', { timeout: 10000 })
-      await expect(page.getByRole('heading', { name: 'Welcome to kbw Notes' })).toBeVisible()
+      const heading = page.getByRole('heading', { level: 1 })
+      await expect(heading).toBeVisible()
+      const text = (await heading.textContent())?.toLowerCase() ?? ''
+      expect(text).toMatch(/404|not found/)
     })
   }
 
   test('unknown route renders the 404 page (not a redirect)', async ({ page }) => {
     await page.goto('/this-route-definitely-does-not-exist')
-    // We don't strictly assert URL — react-router keeps it. Just look for the
-    // 404 marker. NotFoundPage uses a level-1 heading.
     const heading = page.getByRole('heading', { level: 1 })
     await expect(heading).toBeVisible()
     const text = (await heading.textContent())?.toLowerCase() ?? ''

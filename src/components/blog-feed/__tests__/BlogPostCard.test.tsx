@@ -98,27 +98,35 @@ describe('BlogPostCard', () => {
     })
 
     it('shows filled heart icon when isLiked is true', () => {
-      render(<BlogPostCard post={mockLikedPost} />)
+      render(<BlogPostCard post={mockLikedPost} onLike={vi.fn()} />)
       const likeButton = screen.getByRole('button', { name: /unlike/i })
       expect(likeButton).toBeInTheDocument()
     })
 
     it('shows outline heart icon when isLiked is false', () => {
-      render(<BlogPostCard post={mockPost} />)
+      render(<BlogPostCard post={mockPost} onLike={vi.fn()} />)
       const likeButton = screen.getByRole('button', { name: /^like$/i })
       expect(likeButton).toBeInTheDocument()
     })
 
     it('shows filled bookmark icon when isBookmarked is true', () => {
-      render(<BlogPostCard post={mockBookmarkedPost} />)
+      render(<BlogPostCard post={mockBookmarkedPost} onBookmark={vi.fn()} />)
       const bookmarkButton = screen.getByRole('button', { name: /remove bookmark/i })
       expect(bookmarkButton).toBeInTheDocument()
     })
 
     it('shows outline bookmark icon when isBookmarked is false', () => {
-      render(<BlogPostCard post={mockPost} />)
+      render(<BlogPostCard post={mockPost} onBookmark={vi.fn()} />)
       const bookmarkButton = screen.getByRole('button', { name: /^bookmark$/i })
       expect(bookmarkButton).toBeInTheDocument()
+    })
+
+    it('hides authenticated engagement controls when handlers are not provided', () => {
+      render(<BlogPostCard post={mockPost} />)
+
+      expect(screen.queryByRole('button', { name: /^like$/i })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: /^bookmark$/i })).not.toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /share/i })).toBeInTheDocument()
     })
   })
 
@@ -193,12 +201,12 @@ describe('BlogPostCard', () => {
 
   describe('Accessibility', () => {
     it('like button has aria-label', () => {
-      render(<BlogPostCard post={mockPost} />)
+      render(<BlogPostCard post={mockPost} onLike={vi.fn()} />)
       expect(screen.getByRole('button', { name: /like/i })).toBeInTheDocument()
     })
 
     it('bookmark button has aria-label', () => {
-      render(<BlogPostCard post={mockPost} />)
+      render(<BlogPostCard post={mockPost} onBookmark={vi.fn()} />)
       expect(screen.getByRole('button', { name: /bookmark/i })).toBeInTheDocument()
     })
 

@@ -1,73 +1,38 @@
-# React + TypeScript + Vite
+# kbw-notes
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Public reader app for KBW Notes. `/` redirects to `/kbw-notes/home`; the exposed app surface is the feed, public post pages, and local reader settings.
 
-Currently, two official plugins are available:
+## Commands
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+bun install
+bun run dev
+bun run lint
+bun run test:run
+bun run build
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Routes
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- `/` redirects to `/kbw-notes/home`
+- `/kbw-notes/home` shows published posts from `submissions`
+- `/kbw-notes/post/:id` shows one published post with comments
+- `/kbw-notes/settings` stores local appearance and reading preferences
+- `/rejected` remains for legacy invite-only auth flows
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+Submissions, notifications, profiles, bookmarks, likes, and admin actions are not public routes.
+
+## Data Boundary
+
+Published submissions and moderated comments are public reads. The folio bar reads `editions` anonymously via migration `026_public_editions_read.sql`.
+
+Drafts, publishing, profile editing, notifications, likes/bookmarks, storage uploads, edition writes, and admin actions remain protected by existing Supabase RLS and server-side checks.
+
+## Deployment
+
+1. Apply Supabase migrations.
+2. Build with `bun run build`.
+3. Deploy the Vite output from `dist/`.
+4. Roll back by reverting the app deploy and reverting `026_public_editions_read.sql` if anonymous edition reads must be closed.
+
+What good looks like: an unauthenticated visitor lands on `/kbw-notes/home`, can open a post, comment through moderation, adjust local reader settings, and never sees sign-in, sign-out, profile, submissions, or notifications controls.

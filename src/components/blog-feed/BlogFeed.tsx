@@ -61,8 +61,8 @@ export function BlogFeed({
               post={post}
               variant={index === 0 ? 'lead' : 'default'}
               onView={() => onViewPost?.(post.id)}
-              onLike={() => onLike?.(post.id)}
-              onBookmark={() => onBookmark?.(post.id)}
+              onLike={onLike ? () => onLike(post.id) : undefined}
+              onBookmark={onBookmark ? () => onBookmark(post.id) : undefined}
               onShare={() => onShare?.(post.id)}
             />
           ))}

@@ -1,67 +1,21 @@
-import { useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { AppShell } from '../components/shell'
 import { BlogFeed } from '../components/blog-feed'
-import { useAuth, useProfile, useBlogPosts, usePostEngagement } from '../hooks'
+import { useBlogPosts } from '../hooks'
 
 export function HomePage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { user, signOut, isLoading: authLoading } = useAuth()
-  const { profileComplete, isLoading: profileLoading } = useProfile(user?.id)
-  const { posts, isLoading, hasMore, loadMore, updatePost } = useBlogPosts({ limit: 6 })
-
-  useEffect(() => {
-    if (!authLoading && !profileLoading && user && !profileComplete) {
-      navigate('/kbw-notes/profile/setup')
-    }
-  }, [authLoading, profileLoading, user, profileComplete, navigate])
-
-  const { toggleLike, toggleBookmark } = usePostEngagement()
+  const { posts, isLoading, hasMore, loadMore } = useBlogPosts({ limit: 6 })
 
   const navigationItems = [
     { label: 'Home',          href: '/kbw-notes/home',          isActive: location.pathname === '/kbw-notes/home' },
-    { label: 'Submissions',   href: '/kbw-notes/submissions',   isActive: location.pathname === '/kbw-notes/submissions' },
-    { label: 'Notifications', href: '/kbw-notes/notifications', isActive: location.pathname === '/kbw-notes/notifications' },
     { label: 'Settings',      href: '/kbw-notes/settings',      isActive: location.pathname === '/kbw-notes/settings' },
   ]
 
   const handleNavigate = (href: string) => navigate(href)
-  const handleLogout = async () => { await signOut(); navigate('/') }
-  const handleSignIn = () => navigate('/', { state: { from: location.pathname } })
 
   const handleViewPost = (id: string) => navigate(`/kbw-notes/post/${id}`)
-
-  const handleLike = (id: string) => {
-    if (!user) {
-      navigate('/', { state: { from: location.pathname } })
-      return
-    }
-    const post = posts.find((p) => p.id === id)
-    if (post) {
-      updatePost(id, {
-        isLiked: !post.isLiked,
-        likeCount: post.isLiked ? post.likeCount - 1 : post.likeCount + 1,
-      })
-    }
-    toggleLike(id, (isLiked) => {
-      const currentPost = posts.find((p) => p.id === id)
-      if (currentPost && currentPost.isLiked !== isLiked) updatePost(id, { isLiked })
-    })
-  }
-
-  const handleBookmark = (id: string) => {
-    if (!user) {
-      navigate('/', { state: { from: location.pathname } })
-      return
-    }
-    const post = posts.find((p) => p.id === id)
-    if (post) updatePost(id, { isBookmarked: !post.isBookmarked })
-    toggleBookmark(id, (isBookmarked) => {
-      const currentPost = posts.find((p) => p.id === id)
-      if (currentPost && currentPost.isBookmarked !== isBookmarked) updatePost(id, { isBookmarked })
-    })
-  }
 
   const handleShare = async (id: string) => {
     const post = posts.find((p) => p.id === id)
@@ -81,21 +35,10 @@ export function HomePage() {
     }
   }
 
-  const userDisplay = user
-    ? {
-        name: user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email ?? 'User',
-        email: user.email ?? undefined,
-        avatarUrl: user.user_metadata?.avatar_url,
-      }
-    : undefined
-
   return (
     <AppShell
       navigationItems={navigationItems}
-      user={userDisplay}
       onNavigate={handleNavigate}
-      onLogout={handleLogout}
-      onSignIn={handleSignIn}
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-7)' }}>
         <header>
@@ -142,8 +85,6 @@ export function HomePage() {
         <BlogFeed
           blogPosts={posts}
           onViewPost={handleViewPost}
-          onLike={handleLike}
-          onBookmark={handleBookmark}
           onShare={handleShare}
           onLoadMore={loadMore}
           isLoading={isLoading}
