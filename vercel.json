@@ -4,8 +4,7 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "rewrites": [
-    { "source": "/kbw-notes/:path*", "destination": "/index.html" },
-    { "source": "/((?!assets/).*)", "destination": "/index.html" }
+    { "source": "/kbw-notes/:path*", "destination": "/kbw-notes/index.html" }
   ],
   "headers": [
     {

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import { routes } from './router'
 
@@ -38,13 +38,11 @@ function renderAt(path: string) {
 }
 
 describe('public reader routes', () => {
-  it('redirects / to /kbw-notes/home', async () => {
+  it('does not own / — the static landing serves the root', async () => {
     const router = renderAt('/')
 
-    await screen.findByTestId('home-page')
-    await waitFor(() => {
-      expect(router.state.location.pathname).toBe('/kbw-notes/home')
-    })
+    await screen.findByRole('heading', { name: /404 not found/i })
+    expect(router.state.location.pathname).toBe('/')
   })
 
   it('renders the anonymous reader home route directly', async () => {

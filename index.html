@@ -1,17 +1,505 @@
 <!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>kbw Notes</title>
-    <!-- Two-voice type system: Fraunces (serif) + Inter Tight (sans) + JetBrains Mono -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..900,0..100,0..1&family=Inter+Tight:wght@300..900&family=JetBrains+Mono:wght@400..700&display=swap" rel="stylesheet">
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>kalwaleed — a working notebook</title>
+<meta name="description" content="A working notebook from kbw — articles, ideas, and observations on capital, computation, and the systems we don't yet have words for.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#F4F0E6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1A1C16" media="(prefers-color-scheme: dark)">
+<link rel="canonical" href="https://kalwaleed.com/">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="kbw Notes">
+<meta property="og:title" content="kalwaleed — a working notebook">
+<meta property="og:description" content="A working notebook from kbw — articles, ideas, and observations on capital, computation, and the systems we don't yet have words for.">
+<meta property="og:url" content="https://kalwaleed.com/">
+<meta property="og:image" content="https://kalwaleed.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="kbw Notes — a working notebook on capital, computation, and the systems we don't yet have words for.">
+<meta property="og:locale" content="en_US">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@kbw_notes">
+<meta name="twitter:creator" content="@kbw_notes">
+<meta name="twitter:title" content="kalwaleed — a working notebook">
+<meta name="twitter:description" content="A working notebook from kbw — articles, ideas, and observations on capital, computation, and the systems we don't yet have words for.">
+<meta name="twitter:image" content="https://kalwaleed.com/og-image.png">
+<meta name="twitter:image:alt" content="kbw Notes — a working notebook on capital, computation, and the systems we don't yet have words for.">
+
+<!-- Favicons -->
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="mask-icon" href="/favicon.svg" color="#3F5B3A">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500;1,9..144,600&family=Inter+Tight:wght@400;500&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper:        #F4F0E6;
+  --paper-sunken: #ECE7D5;
+  --ink:          #14160F;
+  --ink-muted:    #4A4D42;
+  --ink-soft:     #7A7D6F;
+  --hair:         #E0DAC6;
+  --accent:       #3F5B3A;
+  --accent-deep:  #2C4129;
+
+  --font-serif: 'Fraunces', ui-serif, Georgia, 'Iowan Old Style', serif;
+  --font-sans:  'Inter Tight', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono:  'JetBrains Mono', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+
+  --prose-size: 18px;
+}
+[data-theme="dark"] {
+  --paper:        #1A1C16;
+  --paper-sunken: #14160F;
+  --ink:          #ECE6D2;
+  --ink-muted:    #B0AB97;
+  --ink-soft:     #7E7B6C;
+  --hair:         #2E3027;
+  --accent:       #6B8A60;
+  --accent-deep:  #8DA982;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+html { background: var(--paper); }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-serif);
+  font-feature-settings: "ss02" 1;
+  min-height: 100vh;
+  min-height: 100svh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  transition: background-color 200ms ease, color 200ms ease;
+  overflow-x: hidden;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+.skip {
+  position: absolute;
+  top: 8px; left: 8px;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 8px 12px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  z-index: 100;
+  transform: translateY(-200%);
+  transition: transform 150ms ease;
+}
+.skip:focus-visible {
+  transform: translateY(0);
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 1px;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 64px;
+  padding: 0 32px;
+  border-bottom: 1px solid var(--hair);
+}
+.wordmark {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+  text-decoration: none;
+  font-variation-settings: "WONK" 1;
+}
+.wordmark .dot { color: var(--accent); }
+.wordmark:hover { color: var(--accent); }
+
+.controls {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.seg {
+  display: inline-flex;
+  border: 1px solid var(--hair);
+  padding: 2px;
+  background: transparent;
+}
+.seg button {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: transparent;
+  border: 0;
+  padding: 4px 10px;
+  min-height: 28px;
+  cursor: pointer;
+  color: var(--ink-muted);
+  transition: color 150ms ease, background-color 150ms ease;
+}
+.seg button:hover { color: var(--ink); }
+.seg button[aria-checked="true"],
+.seg button[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--paper);
+}
+.seg.size button {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0;
+  text-transform: none;
+  padding: 4px 10px;
+  min-width: 30px;
+  font-feature-settings: "ss02" 1;
+}
+.seg.size button:nth-child(1) { font-size: 11px; }
+.seg.size button:nth-child(2) { font-size: 15px; }
+
+main {
+  display: grid;
+  align-content: center;
+  padding: clamp(40px, 8vh, 96px) clamp(24px, 6vw, 96px);
+}
+.stage {
+  max-width: 720px;
+  margin-left: clamp(0px, 4vw, 64px);
+}
+
+.kicker {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.kicker .sep { color: var(--ink-soft); }
+.kicker .live {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 22%, transparent);
+  display: inline-block;
+  animation: pulse 2.4s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%,100% { transform: scale(1);    opacity: 1;   }
+  50%     { transform: scale(1.25); opacity: 0.7; }
+}
+
+.hero {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: clamp(40px, 8vw, 84px);
+  line-height: 1.0;
+  letter-spacing: -0.035em;
+  margin: 0 0 0;
+  color: var(--ink);
+  font-variation-settings: "WONK" 1, "SOFT" 30, "opsz" 144;
+  position: relative;
+}
+.hero .glyph {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(0.2em);
+  animation: rise 720ms var(--ease) forwards;
+}
+.hero .swell {
+  font-style: italic;
+  font-weight: 600;
+  font-variation-settings: "WONK" 1, "SOFT" 100, "opsz" 144;
+  color: var(--accent);
+  padding-right: 0.02em;
+}
+
+.hero-rule {
+  display: block;
+  height: 1.5px;
+  width: 100%;
+  max-width: 540px;
+  margin: 28px 0 0;
+  background: var(--accent);
+  transform-origin: left center;
+  transform: scaleX(0);
+  animation: draw 900ms var(--ease) forwards;
+  animation-delay: 1100ms;
+}
+
+.dek {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(18px, 2vw, 22px);
+  line-height: 1.4;
+  letter-spacing: 0.005em;
+  max-width: 38ch;
+  color: var(--ink-muted);
+  margin: 28px 0 36px;
+  font-variation-settings: "WONK" 1, "SOFT" 50;
+  opacity: 0;
+  animation: fade 600ms var(--ease) forwards;
+  animation-delay: 900ms;
+}
+
+.strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  border-top: 1px solid var(--hair);
+  border-bottom: 1px solid var(--hair);
+  padding: 10px 0;
+  margin: 0 0 36px;
+  opacity: 0;
+  animation: fade 600ms var(--ease) forwards;
+  animation-delay: 1100ms;
+}
+.strip .sep { color: var(--hair); }
+
+.note {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: var(--prose-size);
+  line-height: 1.7;
+  letter-spacing: 0.005em;
+  max-width: 62ch;
+  color: var(--ink);
+  margin: 0 0 48px;
+  transition: font-size 150ms ease;
+  opacity: 0;
+  animation: fade 700ms var(--ease) forwards;
+  animation-delay: 1300ms;
+}
+.note .cap {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 4.4em;
+  line-height: 0.85;
+  float: left;
+  padding: 6px 12px 0 0;
+  color: var(--accent);
+  font-variation-settings: "SOFT" 100, "opsz" 144;
+}
+.note em {
+  font-style: italic;
+  font-variation-settings: "WONK" 1, "SOFT" 50;
+  color: var(--ink);
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid var(--accent);
+  padding: 6px 0;
+  min-height: 44px;
+  transition: color 150ms ease, border-color 150ms ease;
+  opacity: 0;
+  animation: fade 600ms var(--ease) forwards;
+  animation-delay: 1700ms;
+}
+.cta svg {
+  transition: transform 200ms cubic-bezier(0.2,0,0,1);
+}
+.cta:hover { color: var(--accent-deep); border-color: var(--accent-deep); }
+.cta:hover svg { transform: translateX(4px); }
+
+.cta kbd {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-soft);
+  background: transparent;
+  border: 1px solid var(--hair);
+  padding: 2px 6px;
+  margin-left: 8px;
+  border-radius: 2px;
+  line-height: 1;
+}
+
+footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 40px;
+  padding: 0 32px;
+  border-top: 1px solid var(--hair);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+footer .sep { color: var(--hair); }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(0.2em); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes draw {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body, .note, .seg button, .cta, .cta svg, .skip { transition: none; }
+  .kicker .live { animation: none; }
+  .hero .glyph,
+  .dek,
+  .strip,
+  .note,
+  .cta {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+  }
+  .hero-rule {
+    transform: scaleX(1) !important;
+    animation: none !important;
+  }
+}
+
+@media (max-width: 720px) {
+  header, footer { padding-left: 20px; padding-right: 20px; }
+  header { gap: 8px; flex-wrap: wrap; height: auto; padding-top: 12px; padding-bottom: 12px; }
+  main { padding: 48px 20px; }
+  .stage { margin-left: 0; }
+  .controls { gap: 8px; }
+  .note .cap { font-size: 3.6em; padding: 4px 8px 0 0; }
+  .strip { gap: 8px; }
+  .hero-rule { max-width: 80%; }
+}
+@media (max-width: 480px) {
+  .controls { width: 100%; justify-content: flex-start; }
+}
+</style>
+</head>
+<body>
+
+<a class="skip" href="#main">Skip to main</a>
+
+<header>
+  <a class="wordmark" href="/">kalwaleed<span class="dot">.</span></a>
+
+  <nav class="controls" aria-label="Page controls">
+    <div class="seg size" role="group" aria-label="Text size">
+      <button id="sz-down" type="button" aria-label="Decrease text size">A</button>
+      <button id="sz-up"   type="button" aria-label="Increase text size">A</button>
+    </div>
+
+    <div class="seg theme" role="radiogroup" aria-label="Theme">
+      <button id="th-light" type="button" role="radio" aria-checked="true">Light</button>
+      <button id="th-dark"  type="button" role="radio" aria-checked="false">Dark</button>
+      <button id="th-auto"  type="button" role="radio" aria-checked="false">Auto</button>
+    </div>
+  </nav>
+</header>
+
+<main id="main" tabindex="-1">
+  <div class="stage">
+
+    <p class="kicker">
+      <span>Riyadh</span>
+      <span class="sep">·</span>
+      <time id="now" datetime="">—</time>
+      <span class="sep">·</span>
+      <span class="live" aria-hidden="true"></span>
+      <span class="visually-hidden">Live</span>
+    </p>
+
+    <h1 class="hero" aria-label="kalwaleed">
+      <span class="glyph" style="animation-delay: 80ms">k</span><span class="glyph" style="animation-delay: 110ms">a</span><span class="glyph" style="animation-delay: 140ms">l</span><span class="glyph" style="animation-delay: 170ms">w</span><span class="glyph swell" style="animation-delay: 200ms">a</span><span class="glyph" style="animation-delay: 230ms">l</span><span class="glyph" style="animation-delay: 260ms">e</span><span class="glyph" style="animation-delay: 290ms">e</span><span class="glyph" style="animation-delay: 320ms">d</span><span class="glyph" style="animation-delay: 350ms; color: var(--accent)">.</span>
+    </h1>
+
+    <span class="hero-rule" aria-hidden="true"></span>
+
+    <p class="dek">A working notebook on capital, computation, and the systems we don't yet have words for.</p>
+
+    <div class="strip" aria-label="Reading information">
+      <span>1 min read</span>
+      <span class="sep">·</span>
+      <span>~120 words</span>
+      <span class="sep">·</span>
+      <span>set in Fraunces</span>
+    </div>
+
+    <p class="note" id="note">
+      <span aria-hidden="true" class="cap">W</span><span class="visually-hidden">W</span>elcome. This is a place where we share what's catching our attention — articles, ideas, observations, things worth passing along. Most of what's here is unfinished thinking. Some of it will spark a conversation, some of it won't. If something resonates or you have something to add, the door is open. The <em>notes</em> are one click away.
+    </p>
+
+    <a class="cta" id="cta" href="/kbw-notes/">
+      Enter kbw notes
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 8h10M9 4l4 4-4 4"/>
+      </svg>
+      <kbd aria-hidden="true">Enter</kbd>
+    </a>
+  </div>
+</main>
+
+<footer>
+  <span>© 2026 KALWALEED</span>
+  <span class="sep">·</span>
+  <span>Set in Fraunces &amp; JetBrains Mono</span>
+</footer>
+
+<script src="/landing.js" defer></script>
+</body>
 </html>

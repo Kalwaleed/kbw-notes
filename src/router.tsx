@@ -14,10 +14,6 @@ export const routes: RouteObject[] = [
     element: <Outlet />,
     children: [
       {
-        path: '/',
-        element: <Navigate to="/kbw-notes/home" replace />,
-      },
-      {
         path: '/rejected',
         element: <RejectedPage />,
       },
