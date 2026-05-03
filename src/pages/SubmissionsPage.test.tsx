@@ -29,6 +29,10 @@ vi.mock('../components/shell', () => ({
   ),
 }))
 
+vi.mock('../components/submissions/ImageUploader', () => ({
+  ImageUploader: () => <div data-testid="image-uploader">[Image uploader]</div>,
+}))
+
 describe('SubmissionsPage', () => {
   it('renders anonymous submission intake fields', () => {
     render(
@@ -41,7 +45,8 @@ describe('SubmissionsPage', () => {
     expect(screen.getByLabelText(/name/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/title/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/cover image url/i)).toBeInTheDocument()
+    expect(screen.getByText(/cover image/i)).toBeInTheDocument()
+    expect(screen.getByTestId('image-uploader')).toBeInTheDocument()
     expect(screen.getByLabelText(/post body/i)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /sign in/i })).not.toBeInTheDocument()
   })
@@ -56,14 +61,13 @@ describe('SubmissionsPage', () => {
 
     await user.type(screen.getByLabelText(/name/i), 'Aisha Khan')
     await user.type(screen.getByLabelText(/title/i), 'The operating cadence')
-    await user.type(screen.getByLabelText(/cover image url/i), 'https://example.com/cover.jpg')
     await user.type(screen.getByLabelText(/post body/i), 'A practical note with enough detail for review.')
     await user.click(screen.getByRole('button', { name: /^submit$/i }))
 
     expect(submitReaderSubmission).toHaveBeenCalledWith(expect.objectContaining({
       submitterName: 'Aisha Khan',
       title: 'The operating cadence',
-      coverImageUrl: 'https://example.com/cover.jpg',
+      coverImageUrl: '',
       content: 'A practical note with enough detail for review.',
     }))
     expect(await screen.findByText(/submission received/i)).toBeInTheDocument()

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Send } from 'lucide-react'
 import { AppShell } from '../components/shell'
+import { ImageUploader } from '../components/submissions/ImageUploader'
 import { submitReaderSubmission } from '../lib/queries/readerSubmissions'
 import type React from 'react'
 
@@ -47,9 +48,6 @@ export function SubmissionsPage() {
   const validate = (): string | null => {
     if (form.submitterName.trim().length < 2) return 'Name is required.'
     if (form.title.trim().length < 3) return 'Title is required.'
-    if (form.coverImageUrl.trim() && !/^https?:\/\//i.test(form.coverImageUrl.trim())) {
-      return 'Cover image must be an http or https URL.'
-    }
     if (form.content.trim().length < 20) return 'Post body must be at least 20 characters.'
     if (form.excerpt.length > 500) return 'Excerpt must be 500 characters or fewer.'
     return null
@@ -209,33 +207,13 @@ export function SubmissionsPage() {
             />
           </Field>
 
-          <Field label="Cover image URL">
-            <input
-              value={form.coverImageUrl}
-              onChange={(event) => updateField('coverImageUrl', event.target.value)}
-              placeholder="https://example.com/image.jpg"
-              type="url"
-              maxLength={1000}
-              style={inputStyle}
+          <Field label="Cover image">
+            <ImageUploader
+              currentImageUrl={form.coverImageUrl || null}
+              onImageUploaded={(url) => updateField('coverImageUrl', url)}
+              onImageRemoved={() => updateField('coverImageUrl', '')}
             />
           </Field>
-
-          {form.coverImageUrl.trim() && /^https?:\/\//i.test(form.coverImageUrl.trim()) && (
-            <div
-              style={{
-                aspectRatio: '16 / 9',
-                border: '1px solid var(--color-hair)',
-                background: 'var(--color-paper-sunken)',
-                overflow: 'hidden',
-              }}
-            >
-              <img
-                src={form.coverImageUrl.trim()}
-                alt=""
-                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-              />
-            </div>
-          )}
 
           <Field label="Post body" required>
             <textarea
