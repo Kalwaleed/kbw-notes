@@ -17,6 +17,19 @@ interface GateGuardProps {
  *
  * The gate is soft — the password lives in client source. Real auth is a
  * future phase.
+ *
+ * POST-MVP TODO (auth hardening — must do all three before going public):
+ *   1. Remove the soft password from client source. Replace with the existing
+ *      invite-only magic-link flow (request-magic-link Edge Function +
+ *      invited_emails table) OR a server-validated cookie gate.
+ *   2. Re-enable Supabase Auth → Attack Protection → CAPTCHA, and integrate
+ *      hCaptcha or Turnstile here. Pass the captcha token to
+ *      signInAnonymously({ options: { captchaToken } }).
+ *   3. Replace anonymous Supabase sessions with a service-role Edge Function
+ *      that handles public cover uploads server-side (validates magic numbers,
+ *      size, MIME, rate-limits per IP, writes with service role). Then revert
+ *      migration 026 so the @kbw.vc domain lock applies to every signup again
+ *      and remove the signInAnonymously() call below.
  */
 export function GateGuard({ children }: GateGuardProps) {
   const [status, setStatus] = useState<'checking' | 'allowed' | 'denied'>(

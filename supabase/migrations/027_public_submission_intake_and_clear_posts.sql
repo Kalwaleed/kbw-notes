@@ -122,20 +122,4 @@ end;
 $$;
 
 revoke all on function public.submit_reader_submission(text, text, text, text, text, text[]) from public;
-grant execute on function public.submit_reader_submission(text, text, text, text, text[]) to anon, authenticated;
-
--- One-time reset: remove currently published/public blog content so the reader
--- starts fresh. Drafts and private intake rows are preserved.
-delete from public.comments
-where post_id in (select id from public.submissions where status = 'published');
-
-delete from public.post_likes
-where post_id in (select id from public.submissions where status = 'published');
-
-delete from public.post_bookmarks
-where post_id in (select id from public.submissions where status = 'published');
-
-delete from public.submissions
-where status = 'published';
-
-delete from public.blog_posts;
+grant execute on function public.submit_reader_submission(text, text, text, text, text, text[]) to anon, authenticated;
