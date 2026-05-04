@@ -6,6 +6,10 @@ import type { ReactNode } from 'react'
 const mockSupabase = vi.hoisted(() => ({
   auth: {
     getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
+    signInAnonymously: vi.fn().mockResolvedValue({
+      data: { session: null, user: null },
+      error: null,
+    }),
     onAuthStateChange: vi.fn().mockReturnValue({
       data: { subscription: { unsubscribe: vi.fn() } },
     }),

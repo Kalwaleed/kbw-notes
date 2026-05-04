@@ -31,10 +31,6 @@ vi.mock('./pages/RouterErrorPage', () => ({
   RouterErrorPage: () => <div>Route error</div>,
 }))
 
-vi.mock('./components/GateGuard', () => ({
-  GateGuard: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-}))
-
 function renderAt(path: string) {
   const router = createMemoryRouter(routes, { initialEntries: [path] })
   render(<RouterProvider router={router} />)

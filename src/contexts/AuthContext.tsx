@@ -37,21 +37,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-      setIsLoading(false)
-    })
+    let cancelled = false
+
+    async function bootstrap() {
+      const {
+        data: { session: existing },
+      } = await supabase.auth.getSession()
+      if (cancelled) return
+
+      if (existing) {
+        setSession(existing)
+        setUser(existing.user)
+        setIsLoading(false)
+        return
+      }
+
+      // Storage policy on the `post-images` bucket requires
+      // auth.role() = 'authenticated'. The public submissions page uploads
+      // covers, so bootstrap an anonymous session when none exists. If anon
+      // sign-in is disabled the SPA still works for reading; only the
+      // uploader degrades and surfaces its own error.
+      try {
+        const { data, error: anonError } = await supabase.auth.signInAnonymously()
+        if (cancelled) return
+        if (!anonError && data.session) {
+          setSession(data.session)
+          setUser(data.user)
+        }
+      } catch (err) {
+        console.warn('[AuthContext] anonymous sign-in failed', err)
+      } finally {
+        if (!cancelled) setIsLoading(false)
+      }
+    }
+
+    bootstrap()
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (cancelled) return
       setSession(session)
       setUser(session?.user ?? null)
       setIsLoading(false)
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      cancelled = true
+      subscription.unsubscribe()
+    }
   }, [])
 
   // NFKC + invisible-character strip + strict @kbw.vc check.

@@ -6,7 +6,6 @@ import { SubmissionsPage } from './pages/SubmissionsPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { RejectedPage } from './pages/RejectedPage'
 import { RouterErrorPage } from './pages/RouterErrorPage'
-import { GateGuard } from './components/GateGuard'
 
 export const routes: RouteObject[] = [
   {
@@ -20,7 +19,7 @@ export const routes: RouteObject[] = [
       },
       {
         path: '/kbw-notes',
-        element: <GateGuard><Outlet /></GateGuard>,
+        element: <Outlet />,
         children: [
           { index: true, element: <Navigate to="home" replace /> },
           { path: 'home', element: <HomePage /> },
