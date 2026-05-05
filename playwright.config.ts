@@ -17,6 +17,38 @@ if (existsSync(envPath)) {
   }
 }
 
+// Optional: target a Vercel-protected deployment instead of the local dev
+// server. Set PLAYWRIGHT_BASE_URL=https://kalwaleed.com (or a preview URL)
+// and VERCEL_BYPASS_SECRET=<value> to send the protection-bypass header on
+// every request. The secret value is read only from the environment — never
+// hardcode it here, never log it, never include it in test fixtures or
+// commit messages. .env.local (gitignored) is the recommended store.
+//
+// Trace/HAR caveat: Playwright's built-in trace recorder captures request
+// headers. The `trace: 'on-first-retry'` setting below means traces are
+// only generated for failing tests, and the test-results/ and
+// playwright-report/ directories are gitignored. If you upload traces to
+// CI artifacts on a public repo, they will contain the bypass header —
+// either rotate the secret after such runs or disable trace upload.
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:5173'
+const isProtectedTarget = !/^https?:\/\/(localhost|127\.0\.0\.1)/.test(baseURL)
+const bypassSecret = process.env.VERCEL_BYPASS_SECRET
+
+if (isProtectedTarget && !bypassSecret) {
+  throw new Error(
+    'PLAYWRIGHT_BASE_URL targets a Vercel-protected URL but VERCEL_BYPASS_SECRET is not set. ' +
+      'Add it to .env.local or your CI secret store.'
+  )
+}
+
+const extraHTTPHeaders =
+  isProtectedTarget && bypassSecret
+    ? {
+        'x-vercel-protection-bypass': bypassSecret,
+        'x-vercel-set-bypass-cookie': 'true',
+      }
+    : undefined
+
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
@@ -25,7 +57,8 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
   use: {
-    baseURL: 'http://localhost:5173',
+    baseURL,
+    extraHTTPHeaders,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
@@ -39,9 +72,13 @@ export default defineConfig({
       use: { ...devices['Pixel 5'] },
     },
   ],
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:5173',
-    reuseExistingServer: !process.env.CI,
-  },
+  // Only spin up the local dev server when targeting localhost. Targeting a
+  // remote URL bypasses webServer entirely.
+  webServer: isProtectedTarget
+    ? undefined
+    : {
+        command: 'npm run dev',
+        url: 'http://localhost:5173',
+        reuseExistingServer: !process.env.CI,
+      },
 })
