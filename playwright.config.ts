@@ -25,11 +25,11 @@ if (existsSync(envPath)) {
 // commit messages. .env.local (gitignored) is the recommended store.
 //
 // Trace/HAR caveat: Playwright's built-in trace recorder captures request
-// headers. The `trace: 'on-first-retry'` setting below means traces are
-// only generated for failing tests, and the test-results/ and
-// playwright-report/ directories are gitignored. If you upload traces to
-// CI artifacts on a public repo, they will contain the bypass header —
-// either rotate the secret after such runs or disable trace upload.
+// headers, which would include the bypass secret. To prevent any chance
+// of leakage via uploaded artifacts, traces are disabled entirely when
+// targeting a protected URL. Local-against-localhost runs still get full
+// trace debugging on first retry. Screenshots are kept (they capture
+// rendered DOM, not headers) but only on failure.
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:5173'
 const isProtectedTarget = !/^https?:\/\/(localhost|127\.0\.0\.1)/.test(baseURL)
 const bypassSecret = process.env.VERCEL_BYPASS_SECRET
@@ -59,7 +59,7 @@ export default defineConfig({
   use: {
     baseURL,
     extraHTTPHeaders,
-    trace: 'on-first-retry',
+    trace: isProtectedTarget ? 'off' : 'on-first-retry',
     screenshot: 'only-on-failure',
   },
   projects: [
