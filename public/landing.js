@@ -2,7 +2,9 @@
   'use strict';
   var html = document.documentElement;
   var KEY_THEME = 'kbw-theme';
-  var KEY_SIZE  = 'kbw-prose-size';
+  var KEY_SIZE = 'kbw-prose-size';
+  var KEY_GATE = 'kbw-gate-passed';
+  var GATE_PASSWORD = 'Thanos$26';
 
   // ── theme: three-way (light / dark / auto), persists in localStorage ──
   var bL = document.getElementById('th-light');
@@ -20,19 +22,19 @@
     bL.setAttribute('aria-checked', String(pref === 'light'));
     bD.setAttribute('aria-checked', String(pref === 'dark'));
     bA.setAttribute('aria-checked', String(pref === 'auto'));
-    try { localStorage.setItem(KEY_THEME, pref); } catch (e) {}
+    try { localStorage.setItem(KEY_THEME, pref); } catch (e) { }
   }
 
   var savedTheme = 'light';
   try {
     var s = localStorage.getItem(KEY_THEME);
     if (s === 'light' || s === 'dark' || s === 'auto') savedTheme = s;
-  } catch (e) {}
+  } catch (e) { }
   applyTheme(savedTheme);
 
   bL.addEventListener('click', function () { applyTheme('light'); });
-  bD.addEventListener('click', function () { applyTheme('dark');  });
-  bA.addEventListener('click', function () { applyTheme('auto');  });
+  bD.addEventListener('click', function () { applyTheme('dark'); });
+  bA.addEventListener('click', function () { applyTheme('auto'); });
 
   themeBtns.forEach(function (btn, i) {
     btn.addEventListener('keydown', function (e) {
@@ -57,18 +59,18 @@
   var SIZES = [16, 17, 18, 19, 20, 22];
   var note = document.getElementById('note');
   var bDown = document.getElementById('sz-down');
-  var bUp   = document.getElementById('sz-up');
+  var bUp = document.getElementById('sz-up');
 
   function applySize(px) {
     note.style.setProperty('--ps', px + 'px');
     note.style.fontSize = px + 'px';
-    try { localStorage.setItem(KEY_SIZE, String(px)); } catch (e) {}
+    try { localStorage.setItem(KEY_SIZE, String(px)); } catch (e) { }
   }
   var savedSize = 18;
   try {
     var sz = parseInt(localStorage.getItem(KEY_SIZE), 10);
     if (SIZES.indexOf(sz) !== -1) savedSize = sz;
-  } catch (e) {}
+  } catch (e) { }
   applySize(savedSize);
 
   function bump(delta) {
@@ -79,7 +81,7 @@
     applySize(next);
   }
   bDown.addEventListener('click', function () { bump(-1); });
-  bUp  .addEventListener('click', function () { bump(+1); });
+  bUp.addEventListener('click', function () { bump(+1); });
 
   // ── live clock — Riyadh, ticks every 60s ──
   var nowEl = document.getElementById('now');
@@ -100,4 +102,87 @@
   }
   tick();
   setInterval(tick, 60 * 1000);
+
+  // ── password gate ──
+  var cta = document.getElementById('cta');
+  var gate = document.getElementById('gate');
+  var gateForm = document.getElementById('gate-form');
+  var gateInput = document.getElementById('gate-input');
+  var gateError = document.getElementById('gate-error');
+
+  function gatePassed() {
+    try { return localStorage.getItem(KEY_GATE) === 'true'; } catch (e) { return false; }
+  }
+  function setGatePassed() {
+    try { localStorage.setItem(KEY_GATE, 'true'); } catch (e) { }
+  }
+  function navigateToBlog() {
+    window.location.href = '/kbw-notes/';
+  }
+  function openGate() {
+    gate.hidden = false;
+    requestAnimationFrame(function () { gate.classList.add('open'); });
+    cta.setAttribute('aria-expanded', 'true');
+    gateInput.value = '';
+    gateError.hidden = true;
+    gateError.textContent = '';
+    setTimeout(function () { gateInput.focus(); }, 0);
+    document.addEventListener('keydown', onEscOrEnter);
+    document.addEventListener('mousedown', onOutsideClick);
+  }
+  function closeGate() {
+    gate.classList.remove('open');
+    cta.setAttribute('aria-expanded', 'false');
+    setTimeout(function () { gate.hidden = true; }, 200);
+    document.removeEventListener('keydown', onEscOrEnter);
+    document.removeEventListener('mousedown', onOutsideClick);
+    cta.focus();
+  }
+  function onEscOrEnter(e) {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      closeGate();
+    }
+  }
+  function onOutsideClick(e) {
+    if (!gate.contains(e.target) && e.target !== cta && !cta.contains(e.target)) {
+      closeGate();
+    }
+  }
+  function showGateError(msg) {
+    gateError.textContent = msg;
+    gateError.hidden = false;
+    gateInput.classList.remove('shake');
+    void gateInput.offsetWidth;
+    gateInput.classList.add('shake');
+    gateInput.select();
+  }
+
+  cta.addEventListener('click', function () {
+    if (gatePassed()) {
+      navigateToBlog();
+      return;
+    }
+    if (gate.classList.contains('open')) {
+      closeGate();
+    } else {
+      openGate();
+    }
+  });
+
+  gateForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var entered = gateInput.value;
+    if (entered === GATE_PASSWORD) {
+      setGatePassed();
+      navigateToBlog();
+    } else {
+      showGateError('That isn’t the password.');
+    }
+  });
+
+  gateInput.addEventListener('input', function () {
+    gateInput.classList.remove('shake');
+    gateError.hidden = true;
+  });
 })();
