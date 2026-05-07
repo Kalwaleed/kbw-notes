@@ -1,0 +1,27 @@
+-- Storage policy reconciliation for the post-images bucket.
+--
+-- Migration 009 declared an "Anyone can view post images" SELECT policy
+-- on storage.objects that is not present in production (verified
+-- 2026-05-07 against pg_policies — only INSERT, DELETE, and UPDATE
+-- policies exist). This migration formalizes the canonical policy set
+-- and explicitly removes the SELECT policy if any future re-application
+-- of 009 brings it back.
+--
+-- Rationale: for public buckets, `storage.buckets.public = true` is the
+-- canonical source of truth for read access. Supabase Storage's HTTP
+-- layer serves public buckets directly without consulting RLS, so an
+-- explicit SELECT policy is redundant in the current state. Worse, an
+-- explicit USING (bucket_id = '...') SELECT policy would survive a
+-- future decision to flip the bucket private — re-permitting anonymous
+-- reads regardless of the flag and creating dual sources of truth.
+--
+-- Convention going forward for kbw-notes Storage:
+--   * Public/private toggle = storage.buckets.public flag, not policy
+--   * Write policies on storage.objects = author scoping (own folder)
+--   * No explicit SELECT policies on public buckets
+--
+-- This migration is idempotent and is a no-op against current production
+-- (the policy doesn't exist). It serves as the forward-declared canonical
+-- state to prevent the drift from re-emerging.
+
+DROP POLICY IF EXISTS "Anyone can view post images" ON storage.objects;
