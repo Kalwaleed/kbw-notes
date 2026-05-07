@@ -15,6 +15,7 @@ const THEME_STORAGE_KEY = 'kbw-theme'
 const READING_STORAGE_KEY = 'kbw-reading-settings'
 const LEGACY_APPEARANCE_KEY = 'kbw-appearance-settings'
 const LEGACY_THEME_KEY = 'theme'
+const COLOR_SCHEME_DARK_QUERY = '(prefers-color-scheme: dark)'
 
 // Valid values for settings validation
 const VALID_THEMES: Theme[] = ['light', 'dark', 'system']
@@ -23,6 +24,10 @@ const VALID_POSTS_PER_PAGE: PostsPerPage[] = [6, 12, 24]
 
 function isTheme(value: unknown): value is Theme {
   return typeof value === 'string' && VALID_THEMES.includes(value as Theme)
+}
+
+function prefersDarkSystem(): boolean {
+  return typeof window !== 'undefined' && window.matchMedia(COLOR_SCHEME_DARK_QUERY).matches
 }
 
 /**
@@ -131,8 +136,7 @@ export function useSettings() {
 
     const applyTheme = (current: Theme) => {
       if (current === 'system') {
-        const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-        root.classList.toggle('dark', systemDark)
+        root.classList.toggle('dark', prefersDarkSystem())
       } else {
         root.classList.toggle('dark', current === 'dark')
       }
@@ -140,7 +144,7 @@ export function useSettings() {
 
     applyTheme(theme)
 
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+    const mediaQuery = window.matchMedia(COLOR_SCHEME_DARK_QUERY)
     const handleChange = () => {
       if (theme === 'system') applyTheme('system')
     }
@@ -148,13 +152,42 @@ export function useSettings() {
     return () => mediaQuery.removeEventListener('change', handleChange)
   }, [theme])
 
+  // Cross-tab sync: when another tab writes to localStorage, mirror the change here.
+  // The 'storage' event fires on tabs OTHER than the writer, so this never echoes
+  // our own writes.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const handler = (e: StorageEvent) => {
+      if (e.key === THEME_STORAGE_KEY) {
+        if (e.newValue === null) {
+          setThemeState(defaultAppearanceSettings.theme)
+        } else if (isTheme(e.newValue)) {
+          setThemeState(e.newValue)
+        }
+      } else if (e.key === READING_STORAGE_KEY) {
+        if (e.newValue === null) {
+          setReadingState(defaultReadingSettings)
+          return
+        }
+        try {
+          const parsed = JSON.parse(e.newValue)
+          setReadingState(validateReadingSettings(parsed, defaultReadingSettings))
+        } catch {
+          setReadingState(defaultReadingSettings)
+        }
+      }
+    }
+    window.addEventListener('storage', handler)
+    return () => window.removeEventListener('storage', handler)
+  }, [])
+
   // Persist
   useEffect(() => { saveTheme(theme) }, [theme])
   useEffect(() => { saveReading(reading) }, [reading])
 
   // Resolve effective theme (handles 'system' → actual value)
   const resolvedTheme: 'light' | 'dark' = theme === 'system'
-    ? (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+    ? (prefersDarkSystem() ? 'dark' : 'light')
     : theme
 
   const appearance: AppearanceSettings = { theme }
@@ -168,9 +201,7 @@ export function useSettings() {
       if (prev === 'dark') return 'light'
       if (prev === 'light') return 'dark'
       // 'system' → flip to the opposite of what's currently shown
-      const systemDark = typeof window !== 'undefined'
-        && window.matchMedia('(prefers-color-scheme: dark)').matches
-      return systemDark ? 'light' : 'dark'
+      return prefersDarkSystem() ? 'light' : 'dark'
     })
   }, [])
 
