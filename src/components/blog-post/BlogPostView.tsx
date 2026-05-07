@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import DOMPurify from 'dompurify'
+import { sanitizeForArticle, trustTransformedHtml, type TrustedHtml } from '../../lib/content/contentRenderer'
 import { Twitter, Linkedin, Link2, MessageCircle } from 'lucide-react'
 import type { BlogPostCommentsProps, Comment } from './types'
 import { CommentThread } from './CommentThread'
@@ -27,18 +27,16 @@ function slugify(text: string): string {
 interface TocEntry { id: string; text: string; level: 2 | 3 }
 
 /**
- * Walks DOMPurify-sanitized HTML, assigns ids to H2/H3, prepends a folio
- * span, and returns both the decorated HTML and a TOC entry list.
- *
- * Security: the input is already DOMPurify-sanitized; this pass only adds
- * `id` attributes and a leading `<span class="folio">` to existing
- * heading nodes — it does not introduce executable content.
+ * Walks already-sanitized HTML, assigns ids to H2/H3, prepends a folio
+ * span, and returns the decorated HTML and a TOC entry list. The transform
+ * uses DOM APIs (setAttribute, createElement) so trust passes through
+ * without re-introducing risk via string concatenation.
  */
-function decorateAndExtractToc(sanitizedHtml: string): { html: string; toc: TocEntry[] } {
-  if (typeof window === 'undefined') return { html: sanitizedHtml, toc: [] }
+function decorateAndExtractToc(sanitizedHtml: TrustedHtml): { html: TrustedHtml; toc: TocEntry[] } {
+  if (typeof window === "undefined") return { html: sanitizedHtml, toc: [] }
   const parser = new DOMParser()
-  const doc = parser.parseFromString(`<root>${sanitizedHtml}</root>`, 'text/html')
-  const root = doc.querySelector('root')
+  const doc = parser.parseFromString(`<root>${sanitizedHtml}</root>`, "text/html")
+  const root = doc.querySelector("root")
   if (!root) return { html: sanitizedHtml, toc: [] }
 
   const toc: TocEntry[] = []
@@ -74,19 +72,13 @@ function decorateAndExtractToc(sanitizedHtml: string): { html: string; toc: TocE
     }
   })
 
-  return { html: root.innerHTML, toc }
+  return { html: trustTransformedHtml(root.innerHTML), toc }
 }
 
-/**
- * Renders pre-sanitized article HTML. Sanitization happens upstream via
- * DOMPurify; this component requires its caller to pass a string already
- * cleaned. Kept tiny so the security review stays narrow.
- */
-function ArticleProse({ html }: { html: string }) {
+function ArticleProse({ html }: { html: TrustedHtml }) {
   return (
     <article
       className="prose-article kbw-prose-section"
-      // Input is sanitized by DOMPurify in the parent before reaching here.
       dangerouslySetInnerHTML={{ __html: html }}
     />
   )
@@ -126,7 +118,7 @@ export function BlogPostView({
   }, 0)
 
   const { html: decoratedHtml, toc } = useMemo(() => {
-    const sanitized = DOMPurify.sanitize(blogPost.content ?? '', { ADD_ATTR: ['id'] })
+    const sanitized = sanitizeForArticle(blogPost.content ?? '')
     return decorateAndExtractToc(sanitized)
   }, [blogPost.content])
 

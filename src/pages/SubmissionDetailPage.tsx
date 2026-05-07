@@ -4,7 +4,7 @@
 // "Routing" section and ~/.claude/projects/.../memory/phase-2-real-gate-plan.md.
 import { useState, useMemo } from 'react'
 import { useNavigate, useLocation, useParams } from 'react-router-dom'
-import DOMPurify from 'dompurify'
+import { sanitizeForPreview, type TrustedHtml } from '../lib/content/contentRenderer'
 import {
   ArrowLeft,
   Save,
@@ -26,15 +26,10 @@ import {
 import { useAuth, useSubmission, useSubmissionDraft } from '../hooks'
 import type { SubmissionFormData } from '../types/submission'
 
-/**
- * Renders pre-sanitized HTML preview. Caller is responsible for running
- * the input through DOMPurify before passing it here.
- */
-function SanitizedPreview({ html }: { html: string }) {
+function SanitizedPreview({ html }: { html: TrustedHtml }) {
   return (
     <div
       className="prose-article kbw-prose-section"
-      // Input is DOMPurify-sanitized in the parent before reaching here.
       dangerouslySetInnerHTML={{ __html: html }}
     />
   )
@@ -94,7 +89,7 @@ export function SubmissionDetailPage() {
   })
 
   const sanitizedPreviewHtml = useMemo(
-    () => DOMPurify.sanitize(formData.content),
+    () => sanitizeForPreview(formData.content),
     [formData.content]
   )
 

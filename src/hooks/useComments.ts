@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { Comment } from '../types/blog'
 import {
-  fetchCommentsForPost,
+  fetchVisibleCommentsForPost,
   fetchCommentById,
   deleteComment as deleteCommentQuery,
   toggleCommentLike,
@@ -48,7 +48,7 @@ export function useComments(postId: string): UseCommentsResult {
     setError(null)
 
     try {
-      const fetchedComments = await fetchCommentsForPost(postId)
+      const fetchedComments = await fetchVisibleCommentsForPost(postId)
       setComments(fetchedComments)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load comments')

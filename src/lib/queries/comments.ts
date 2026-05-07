@@ -52,33 +52,64 @@ function buildCommentTree(flatComments: DbComment[]): Comment[] {
   return rootComments
 }
 
+const COMMENT_SELECT = `
+  id,
+  post_id,
+  user_id,
+  content,
+  parent_id,
+  is_moderated,
+  created_at,
+  updated_at,
+  profiles:user_id (
+    id,
+    display_name,
+    avatar_url
+  )
+`
+
 /**
- * Fetch all comments for a post with nested replies
+ * Fetch comments visible to the current viewer for a post, with nested replies.
+ *
+ * Visibility (`is_moderated = true` for non-admins) is enforced by RLS as of
+ * migration 030. Non-admin callers will not see pending comments even if the
+ * query is malformed.
  */
-export async function fetchCommentsForPost(postId: string): Promise<Comment[]> {
+export async function fetchVisibleCommentsForPost(postId: string): Promise<Comment[]> {
   const { data, error } = await supabase
     .from('comments')
-    .select(`
-      id,
-      post_id,
-      user_id,
-      content,
-      parent_id,
-      is_moderated,
-      created_at,
-      updated_at,
-      profiles:user_id (
-        id,
-        display_name,
-        avatar_url
-      )
-    `)
+    .select(COMMENT_SELECT)
     .eq('post_id', postId)
-    .eq('is_moderated', true)
     .order('created_at', { ascending: true })
 
   if (error) {
     throw new Error(`Failed to fetch comments: ${error.message}`)
+  }
+
+  if (!data || data.length === 0) {
+    return []
+  }
+
+  return buildCommentTree(data as unknown as DbComment[])
+}
+
+/**
+ * Fetch pending (unmoderated) comments for a post — admin-only.
+ *
+ * RLS gates this: non-admin callers receive an empty array. Admins receive
+ * comments where `is_moderated = false`. Use this to power admin moderation
+ * UI when it returns; do not expose results to non-admin readers.
+ */
+export async function fetchPendingCommentsForPost(postId: string): Promise<Comment[]> {
+  const { data, error } = await supabase
+    .from('comments')
+    .select(COMMENT_SELECT)
+    .eq('post_id', postId)
+    .eq('is_moderated', false)
+    .order('created_at', { ascending: true })
+
+  if (error) {
+    throw new Error(`Failed to fetch pending comments: ${error.message}`)
   }
 
   if (!data || data.length === 0) {

@@ -1,4 +1,4 @@
-import DOMPurify from 'dompurify'
+import { sanitizeForStorage } from '../content/contentRenderer'
 import { supabase } from '../supabase'
 import { PUBLISHED_EDIT_CAP, type Submission, type SubmissionFormData, type SubmissionStatus } from '../../types/submission'
 import type { SubmissionRow, TablesUpdate } from '../database.types'
@@ -117,7 +117,7 @@ export async function updateSubmission(
 
   if (data.title !== undefined) updateData.title = data.title
   if (data.excerpt !== undefined) updateData.excerpt = data.excerpt
-  if (data.content !== undefined) updateData.content = DOMPurify.sanitize(data.content)
+  if (data.content !== undefined) updateData.content = sanitizeForStorage(data.content)
   if (data.coverImageUrl !== undefined) updateData.cover_image_url = data.coverImageUrl
   if (data.tags !== undefined) updateData.tags = data.tags
 
