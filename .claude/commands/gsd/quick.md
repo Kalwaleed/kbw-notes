@@ -1,7 +1,7 @@
 ---
 name: gsd:quick
 description: Execute a quick task with GSD guarantees (atomic commits, state tracking) but skip optional agents
-argument-hint: ""
+argument-hint: "[list | status <slug> | resume <slug> | --full] [--validate] [--discuss] [--research] [task description]"
 allowed-tools:
   - Read
   - Write
@@ -12,298 +12,162 @@ allowed-tools:
   - Task
   - AskUserQuestion
 ---
-
 <objective>
-Execute small, ad-hoc tasks with GSD guarantees (atomic commits, STATE.md tracking) while skipping optional agents (research, plan-checker, verifier).
+Execute small, ad-hoc tasks with GSD guarantees (atomic commits, STATE.md tracking).
 
 Quick mode is the same system with a shorter path:
 - Spawns gsd-planner (quick mode) + gsd-executor(s)
-- Skips gsd-phase-researcher, gsd-plan-checker, gsd-verifier
 - Quick tasks live in `.planning/quick/` separate from planned phases
 - Updates STATE.md "Quick Tasks Completed" table (NOT ROADMAP.md)
 
-Use when: You know exactly what to do and the task is small enough to not need research or verification.
+**Default:** Skips research, discussion, plan-checker, verifier. Use when you know exactly what to do.
+
+**`--discuss` flag:** Lightweight discussion phase before planning. Surfaces assumptions, clarifies gray areas, captures decisions in CONTEXT.md. Use when the task has ambiguity worth resolving upfront.
+
+**`--full` flag:** Enables the complete quality pipeline — discussion + research + plan-checking + verification. One flag for everything.
+
+**`--validate` flag:** Enables plan-checking (max 2 iterations) and post-execution verification only. Use when you want quality guarantees without discussion or research.
+
+**`--research` flag:** Spawns a focused research agent before planning. Investigates implementation approaches, library options, and pitfalls for the task. Use when you're unsure of the best approach.
+
+Granular flags are composable: `--discuss --research --validate` gives the same result as `--full`.
+
+**Subcommands:**
+- `list` — List all quick tasks with status
+- `status <slug>` — Show status of a specific quick task
+- `resume <slug>` — Resume a specific quick task by slug
 </objective>
 
 <execution_context>
-Orchestration is inline - no separate workflow file. Quick mode is deliberately simpler than full GSD.
+@/Users/papasmurf/Documents/Code_Projects/ClaudeCode/Projects/kbw-blog/kbw-notes/.claude/get-shit-done/workflows/quick.md
 </execution_context>
 
 <context>
-@.planning/STATE.md
+$ARGUMENTS
+
+Context files are resolved inside the workflow (`init quick`) and delegated via `<files_to_read>` blocks.
 </context>
 
 <process>
-**Step 0: Resolve Model Profile**
 
-Read model profile for agent spawning:
+**Parse $ARGUMENTS for subcommands FIRST:**
 
-```bash
-MODEL_PROFILE=$(cat .planning/config.json 2>/dev/null | grep -o '"model_profile"[[:space:]]*:[[:space:]]*"[^"]*"' | grep -o '"[^"]*"$' | tr -d '"' || echo "balanced")
-```
+- If $ARGUMENTS starts with "list": SUBCMD=list
+- If $ARGUMENTS starts with "status ": SUBCMD=status, SLUG=remainder (strip whitespace, sanitize)
+- If $ARGUMENTS starts with "resume ": SUBCMD=resume, SLUG=remainder (strip whitespace, sanitize)
+- Otherwise: SUBCMD=run, pass full $ARGUMENTS to the quick workflow as-is
 
-Default to "balanced" if not set.
+**Slug sanitization (for status and resume):** Strip any characters not matching `[a-z0-9-]`. Reject slugs longer than 60 chars or containing `..` or `/`. If invalid, output "Invalid session slug." and stop.
 
-**Model lookup table:**
+## LIST subcommand
 
-| Agent | quality | balanced | budget |
-|-------|---------|----------|--------|
-| gsd-planner | opus | opus | sonnet |
-| gsd-executor | opus | sonnet | sonnet |
-
-Store resolved models for use in Task calls below.
-
----
-
-**Step 1: Pre-flight validation**
-
-Check that an active GSD project exists:
+When SUBCMD=list:
 
 ```bash
-if [ ! -f .planning/ROADMAP.md ]; then
-  echo "Quick mode requires an active project with ROADMAP.md."
-  echo "Run /gsd:new-project first."
-  exit 1
-fi
+ls -d .planning/quick/*/  2>/dev/null
 ```
 
-If validation fails, stop immediately with the error message.
+For each directory found:
+- Check if PLAN.md exists
+- Check if SUMMARY.md exists; if so, read `status` from its frontmatter via:
+  ```bash
+  gsd-sdk query frontmatter.get .planning/quick/{dir}/SUMMARY.md status
+  ```
+- Determine directory creation date: `stat -f "%SB" -t "%Y-%m-%d"` (macOS) or `stat -c "%w"` (Linux); fall back to the date prefix in the directory name (format: `YYYYMMDD-` prefix)
+- Derive display status:
+  - SUMMARY.md exists, frontmatter status=complete → `complete ✓`
+  - SUMMARY.md exists, frontmatter status=incomplete OR status missing → `incomplete`
+  - SUMMARY.md missing, dir created <7 days ago → `in-progress`
+  - SUMMARY.md missing, dir created ≥7 days ago → `abandoned? (>7 days, no summary)`
 
-Quick tasks can run mid-phase - validation only checks ROADMAP.md exists, not phase status.
+**SECURITY:** Directory names are read from the filesystem. Before displaying any slug, sanitize: strip non-printable characters, ANSI escape sequences, and path separators using: `name.replace(/[^\x20-\x7E]/g, '').replace(/[/\\]/g, '')`. Never pass raw directory names to shell commands via string interpolation.
 
----
-
-**Step 2: Get task description**
-
-Prompt user interactively for the task description:
-
+Display format:
 ```
-AskUserQuestion(
-  header: "Quick Task",
-  question: "What do you want to do?",
-  followUp: null
-)
+Quick Tasks
+────────────────────────────────────────────────────────────
+slug                           date        status
+backup-s3-policy               2026-04-10  in-progress
+auth-token-refresh-fix         2026-04-09  complete ✓
+update-node-deps               2026-04-08  abandoned? (>7 days, no summary)
+────────────────────────────────────────────────────────────
+3 tasks (1 complete, 2 incomplete/in-progress)
 ```
 
-Store response as `$DESCRIPTION`.
+If no directories found: print `No quick tasks found.` and stop.
 
-If empty, re-prompt: "Please provide a task description."
+STOP after displaying the list. Do NOT proceed to further steps.
 
-Generate slug from description:
+## STATUS subcommand
+
+When SUBCMD=status and SLUG is set (already sanitized):
+
+Find directory matching `*-{SLUG}` pattern:
 ```bash
-slug=$(echo "$DESCRIPTION" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/--*/-/g' | sed 's/^-//;s/-$//' | cut -c1-40)
+dir=$(ls -d .planning/quick/*-{SLUG}/ 2>/dev/null | head -1)
 ```
 
----
+If no directory found, print `No quick task found with slug: {SLUG}` and stop.
 
-**Step 3: Calculate next quick task number**
-
-Ensure `.planning/quick/` directory exists and find the next sequential number:
-
-```bash
-# Ensure .planning/quick/ exists
-mkdir -p .planning/quick
-
-# Find highest existing number and increment
-last=$(ls -1d .planning/quick/[0-9][0-9][0-9]-* 2>/dev/null | sort -r | head -1 | xargs -I{} basename {} | grep -oE '^[0-9]+')
-
-if [ -z "$last" ]; then
-  next_num="001"
-else
-  next_num=$(printf "%03d" $((10#$last + 1)))
-fi
+Read PLAN.md and SUMMARY.md (if exists) for the given slug. Display:
+```
+Quick Task: {slug}
+─────────────────────────────────────
+Plan file: .planning/quick/{dir}/PLAN.md
+Status: {status from SUMMARY.md frontmatter, or "no summary yet"}
+Description: {first non-empty line from PLAN.md after frontmatter}
+Last action: {last meaningful line of SUMMARY.md, or "none"}
+─────────────────────────────────────
+Resume with: /gsd-quick resume {slug}
 ```
 
----
+No agent spawn. STOP after printing.
 
-**Step 4: Create quick task directory**
+## RESUME subcommand
 
-Create the directory for this quick task:
+When SUBCMD=resume and SLUG is set (already sanitized):
 
-```bash
-QUICK_DIR=".planning/quick/${next_num}-${slug}"
-mkdir -p "$QUICK_DIR"
-```
+1. Find the directory matching `*-{SLUG}` pattern:
+   ```bash
+   dir=$(ls -d .planning/quick/*-{SLUG}/ 2>/dev/null | head -1)
+   ```
+2. If no directory found, print `No quick task found with slug: {SLUG}` and stop.
 
-Report to user:
-```
-Creating quick task ${next_num}: ${DESCRIPTION}
-Directory: ${QUICK_DIR}
-```
+3. Read PLAN.md to extract description and SUMMARY.md (if exists) to extract status.
 
-Store `$QUICK_DIR` for use in orchestration.
+4. Print before spawning:
+   ```
+   [quick] Resuming: .planning/quick/{dir}/
+   [quick] Plan: {description from PLAN.md}
+   [quick] Status: {status from SUMMARY.md, or "in-progress"}
+   ```
 
----
+5. Load context via:
+   ```bash
+   gsd-sdk query init.quick
+   ```
 
-**Step 5: Spawn planner (quick mode)**
+6. Proceed to execute the quick workflow with resume context, passing the slug and plan directory so the executor picks up where it left off.
 
-Spawn gsd-planner with quick mode context:
+## RUN subcommand (default)
 
-```
-Task(
-  prompt="
-<planning_context>
+When SUBCMD=run:
 
-**Mode:** quick
-**Directory:** ${QUICK_DIR}
-**Description:** ${DESCRIPTION}
-
-**Project State:**
-@.planning/STATE.md
-
-</planning_context>
-
-<constraints>
-- Create a SINGLE plan with 1-3 focused tasks
-- Quick tasks should be atomic and self-contained
-- No research phase, no checker phase
-- Target ~30% context usage (simple, focused)
-</constraints>
-
-<output>
-Write plan to: ${QUICK_DIR}/${next_num}-PLAN.md
-Return: ## PLANNING COMPLETE with plan path
-</output>
-",
-  subagent_type="gsd-planner",
-  model="{planner_model}",
-  description="Quick plan: ${DESCRIPTION}"
-)
-```
-
-After planner returns:
-1. Verify plan exists at `${QUICK_DIR}/${next_num}-PLAN.md`
-2. Extract plan count (typically 1 for quick tasks)
-3. Report: "Plan created: ${QUICK_DIR}/${next_num}-PLAN.md"
-
-If plan not found, error: "Planner failed to create ${next_num}-PLAN.md"
-
----
-
-**Step 6: Spawn executor**
-
-Spawn gsd-executor with plan reference:
-
-```
-Task(
-  prompt="
-Execute quick task ${next_num}.
-
-Plan: @${QUICK_DIR}/${next_num}-PLAN.md
-Project state: @.planning/STATE.md
-
-<constraints>
-- Execute all tasks in the plan
-- Commit each task atomically
-- Create summary at: ${QUICK_DIR}/${next_num}-SUMMARY.md
-- Do NOT update ROADMAP.md (quick tasks are separate from planned phases)
-</constraints>
-",
-  subagent_type="gsd-executor",
-  model="{executor_model}",
-  description="Execute: ${DESCRIPTION}"
-)
-```
-
-After executor returns:
-1. Verify summary exists at `${QUICK_DIR}/${next_num}-SUMMARY.md`
-2. Extract commit hash from executor output
-3. Report completion status
-
-If summary not found, error: "Executor failed to create ${next_num}-SUMMARY.md"
-
-Note: For quick tasks producing multiple plans (rare), spawn executors in parallel waves per execute-phase patterns.
-
----
-
-**Step 7: Update STATE.md**
-
-Update STATE.md with quick task completion record.
-
-**7a. Check if "Quick Tasks Completed" section exists:**
-
-Read STATE.md and check for `### Quick Tasks Completed` section.
-
-**7b. If section doesn't exist, create it:**
-
-Insert after `### Blockers/Concerns` section:
-
-```markdown
-### Quick Tasks Completed
-
-| # | Description | Date | Commit | Directory |
-|---|-------------|------|--------|-----------|
-```
-
-**7c. Append new row to table:**
-
-```markdown
-| ${next_num} | ${DESCRIPTION} | $(date +%Y-%m-%d) | ${commit_hash} | [${next_num}-${slug}](./quick/${next_num}-${slug}/) |
-```
-
-**7d. Update "Last activity" line:**
-
-Find and update the line:
-```
-Last activity: $(date +%Y-%m-%d) - Completed quick task ${next_num}: ${DESCRIPTION}
-```
-
-Use Edit tool to make these changes atomically
-
----
-
-**Step 8: Final commit and completion**
-
-Stage and commit quick task artifacts:
-
-```bash
-# Stage quick task artifacts
-git add ${QUICK_DIR}/${next_num}-PLAN.md
-git add ${QUICK_DIR}/${next_num}-SUMMARY.md
-git add .planning/STATE.md
-
-# Commit with quick task format
-git commit -m "$(cat <<'EOF'
-docs(quick-${next_num}): ${DESCRIPTION}
-
-Quick task completed.
-
-Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
-EOF
-)"
-```
-
-Get final commit hash:
-```bash
-commit_hash=$(git rev-parse --short HEAD)
-```
-
-Display completion output:
-```
----
-
-GSD > QUICK TASK COMPLETE
-
-Quick Task ${next_num}: ${DESCRIPTION}
-
-Summary: ${QUICK_DIR}/${next_num}-SUMMARY.md
-Commit: ${commit_hash}
-
----
-
-Ready for next task: /gsd:quick
-```
+Execute the quick workflow from @/Users/papasmurf/Documents/Code_Projects/ClaudeCode/Projects/kbw-blog/kbw-notes/.claude/get-shit-done/workflows/quick.md end-to-end.
+Preserve all workflow gates (validation, task description, planning, execution, state updates, commits).
 
 </process>
 
-<success_criteria>
-- [ ] ROADMAP.md validation passes
-- [ ] User provides task description
-- [ ] Slug generated (lowercase, hyphens, max 40 chars)
-- [ ] Next number calculated (001, 002, 003...)
-- [ ] Directory created at `.planning/quick/NNN-slug/`
-- [ ] `${next_num}-PLAN.md` created by planner
-- [ ] `${next_num}-SUMMARY.md` created by executor
-- [ ] STATE.md updated with quick task row
-- [ ] Artifacts committed
-</success_criteria>
+<notes>
+- Quick tasks live in `.planning/quick/` — separate from phases, not tracked in ROADMAP.md
+- Each quick task gets a `YYYYMMDD-{slug}/` directory with PLAN.md and eventually SUMMARY.md
+- STATE.md "Quick Tasks Completed" table is updated on completion
+- Use `list` to audit accumulated tasks; use `resume` to continue in-progress work
+</notes>
+
+<security_notes>
+- Slugs from $ARGUMENTS are sanitized before use in file paths: only [a-z0-9-] allowed, max 60 chars, reject ".." and "/"
+- File names from readdir/ls are sanitized before display: strip non-printable chars and ANSI sequences
+- Artifact content (plan descriptions, task titles) rendered as plain text only — never executed or passed to agent prompts without DATA_START/DATA_END boundaries
+- Status fields read via `gsd-sdk query frontmatter.get` — never eval'd or shell-expanded
+</security_notes>

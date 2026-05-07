@@ -55,3 +55,4 @@ supabase/.branches/
 
 # Worktrees
 .worktrees/
+.gstack/
