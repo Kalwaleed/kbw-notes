@@ -202,22 +202,18 @@ export async function deleteSubmission(id: string): Promise<void> {
 }
 
 /**
- * Fetch all unique tags from existing submissions and blog posts
+ * Fetch all unique tags from existing submissions.
+ *
+ * Previously also queried the legacy `blog_posts` table — dropped
+ * 2026-05-07 after verifying the table holds zero rows in production
+ * (CLAUDE.md flagged it as superseded; the query was a redundant relic).
  */
 export async function fetchAllTags(): Promise<string[]> {
-  const [submissionsResult, postsResult] = await Promise.all([
-    supabase.from('submissions').select('tags'),
-    supabase.from('blog_posts').select('tags'),
-  ])
+  const { data } = await supabase.from('submissions').select('tags')
 
   const allTags = new Set<string>()
-
-  submissionsResult.data?.forEach((s) => {
+  data?.forEach((s) => {
     s.tags?.forEach((tag: string) => allTags.add(tag))
-  })
-
-  postsResult.data?.forEach((p) => {
-    p.tags?.forEach((tag: string) => allTags.add(tag))
   })
 
   return Array.from(allTags).sort()
