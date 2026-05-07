@@ -1,9 +1,11 @@
 # Plan: Host kalwaleed.com Email with Google Workspace
 
+> **Status: PENDING (as of 2026-05-07).** DNS records configured 2026-01-29 and verified at the time. Google Workspace account creation and final wiring still outstanding. Resume work from the steps below when ready to complete; re-verify DNS records first since they may have drifted.
+
 **Domain**: kalwaleed.com
 **DNS Provider**: Vercel
 **Email Provider**: Google Workspace
-**Status**: DNS records already configured, need to set up new Google Workspace account
+**Status**: DNS records configured 2026-01-29, Workspace account creation outstanding
 
 ---
 
