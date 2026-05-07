@@ -1,3 +1,8 @@
+// UNROUTED — authenticated user notifications view. Not mounted to any
+// route while the authenticated UI surface is offline; restoration belongs
+// to Phase 2 of the gate work alongside SignInPage + magic-link callback.
+// See CLAUDE.md "Routing" section and
+// ~/.claude/projects/.../memory/phase-2-real-gate-plan.md.
 import { useNavigate, useLocation } from 'react-router-dom'
 import { AppShell } from '../components/shell'
 import { NotificationsList } from '../components/notifications'

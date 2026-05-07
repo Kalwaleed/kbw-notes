@@ -1,3 +1,7 @@
+// UNROUTED — admin/author detail view. Not mounted to any route while the
+// authenticated UI surface is offline; restoration belongs to Phase 2 of
+// the gate work alongside SignInPage + magic-link callback. See CLAUDE.md
+// "Routing" section and ~/.claude/projects/.../memory/phase-2-real-gate-plan.md.
 import { useState, useMemo } from 'react'
 import { useNavigate, useLocation, useParams } from 'react-router-dom'
 import DOMPurify from 'dompurify'
