@@ -1,6 +1,7 @@
 import type { Session, User } from '@supabase/supabase-js'
 import type { Notification } from '../types/notification'
-import { PUBLISHED_EDIT_CAP, type Submission, type SubmissionFormData, type SubmissionStatus } from '../types/submission'
+import type { Submission, SubmissionFormData, SubmissionStatus } from '../types/submission'
+import { PUBLISHED_EDIT_CAP } from './submissions/rules'
 import type { Profile } from './database.types'
 
 export const isLocalAuthBypassEnabled =

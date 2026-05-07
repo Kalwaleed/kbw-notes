@@ -1,6 +1,7 @@
 import { sanitizeForStorage } from '../content/contentRenderer'
 import { supabase } from '../supabase'
-import { PUBLISHED_EDIT_CAP, type Submission, type SubmissionFormData, type SubmissionStatus } from '../../types/submission'
+import type { Submission, SubmissionFormData, SubmissionStatus } from '../../types/submission'
+import { getSubmissionRules } from '../submissions/rules'
 import type { SubmissionRow, TablesUpdate } from '../database.types'
 import {
   createLocalDevSubmission,
@@ -223,9 +224,12 @@ export async function fetchAllTags(): Promise<string[]> {
 function transformSubmission(row: SubmissionRowWithEditCount): Submission {
   const status = (row.status ?? 'draft') as SubmissionStatus
   const editCount = row.edit_count ?? 0
-  const editsRemaining = status === 'published'
-    ? Math.max(0, PUBLISHED_EDIT_CAP - editCount)
-    : PUBLISHED_EDIT_CAP
+  const { editsRemaining } = getSubmissionRules({ status, editCount })
+  // Surface as a finite number for UI; the rules module returns Infinity for
+  // drafts to make rule predicates clean. UI displays a fixed cap badge.
+  const editsRemainingNumeric = Number.isFinite(editsRemaining)
+    ? editsRemaining
+    : 3 // PUBLISHED_EDIT_CAP — drafts have no spent count yet
   return {
     id: row.id,
     authorId: row.author_id,
@@ -240,6 +244,6 @@ function transformSubmission(row: SubmissionRowWithEditCount): Submission {
     createdAt: row.created_at ?? '',
     updatedAt: row.updated_at ?? '',
     editCount,
-    editsRemaining,
+    editsRemaining: editsRemainingNumeric,
   }
 }

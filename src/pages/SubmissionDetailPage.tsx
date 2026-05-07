@@ -25,6 +25,7 @@ import {
 } from '../components/submissions'
 import { useAuth, useSubmission, useSubmissionDraft } from '../hooks'
 import type { SubmissionFormData } from '../types/submission'
+import { getSubmissionRules } from '../lib/submissions/rules'
 
 function SanitizedPreview({ html }: { html: TrustedHtml }) {
   return (
@@ -42,9 +43,15 @@ export function SubmissionDetailPage() {
   const { user, isAdmin, signOut } = useAuth()
   const { submission, isLoading, error, publish, unpublish, remove } = useSubmission(id)
 
+  const rules = submission ? getSubmissionRules(submission) : null
   const isPublished = submission?.status === 'published'
   const editsRemaining = submission?.editsRemaining ?? 0
   const editLocked = !isAdmin && isPublished && editsRemaining <= 0
+  // Auto-save when the lifecycle rules permit (drafts only); admins override
+  // for published posts because they are not bound by the edit cap. The
+  // lifecycle rule lives in getSubmissionRules; admin authorization stays
+  // here as a permission overlay.
+  const autoSaveEnabled = rules ? rules.canAutoSave || isAdmin : true
 
   const [showMenu, setShowMenu] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
@@ -85,7 +92,7 @@ export function SubmissionDetailPage() {
     submissionId: id ?? '',
     initialData,
     autoSaveInterval: 30000,
-    autoSaveEnabled: !isPublished || isAdmin,
+    autoSaveEnabled,
   })
 
   const sanitizedPreviewHtml = useMemo(

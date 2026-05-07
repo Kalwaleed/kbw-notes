@@ -19,8 +19,6 @@ export interface Submission {
   editsRemaining: number
 }
 
-export const PUBLISHED_EDIT_CAP = 3
-
 export interface SubmissionFormData {
   title: string
   excerpt: string
