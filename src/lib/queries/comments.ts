@@ -205,47 +205,6 @@ export async function deleteComment(commentId: string): Promise<void> {
 }
 
 /**
- * Toggle like on a comment
- * Returns true if now liked, false if unliked
- */
-export async function toggleCommentLike(commentId: string, userId: string): Promise<boolean> {
-  // Check if already liked (use maybeSingle to avoid error when no rows)
-  const { data: existing, error: selectError } = await supabase
-    .from('comment_likes')
-    .select('id')
-    .eq('comment_id', commentId)
-    .eq('user_id', userId)
-    .maybeSingle()
-
-  if (selectError) {
-    throw new Error(`Failed to check like status: ${selectError.message}`)
-  }
-
-  if (existing) {
-    // Unlike
-    const { error } = await supabase
-      .from('comment_likes')
-      .delete()
-      .eq('comment_id', commentId)
-      .eq('user_id', userId)
-
-    if (error) throw new Error(`Failed to unlike comment: ${error.message}`)
-    return false
-  } else {
-    // Like
-    const { error } = await supabase
-      .from('comment_likes')
-      .insert({
-        comment_id: commentId,
-        user_id: userId,
-      })
-
-    if (error) throw new Error(`Failed to like comment: ${error.message}`)
-    return true
-  }
-}
-
-/**
  * Get like count for a comment
  */
 export async function getCommentLikeCount(commentId: string): Promise<number> {

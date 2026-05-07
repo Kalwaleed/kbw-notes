@@ -6,12 +6,14 @@ import type { Comment } from '../../types/blog'
 const mockFetchCommentsForPost = vi.fn()
 const mockFetchCommentById = vi.fn()
 const mockDeleteCommentQuery = vi.fn()
-const mockToggleCommentLike = vi.fn()
+const mockToggleEngagement = vi.fn()
 vi.mock('../../lib/queries/comments', () => ({
   fetchVisibleCommentsForPost: (...args: unknown[]) => mockFetchCommentsForPost(...args),
   fetchCommentById: (...args: unknown[]) => mockFetchCommentById(...args),
   deleteComment: (...args: unknown[]) => mockDeleteCommentQuery(...args),
-  toggleCommentLike: (...args: unknown[]) => mockToggleCommentLike(...args),
+}))
+vi.mock('../../lib/queries/engagement', () => ({
+  toggleEngagement: (...args: unknown[]) => mockToggleEngagement(...args),
 }))
 
 const mockSubmitCommentForModeration = vi.fn()
@@ -170,7 +172,7 @@ describe('useComments', () => {
   })
 
   it('likeComment applies optimistic update', async () => {
-    mockToggleCommentLike.mockResolvedValue(true) // now liked
+    mockToggleEngagement.mockResolvedValue(true) // now liked
     mockGetUser.mockResolvedValue({ data: { user: { id: 'u-1' } } })
 
     const { result } = renderHook(() => useComments('post-1'))
@@ -180,13 +182,13 @@ describe('useComments', () => {
       await result.current.likeComment('c-1')
     })
 
-    expect(mockToggleCommentLike).toHaveBeenCalledWith('c-1', 'u-1')
+    expect(mockToggleEngagement).toHaveBeenCalledWith('comment_like', 'c-1')
     expect(result.current.comments[0].reactions).toBe(6)
     expect(result.current.userLikedComments.has('c-1')).toBe(true)
   })
 
   it('likeComment reverts on server error', async () => {
-    mockToggleCommentLike.mockRejectedValue(new Error('Server error'))
+    mockToggleEngagement.mockRejectedValue(new Error('Server error'))
 
     const { result } = renderHook(() => useComments('post-1'))
     await waitFor(() => expect(result.current.isLoading).toBe(false))

@@ -1,11 +1,11 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import type { Comment } from '../types/blog'
 import {
   fetchVisibleCommentsForPost,
   fetchCommentById,
   deleteComment as deleteCommentQuery,
-  toggleCommentLike,
 } from '../lib/queries/comments'
+import { toggleEngagement } from '../lib/queries/engagement'
 import { supabase } from '../lib/supabase'
 import { submitCommentForModeration, ModerationError } from '../lib/moderationService'
 
@@ -167,17 +167,24 @@ export function useComments(postId: string): UseCommentsResult {
     setComments((prev) => updateInTree(prev))
   }, [])
 
+  // Refs mirror the latest state so the likeComment closure always reads
+  // current values. Without these, two clicks within one render frame would
+  // both read the same stale snapshot and produce inconsistent optimistic
+  // updates.
+  const commentsRef = useRef(comments)
+  const userLikedCommentsRef = useRef(userLikedComments)
+  useEffect(() => { commentsRef.current = comments }, [comments])
+  useEffect(() => { userLikedCommentsRef.current = userLikedComments }, [userLikedComments])
+
   // Like/unlike a comment with optimistic updates
   const likeComment = useCallback(async (commentId: string) => {
-    // Get current user
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       throw new Error('You must be logged in to like comments')
     }
 
-    // Find the current comment to get its reaction count
-    const findComment = (comments: Comment[]): Comment | null => {
-      for (const comment of comments) {
+    const findComment = (list: Comment[]): Comment | null => {
+      for (const comment of list) {
         if (comment.id === commentId) return comment
         if (comment.replies.length > 0) {
           const found = findComment(comment.replies)
@@ -187,71 +194,53 @@ export function useComments(postId: string): UseCommentsResult {
       return null
     }
 
-    const currentComment = findComment(comments)
-    const currentCount = currentComment?.reactions ?? 0
-
-    const updateReactionsInTree = (comments: Comment[], newCount: number): Comment[] => {
-      return comments.map((comment) => {
+    const updateReactionsInTree = (list: Comment[], newCount: number): Comment[] => {
+      return list.map((comment) => {
         if (comment.id === commentId) {
           return { ...comment, reactions: newCount }
         }
         if (comment.replies.length > 0) {
-          return {
-            ...comment,
-            replies: updateReactionsInTree(comment.replies, newCount),
-          }
+          return { ...comment, replies: updateReactionsInTree(comment.replies, newCount) }
         }
         return comment
       })
     }
 
-    // Check if user already liked this comment
-    const alreadyLiked = userLikedComments.has(commentId)
+    // Snapshot via refs — never closure — to avoid the stale-read race.
+    const currentComment = findComment(commentsRef.current)
+    const currentCount = currentComment?.reactions ?? 0
+    const alreadyLiked = userLikedCommentsRef.current.has(commentId)
     const optimisticCount = alreadyLiked ? currentCount - 1 : currentCount + 1
 
-    // Optimistic update - update count and liked state immediately
     setComments((prev) => updateReactionsInTree(prev, optimisticCount))
     setUserLikedComments((prev) => {
-      const newSet = new Set(prev)
-      if (alreadyLiked) {
-        newSet.delete(commentId)
-      } else {
-        newSet.add(commentId)
-      }
-      return newSet
+      const next = new Set(prev)
+      if (alreadyLiked) next.delete(commentId)
+      else next.add(commentId)
+      return next
     })
 
     try {
-      // Toggle the like on server - returns true if now liked, false if unliked
-      const isNowLiked = await toggleCommentLike(commentId, user.id)
-
-      // Correct the count and liked state based on actual result
+      const isNowLiked = await toggleEngagement('comment_like', commentId)
       const actualCount = isNowLiked ? currentCount + 1 : currentCount - 1
       setComments((prev) => updateReactionsInTree(prev, Math.max(0, actualCount)))
       setUserLikedComments((prev) => {
-        const newSet = new Set(prev)
-        if (isNowLiked) {
-          newSet.add(commentId)
-        } else {
-          newSet.delete(commentId)
-        }
-        return newSet
+        const next = new Set(prev)
+        if (isNowLiked) next.add(commentId)
+        else next.delete(commentId)
+        return next
       })
     } catch (error) {
-      // Revert on error
       setComments((prev) => updateReactionsInTree(prev, currentCount))
       setUserLikedComments((prev) => {
-        const newSet = new Set(prev)
-        if (alreadyLiked) {
-          newSet.add(commentId)
-        } else {
-          newSet.delete(commentId)
-        }
-        return newSet
+        const next = new Set(prev)
+        if (alreadyLiked) next.add(commentId)
+        else next.delete(commentId)
+        return next
       })
       throw error
     }
-  }, [comments, userLikedComments])
+  }, [])
 
   return {
     comments,

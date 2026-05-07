@@ -298,40 +298,6 @@ export async function fetchBlogPosts({
 }
 
 /**
- * Toggle like on a post
- */
-export async function toggleLike(postId: string, userId: string): Promise<boolean> {
-  // Check if already liked
-  const { data: existing } = await supabase
-    .from('post_likes')
-    .select('id')
-    .eq('post_id', postId)
-    .eq('user_id', userId)
-    .maybeSingle()
-
-  if (existing) {
-    // Unlike
-    const { error } = await supabase
-      .from('post_likes')
-      .delete()
-      .eq('post_id', postId)
-      .eq('user_id', userId)
-
-    if (error) throw new Error(`Failed to unlike: ${error.message}`)
-    return false // Now unliked
-  } else {
-    // Like
-    const { error } = await supabase.from('post_likes').insert({
-      post_id: postId,
-      user_id: userId,
-    })
-
-    if (error) throw new Error(`Failed to like: ${error.message}`)
-    return true // Now liked
-  }
-}
-
-/**
  * Fetch a single blog post by ID (from submissions table)
  */
 export async function fetchBlogPost(postId: string): Promise<{
@@ -412,9 +378,6 @@ export async function fetchBlogPost(postId: string): Promise<{
 }
 
 /**
- * Toggle bookmark on a post
- */
-/**
  * Get like count for a post
  */
 export async function getPostLikeCount(postId: string): Promise<number> {
@@ -425,35 +388,4 @@ export async function getPostLikeCount(postId: string): Promise<number> {
 
   if (error) return 0
   return count ?? 0
-}
-
-export async function toggleBookmark(postId: string, userId: string): Promise<boolean> {
-  // Check if already bookmarked
-  const { data: existing } = await supabase
-    .from('post_bookmarks')
-    .select('id')
-    .eq('post_id', postId)
-    .eq('user_id', userId)
-    .maybeSingle()
-
-  if (existing) {
-    // Remove bookmark
-    const { error } = await supabase
-      .from('post_bookmarks')
-      .delete()
-      .eq('post_id', postId)
-      .eq('user_id', userId)
-
-    if (error) throw new Error(`Failed to remove bookmark: ${error.message}`)
-    return false // Now unbookmarked
-  } else {
-    // Add bookmark
-    const { error } = await supabase.from('post_bookmarks').insert({
-      post_id: postId,
-      user_id: userId,
-    })
-
-    if (error) throw new Error(`Failed to bookmark: ${error.message}`)
-    return true // Now bookmarked
-  }
 }
