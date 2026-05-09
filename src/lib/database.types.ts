@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      auth_audit: {
+        Row: {
+          created_at: string
+          email: string
+          event: string
+          id: string
+          ip: string | null
+          metadata: Json | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          event: string
+          id?: string
+          ip?: string | null
+          metadata?: Json | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          event?: string
+          id?: string
+          ip?: string | null
+          metadata?: Json | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       blog_posts: {
         Row: {
           author_id: string | null
@@ -371,12 +404,58 @@ export type Database = {
         }
         Relationships: []
       }
+      reader_submissions: {
+        Row: {
+          content: string
+          cover_image_url: string | null
+          created_at: string
+          excerpt: string
+          id: string
+          reviewed_at: string | null
+          reviewer_notes: string | null
+          status: string
+          submitter_email: string | null
+          submitter_name: string
+          tags: string[]
+          title: string
+        }
+        Insert: {
+          content: string
+          cover_image_url?: string | null
+          created_at?: string
+          excerpt?: string
+          id?: string
+          reviewed_at?: string | null
+          reviewer_notes?: string | null
+          status?: string
+          submitter_email?: string | null
+          submitter_name: string
+          tags?: string[]
+          title: string
+        }
+        Update: {
+          content?: string
+          cover_image_url?: string | null
+          created_at?: string
+          excerpt?: string
+          id?: string
+          reviewed_at?: string | null
+          reviewer_notes?: string | null
+          status?: string
+          submitter_email?: string | null
+          submitter_name?: string
+          tags?: string[]
+          title?: string
+        }
+        Relationships: []
+      }
       submissions: {
         Row: {
           author_id: string
           content: string | null
           cover_image_url: string | null
           created_at: string | null
+          edit_count: number
           excerpt: string | null
           id: string
           published_at: string | null
@@ -391,6 +470,7 @@ export type Database = {
           content?: string | null
           cover_image_url?: string | null
           created_at?: string | null
+          edit_count?: number
           excerpt?: string | null
           id?: string
           published_at?: string | null
@@ -405,6 +485,7 @@ export type Database = {
           content?: string | null
           cover_image_url?: string | null
           created_at?: string | null
+          edit_count?: number
           excerpt?: string | null
           id?: string
           published_at?: string | null
@@ -444,9 +525,8 @@ export type Database = {
       }
     }
     Functions: {
-      hook_restrict_email_domain: { Args: { event: Json }; Returns: Json }
       advance_edition: {
-        Args: Record<string, never>
+        Args: never
         Returns: {
           edition_date: string
           id: string
@@ -454,7 +534,32 @@ export type Database = {
           run_number: number
           started_at: string
         }
+        SetofOptions: {
+          from: "*"
+          to: "editions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
+      hook_restrict_email_domain: { Args: { event: Json }; Returns: Json }
+      is_admin: { Args: never; Returns: boolean }
+      rate_limit_increment: {
+        Args: { p_identifier: string; p_window_ms: number }
+        Returns: number
+      }
+      submit_reader_submission: {
+        Args: {
+          p_content: string
+          p_cover_image_url?: string
+          p_excerpt: string
+          p_submitter_email: string
+          p_submitter_name: string
+          p_tags?: string[]
+          p_title: string
+        }
+        Returns: string
+      }
+      toggle_comment_like: { Args: { p_comment_id: string }; Returns: boolean }
     }
     Enums: {
       notification_type:
@@ -601,7 +706,7 @@ export const Constants = {
   },
 } as const
 
-// Convenience aliases for commonly used types
+// Convenience aliases — kept by hand across `supabase gen types` regenerations.
 export type Profile = Tables<'profiles'>
 export type CommentRow = Tables<'comments'>
 export type SubmissionRow = Tables<'submissions'>

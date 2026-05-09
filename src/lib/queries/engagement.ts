@@ -9,15 +9,6 @@ import { supabase } from '../supabase'
 
 export type EngagementKind = 'comment_like'
 
-interface KindConfig {
-  rpc: string
-  param: string
-}
-
-const KIND_CONFIG: Record<EngagementKind, KindConfig> = {
-  comment_like: { rpc: 'toggle_comment_like', param: 'p_comment_id' },
-}
-
 /**
  * Toggle an engagement. Returns true if the engagement is now active
  * (e.g., comment is now liked) and false if it was removed.
@@ -30,10 +21,15 @@ export async function toggleEngagement(
   kind: EngagementKind,
   entityId: string
 ): Promise<boolean> {
-  const cfg = KIND_CONFIG[kind]
-  const { data, error } = await supabase.rpc(cfg.rpc, { [cfg.param]: entityId })
-  if (error) {
-    throw new Error(`Failed to toggle ${kind}: ${error.message}`)
+  switch (kind) {
+    case 'comment_like': {
+      const { data, error } = await supabase.rpc('toggle_comment_like', {
+        p_comment_id: entityId,
+      })
+      if (error) {
+        throw new Error(`Failed to toggle ${kind}: ${error.message}`)
+      }
+      return Boolean(data)
+    }
   }
-  return Boolean(data)
 }

@@ -52,7 +52,7 @@ describe.each([
   ['sanitizeForStorage', sanitizeForStorage],
   ['sanitizeForArticle', sanitizeForArticle],
   ['sanitizeForPreview', sanitizeForPreview],
-] as const)('%s — XSS battery', (name, fn) => {
+] as const)('%s — XSS battery', (_name, fn) => {
   it.each(XSS_PAYLOADS)(`strips $name`, ({ html, mustNotInclude }) => {
     const result = fn(html)
     for (const forbidden of mustNotInclude) {
