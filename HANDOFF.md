@@ -26,7 +26,7 @@ service-role Edge Functions.
 | BUG | real `comment_likes(count)` + hydrate viewer liked-state | query valid vs prod schema |
 | PERF | memoized AuthContext value | deployed |
 
-### Phase 2b — DEPLOYED 2026-07-04 (dashboard toggles still pending)
+### Phase 2b — DEPLOYED & CLOSED 2026-07-04
 Removed the dead magic-link / `@kbw.vc` / invite machinery:
 - `AuthContext`: removed `requestMagicLink`, `isEmailAllowed`, `ALLOWED_DOMAIN`, `AuthResult`.
 - Deleted `src/pages/RejectedPage.tsx` + `/rejected` route; `src/lib/queries/invites.ts`.
@@ -37,7 +37,7 @@ Removed the dead magic-link / `@kbw.vc` / invite machinery:
 Deployed by PK 2026-07-04: migration pushed, `request-magic-link` + `auto-sign-in` deleted,
 client shipped via `vercel --prod` (aliased to kalwaleed.com).
 
-### Manual dashboard steps — STILL PENDING
+### Manual dashboard steps — DONE 2026-07-04 (both toggles disabled by PK)
 1. **Auth > Hooks** → disable the **Before User Created** hook (`hook_restrict_email_domain`).
    Only after it's disabled is it safe to `drop function public.hook_restrict_email_domain(jsonb)`
    (left in place by the migration on purpose).
