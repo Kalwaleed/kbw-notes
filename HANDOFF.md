@@ -57,10 +57,20 @@ vercel --prod                                 # ship the client teardown
 - Submit a post w/ cover image → succeeds (server-side upload).
 - Post a comment → still moderated + visible; like count survives reload.
 
+### Phase 3 — #5 MED sanitization — STAGED, NOT DEPLOYED
+`submit-reader-submission` now strips HTML (script/style blocks + tags, loop-until-stable)
+and entity-encodes the remainder of `submitter_name`, `title`, `excerpt`, `content`, and
+each tag before the RPC insert. Helper: `supabase/functions/_shared/sanitize.ts` (Deno-side,
+dependency-free), unit-tested from `src/lib/__tests__/readerSubmissionSanitize.test.ts`.
+
+> **Hard rule for any future admin review UI:** `reader_submissions.*` MUST still go through
+> `src/lib/content/contentRenderer.ts` (`sanitizeForStorage`/`sanitizeForArticle`) before any
+> `dangerouslySetInnerHTML`. The intake-side strip is defense-in-depth, not a substitute.
+
+Post-deploy live check: submit a post containing `<script>alert(1)</script>` and `<b>x</b>`
+via the public form; confirm the stored row contains no `<`.
+
 ## Backlog (not started)
-- **#5 MED** — sanitize `reader_submissions.content/title/excerpt` at the boundary (stored-XSS
-  guard for the future admin review UI). Hard requirement if that UI ever renders via
-  `dangerouslySetInnerHTML`.
 - **LOW** — narrow `select('*')` in `submissions.ts` / `editions.ts`; flush-on-unmount for
   `useSubmissionDraft` (avoids losing ≤30s of edits); route-level code-splitting to break the
   ~556 KB single JS chunk; fix the `[file\:lines]` CSS build warning in `index.css`.

@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.4'
 import { z } from 'https://esm.sh/zod@3.24.1'
+import { sanitizeSubmissionText } from '../_shared/sanitize.ts'
 
 // Public reader-submission intake. Replaces the direct client RPC call so that:
 //   1. submissions are rate-limited per IP (the RPC had none), and
@@ -164,13 +165,17 @@ Deno.serve(async (req) => {
     }
 
     // Insert via the RPC (all field-level validation lives there).
+    // Text fields are sanitized at this boundary: the intake form is a plain
+    // <textarea>, so stored rows must never contain markup. A future admin
+    // review UI MUST still route reader_submissions.* through
+    // src/lib/content/contentRenderer.ts before any dangerouslySetInnerHTML.
     const { data: id, error: rpcError } = await supabaseAdmin.rpc('submit_reader_submission', {
-      p_submitter_name: input.submitterName.trim(),
+      p_submitter_name: sanitizeSubmissionText(input.submitterName.trim()),
       p_submitter_email: input.submitterEmail?.trim() || null,
-      p_title: input.title.trim(),
-      p_excerpt: input.excerpt.trim(),
-      p_content: input.content.trim(),
-      p_tags: input.tags,
+      p_title: sanitizeSubmissionText(input.title.trim()),
+      p_excerpt: sanitizeSubmissionText(input.excerpt.trim()),
+      p_content: sanitizeSubmissionText(input.content.trim()),
+      p_tags: input.tags.map((tag) => sanitizeSubmissionText(tag)),
       p_cover_image_url: coverImageUrl,
     })
 
