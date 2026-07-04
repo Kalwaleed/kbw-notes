@@ -57,7 +57,16 @@ vercel --prod                                 # ship the client teardown
 - Submit a post w/ cover image → succeeds (server-side upload).
 - Post a comment → still moderated + visible; like count survives reload.
 
-### Phase 3 — #5 MED sanitization — STAGED, NOT DEPLOYED
+### Phase 3 — #5 MED + LOW batch — STAGED, NOT DEPLOYED
+Commits `9828a96`..`b8b7660` (build clean, 179/179 tests, lint 0 errors):
+- **#5 MED** — intake sanitization (details below).
+- **LOW** — explicit column lists replace `select('*')` in `submissions.ts`/`editions.ts`;
+  `useSubmissionDraft` now flushes dirty edits on unmount (was silently dropping ≤30s);
+  route-level code splitting + vendor chunks (app entry 556 KB → ~9 KB, react/supabase
+  vendors cached separately; smoke-tested all routes in-browser); Tailwind source scanning
+  scoped to `src/` — kills the `[file\:line]` esbuild warning and 6 KB of junk CSS.
+
+#### #5 MED sanitization detail
 `submit-reader-submission` now strips HTML (script/style blocks + tags, loop-until-stable)
 and entity-encodes the remainder of `submitter_name`, `title`, `excerpt`, `content`, and
 each tag before the RPC insert. Helper: `supabase/functions/_shared/sanitize.ts` (Deno-side,
@@ -70,10 +79,18 @@ dependency-free), unit-tested from `src/lib/__tests__/readerSubmissionSanitize.t
 Post-deploy live check: submit a post containing `<script>alert(1)</script>` and `<b>x</b>`
 via the public form; confirm the stored row contains no `<`.
 
+## Deploy — Phase 3 (PK runs, after or with Phase 2b)
+
+```bash
+cd .../kbw-blog/kbw-notes
+supabase functions deploy submit-reader-submission  # picks up _shared/sanitize.ts
+vercel --prod                                       # client: code-split bundle + draft flush
+```
+
+Live check: submit via the public form with `<script>alert(1)</script><b>x</b>` in the body →
+stored row must contain no `<`.
+
 ## Backlog (not started)
-- **LOW** — narrow `select('*')` in `submissions.ts` / `editions.ts`; flush-on-unmount for
-  `useSubmissionDraft` (avoids losing ≤30s of edits); route-level code-splitting to break the
-  ~556 KB single JS chunk; fix the `[file\:lines]` CSS build warning in `index.css`.
 - Update project `CLAUDE.md` "Auth Architecture" section to describe the password-gate model
   (currently still documents magic-link/invite).
 - Optional: server-side landing gate (Vercel middleware + signed cookie) per the old

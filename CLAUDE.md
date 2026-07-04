@@ -2,6 +2,15 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Design Handoff Folder
+
+`kbw-notes/Handoff_from_design_agent/` is the drop zone for website designs and any other HTML for this project.
+
+Protocol:
+1. **Read first** — at the start of a task, read everything in this folder for new input and use it to drive the work.
+2. **Cleanup gate** — delete the folder's contents ONLY after PK and I both agree the task is done. No unilateral or preemptive wipes. Confirm explicitly and state what's being removed before deleting.
+3. **Fresh start** — an empty folder means a clean slate for the next handoff.
+
 ## Commands
 
 ```bash
