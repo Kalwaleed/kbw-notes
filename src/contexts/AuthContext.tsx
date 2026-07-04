@@ -8,7 +8,9 @@ interface AuthContextValue {
   session: Session | null
   isLoading: boolean
   isAdmin: boolean
+  isReviewer: boolean
   error: Error | null
+  signIn: (email: string, password: string) => Promise<Error | null>
   signOut: () => Promise<void>
 }
 
@@ -61,6 +63,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  // Email/password sign-in for the ~15 staff self-report accounts. Login-only
+  // by design: no signup or reset flow in the client (accounts are provisioned
+  // via the Supabase dashboard).
+  const signIn = useCallback(async (email: string, password: string): Promise<Error | null> => {
+    setError(null)
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) throw error
+      setSession(data.session)
+      setUser(data.user)
+      return null
+    } catch (err) {
+      const signInErr = err instanceof Error ? err : new Error('Failed to sign in')
+      setError(signInErr)
+      return signInErr
+    }
+  }, [])
+
   const signOut = useCallback(async () => {
     setError(null)
     if (isLocalAuthBypassEnabled) {
@@ -78,7 +98,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const isAdmin = ((user?.app_metadata as { role?: string } | undefined)?.role) === 'admin'
+  const role = (user?.app_metadata as { role?: string } | undefined)?.role
+  const isAdmin = role === 'admin'
+  const isReviewer = role === 'reviewer'
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -86,10 +108,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session,
       isLoading,
       isAdmin,
+      isReviewer,
       error,
+      signIn,
       signOut,
     }),
-    [user, session, isLoading, isAdmin, error, signOut]
+    [user, session, isLoading, isAdmin, isReviewer, error, signIn, signOut]
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

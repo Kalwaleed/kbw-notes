@@ -1,14 +1,14 @@
 // Shared shapes for the weekly self-report. JSONB row keys are snake_case to
 // match the DB column style (thresholds.ts reads the same keys).
 
-export interface ToolRow {
+export type ToolRow = {
   tool: string
   used_daily: 'yes' | 'no' | ''
   use_case: string
   example: string
 }
 
-export interface CoverageRow {
+export type CoverageRow = {
   category: string
   total_outputs: string
   ai_assisted: string
@@ -16,7 +16,7 @@ export interface CoverageRow {
   evidence: string
 }
 
-export interface HoursRow {
+export type HoursRow = {
   task: string
   manual_time: string
   ai_time: string
@@ -24,7 +24,7 @@ export interface HoursRow {
   evidence: string
 }
 
-export interface QualityRow {
+export type QualityRow = {
   output: string
   baseline: string
   result: string
@@ -32,7 +32,7 @@ export interface QualityRow {
   evidence: string
 }
 
-export interface WorkflowRow {
+export type WorkflowRow = {
   name: string
   kind: 'new' | 'improved' | 'reused' | ''
   step_replaced: string
@@ -40,7 +40,7 @@ export interface WorkflowRow {
   link: string
 }
 
-export interface DisclosureRow {
+export type DisclosureRow = {
   output: string
   ai_used: 'yes' | 'no' | ''
   disclosed: 'yes' | 'no' | 'na' | ''
@@ -48,7 +48,7 @@ export interface DisclosureRow {
   notes: string
 }
 
-export interface BlockerRow {
+export type BlockerRow = {
   blocker: string
   impact: string
   help_needed: string

@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate, Outlet, type RouteObject } from 'react-r
 import { RouterErrorPage } from './pages/RouterErrorPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { GateGuard } from './components/GateGuard'
+import { RoleGuard } from './components/RoleGuard'
 
 // Pages load through route-level `lazy` so each becomes its own chunk and the
 // entry bundle stays small. The error page and GateGuard stay eager: they must
@@ -34,6 +35,33 @@ export const routes: RouteObject[] = [
           {
             path: 'settings',
             lazy: async () => ({ Component: (await import('./pages/SettingsPage')).SettingsPage }),
+          },
+        ],
+      },
+      // Staff self-report surface: real-auth RoleGuard, deliberately OUTSIDE
+      // the soft localStorage GateGuard (a Supabase session is the stronger
+      // gate; staff shouldn't need the public site password to file reports).
+      {
+        path: '/kbw-notes/report',
+        element: <RoleGuard><Outlet /></RoleGuard>,
+        children: [
+          {
+            index: true,
+            lazy: async () => ({
+              Component: (await import('./pages/SelfReportPage')).SelfReportPage,
+            }),
+          },
+        ],
+      },
+      {
+        path: '/kbw-notes/report/review',
+        element: <RoleGuard requireReviewer><Outlet /></RoleGuard>,
+        children: [
+          {
+            index: true,
+            lazy: async () => ({
+              Component: (await import('./pages/ReviewerPage')).ReviewerPage,
+            }),
           },
         ],
       },

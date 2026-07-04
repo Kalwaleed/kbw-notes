@@ -1,4 +1,5 @@
 import { supabase } from '../supabase'
+import type { TablesInsert } from '../database.types'
 import type {
   ReviewFormData,
   SelfReport,
@@ -30,12 +31,17 @@ export async function upsertSelfReport(
   weekStart: string,
   data: SelfReportFormData
 ): Promise<SelfReport> {
+  // Section-row interfaces lack the Json index signature the generated types
+  // demand; the cast is safe — the shapes are JSON-serializable by construction.
+  const payload = {
+    staff_id: staffId,
+    week_start_date: weekStart,
+    ...data,
+  } as unknown as TablesInsert<'self_reports'>
+
   const { data: row, error } = await supabase
     .from('self_reports')
-    .upsert(
-      { staff_id: staffId, week_start_date: weekStart, ...data },
-      { onConflict: 'staff_id,week_start_date' }
-    )
+    .upsert(payload, { onConflict: 'staff_id,week_start_date' })
     .select(SELF_REPORT_COLUMNS)
     .single()
 

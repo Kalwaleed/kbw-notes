@@ -7,10 +7,30 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.1"
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
@@ -203,27 +223,6 @@ export type Database = {
           is_current?: boolean
           run_number?: number
           started_at?: string
-        }
-        Relationships: []
-      }
-      invited_emails: {
-        Row: {
-          created_at: string
-          email: string
-          id: string
-          invited_by: string | null
-        }
-        Insert: {
-          created_at?: string
-          email: string
-          id?: string
-          invited_by?: string | null
-        }
-        Update: {
-          created_at?: string
-          email?: string
-          id?: string
-          invited_by?: string | null
         }
         Relationships: []
       }
@@ -449,6 +448,164 @@ export type Database = {
         }
         Relationships: []
       }
+      self_report_reviews: {
+        Row: {
+          comments: string
+          created_at: string
+          disclosure_compliance: string
+          escalation_needed: boolean
+          evidence_provided: string
+          hours_saved_reasonable: string
+          id: string
+          report_id: string
+          reviewer_id: string
+          submitted_on_time: string
+          tool_usage_credible: string
+          updated_at: string
+          weekly_status: string
+          workflow_doc_progress: string
+        }
+        Insert: {
+          comments?: string
+          created_at?: string
+          disclosure_compliance: string
+          escalation_needed?: boolean
+          evidence_provided: string
+          hours_saved_reasonable: string
+          id?: string
+          report_id: string
+          reviewer_id: string
+          submitted_on_time: string
+          tool_usage_credible: string
+          updated_at?: string
+          weekly_status: string
+          workflow_doc_progress: string
+        }
+        Update: {
+          comments?: string
+          created_at?: string
+          disclosure_compliance?: string
+          escalation_needed?: boolean
+          evidence_provided?: string
+          hours_saved_reasonable?: string
+          id?: string
+          report_id?: string
+          reviewer_id?: string
+          submitted_on_time?: string
+          tool_usage_credible?: string
+          updated_at?: string
+          weekly_status?: string
+          workflow_doc_progress?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "self_report_reviews_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: true
+            referencedRelation: "self_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      self_reports: {
+        Row: {
+          blockers: Json
+          cert_date: string
+          cert_name: string
+          cert_signature: string
+          coverage: Json
+          created_at: string
+          cumulative_workflows: number
+          disclosure: Json
+          errors_corrected: string
+          errors_found: boolean
+          hours: Json
+          id: string
+          main_workstream: string
+          net_quality: string
+          overall_ai_pct: number
+          quality: Json
+          role_function: string
+          staff_id: string
+          staff_name: string
+          submitted_at: string
+          submitted_without_review: boolean
+          tools: Json
+          tools_total_active: number
+          tools_total_daily: number
+          total_hours_saved: number
+          updated_at: string
+          week_start_date: string
+          without_review_explain: string
+          workflow_doc_submitted: boolean
+          workflows: Json
+        }
+        Insert: {
+          blockers?: Json
+          cert_date: string
+          cert_name: string
+          cert_signature: string
+          coverage?: Json
+          created_at?: string
+          cumulative_workflows?: number
+          disclosure?: Json
+          errors_corrected?: string
+          errors_found?: boolean
+          hours?: Json
+          id?: string
+          main_workstream?: string
+          net_quality: string
+          overall_ai_pct?: number
+          quality?: Json
+          role_function?: string
+          staff_id: string
+          staff_name: string
+          submitted_at?: string
+          submitted_without_review?: boolean
+          tools?: Json
+          tools_total_active?: number
+          tools_total_daily?: number
+          total_hours_saved?: number
+          updated_at?: string
+          week_start_date: string
+          without_review_explain?: string
+          workflow_doc_submitted?: boolean
+          workflows?: Json
+        }
+        Update: {
+          blockers?: Json
+          cert_date?: string
+          cert_name?: string
+          cert_signature?: string
+          coverage?: Json
+          created_at?: string
+          cumulative_workflows?: number
+          disclosure?: Json
+          errors_corrected?: string
+          errors_found?: boolean
+          hours?: Json
+          id?: string
+          main_workstream?: string
+          net_quality?: string
+          overall_ai_pct?: number
+          quality?: Json
+          role_function?: string
+          staff_id?: string
+          staff_name?: string
+          submitted_at?: string
+          submitted_without_review?: boolean
+          tools?: Json
+          tools_total_active?: number
+          tools_total_daily?: number
+          total_hours_saved?: number
+          updated_at?: string
+          week_start_date?: string
+          without_review_explain?: string
+          workflow_doc_submitted?: boolean
+          workflows?: Json
+        }
+        Relationships: []
+      }
       submissions: {
         Row: {
           author_id: string
@@ -543,6 +700,7 @@ export type Database = {
       }
       hook_restrict_email_domain: { Args: { event: Json }; Returns: Json }
       is_admin: { Args: never; Returns: boolean }
+      is_reviewer: { Args: never; Returns: boolean }
       rate_limit_increment: {
         Args: { p_identifier: string; p_window_ms: number }
         Returns: number
@@ -693,6 +851,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       notification_type: [
@@ -706,9 +867,12 @@ export const Constants = {
   },
 } as const
 
+
 // Convenience aliases — kept by hand across `supabase gen types` regenerations.
 export type Profile = Tables<'profiles'>
 export type CommentRow = Tables<'comments'>
 export type SubmissionRow = Tables<'submissions'>
 export type NotificationRow = Tables<'notifications'>
 export type EditionRow = Tables<'editions'>
+export type SelfReportRow = Tables<'self_reports'>
+export type SelfReportReviewRow = Tables<'self_report_reviews'>
