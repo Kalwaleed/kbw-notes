@@ -40,6 +40,14 @@ export function useSubmissionDraft({
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const formDataRef = useRef<SubmissionFormData>(formData)
   const isSavingRef = useRef(false)
+  const isMountedRef = useRef(true)
+
+  // The unmount flush effect has [] deps, so it reads this prop through a ref
+  // to avoid a stale closure if autoSaveEnabled changes mid-session.
+  const autoSaveEnabledRef = useRef(autoSaveEnabled)
+  useEffect(() => {
+    autoSaveEnabledRef.current = autoSaveEnabled
+  }, [autoSaveEnabled])
 
   // Keep formDataRef in sync
   useEffect(() => {
@@ -77,24 +85,32 @@ export function useSubmissionDraft({
     }
 
     isSavingRef.current = true
-    setIsSaving(true)
-    setError(null)
+    if (isMountedRef.current) {
+      setIsSaving(true)
+      setError(null)
+    }
 
     try {
       await updateSubmission(submissionId, currentData)
       lastSavedDataRef.current = currentDataStr
-      setLastSaved(new Date())
-      setIsDirty(false)
+      if (isMountedRef.current) {
+        setLastSaved(new Date())
+        setIsDirty(false)
+      }
       onSave?.(currentData)
       return null
     } catch (err) {
       const saveErr = err instanceof Error ? err : new Error('Failed to save draft')
-      setError(saveErr)
+      if (isMountedRef.current) {
+        setError(saveErr)
+      }
       onError?.(saveErr)
       return saveErr
     } finally {
       isSavingRef.current = false
-      setIsSaving(false)
+      if (isMountedRef.current) {
+        setIsSaving(false)
+      }
     }
   }
 
@@ -122,11 +138,17 @@ export function useSubmissionDraft({
     }
   }, [isDirty, autoSaveInterval, autoSaveEnabled])
 
-  // Cleanup on unmount
+  // Cleanup on unmount: kill the pending timer, then flush unsaved edits so
+  // navigating away doesn't drop up to autoSaveInterval of work. saveNow
+  // no-ops when clean or mid-save; isMountedRef suppresses its setState calls.
   useEffect(() => {
     return () => {
+      isMountedRef.current = false
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current)
+      }
+      if (autoSaveEnabledRef.current) {
+        void saveNowRef.current()
       }
     }
   }, [])

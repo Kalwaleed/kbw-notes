@@ -155,13 +155,48 @@ describe('useSubmissionDraft', () => {
     })
   })
 
-  it('clears timer on unmount', async () => {
+  it('flushes dirty edits once on unmount, with no timer save after', async () => {
     const { result, unmount } = renderHook(() =>
       useSubmissionDraft({ submissionId: 's-1', initialData })
     )
 
     act(() => {
       result.current.updateField('title', 'Before unmount')
+    })
+
+    unmount()
+
+    // The flush fires immediately on unmount — the pending 30s timer is dead.
+    expect(mockUpdateSubmission).toHaveBeenCalledTimes(1)
+    expect(mockUpdateSubmission).toHaveBeenCalledWith(
+      's-1',
+      expect.objectContaining({ title: 'Before unmount' })
+    )
+
+    await act(async () => {
+      vi.advanceTimersByTime(30000)
+    })
+
+    expect(mockUpdateSubmission).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not flush on unmount when data is clean', async () => {
+    const { unmount } = renderHook(() =>
+      useSubmissionDraft({ submissionId: 's-1', initialData })
+    )
+
+    unmount()
+
+    expect(mockUpdateSubmission).not.toHaveBeenCalled()
+  })
+
+  it('does not flush on unmount when autoSave is disabled', async () => {
+    const { result, unmount } = renderHook(() =>
+      useSubmissionDraft({ submissionId: 's-1', initialData, autoSaveEnabled: false })
+    )
+
+    act(() => {
+      result.current.updateField('title', 'Edited with autosave off')
     })
 
     unmount()
