@@ -25,6 +25,8 @@ if (!SERVICE_ROLE_KEY) {
 
 const ADMIN_EMAIL = 'k@kbw.vc'
 const AUTHOR_EMAIL = 'e2e-author@kbw.vc'
+const REVIEWER_EMAIL = 'e2e-reviewer@kbw.vc'
+const STAFF_EMAIL = 'e2e-staff@kbw.vc'
 const PASSWORD = 'e2e-local-test-password'
 
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
@@ -37,16 +39,16 @@ async function findUserByEmail(email) {
   return data.users.find((u) => u.email === email) ?? null
 }
 
-async function ensureUser(email, { admin: isAdmin = false } = {}) {
+async function ensureUser(email, { role = null } = {}) {
   const existing = await findUserByEmail(email)
   if (existing) {
     console.log(`exists: ${email} (${existing.id})`)
-    if (isAdmin) {
+    if (role) {
       const { error } = await admin.auth.admin.updateUserById(existing.id, {
-        app_metadata: { ...existing.app_metadata, role: 'admin' },
+        app_metadata: { ...existing.app_metadata, role },
       })
       if (error) throw error
-      console.log(`  → role=admin set`)
+      console.log(`  → role=${role} set`)
     }
     return existing
   }
@@ -54,17 +56,19 @@ async function ensureUser(email, { admin: isAdmin = false } = {}) {
     email,
     password: PASSWORD,
     email_confirm: true,
-    app_metadata: isAdmin ? { role: 'admin' } : {},
+    app_metadata: role ? { role } : {},
   })
   if (error) throw error
-  console.log(`created: ${email} (${data.user.id}${isAdmin ? ', admin' : ''})`)
+  console.log(`created: ${email} (${data.user.id}${role ? `, ${role}` : ''})`)
   return data.user
 }
 
 async function main() {
   console.log(`url:  ${SUPABASE_URL}`)
-  await ensureUser(ADMIN_EMAIL, { admin: true })
+  await ensureUser(ADMIN_EMAIL, { role: 'admin' })
   await ensureUser(AUTHOR_EMAIL)
+  await ensureUser(REVIEWER_EMAIL, { role: 'reviewer' })
+  await ensureUser(STAFF_EMAIL)
   console.log('ready.')
 }
 

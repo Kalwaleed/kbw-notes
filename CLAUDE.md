@@ -101,7 +101,8 @@ out in Phase 2b, migration `20260704150000_remove_invite_machinery`):
 - `GateGuard` (`src/components/GateGuard.tsx`) wraps `/kbw-notes/*` and redirects to `/` when the flag is missing.
 - **The gate is soft**: the password ships in the JS bundle and the flag is settable via devtools. Accepted MVP risk envelope; the server-side upgrade (Vercel middleware + signed cookie) sits in the `HANDOFF.md` backlog.
 - The browser has **no write access** to the database or storage. All anonymous writes go through service-role Edge Functions (`moderate-comment`, `submit-reader-submission`) with per-IP rate limiting.
-- `AuthProvider` (`src/contexts/AuthContext.tsx`) and `useAuth` remain in the codebase only for future internal/admin capabilities; no route renders authenticated UI today. Keep RLS write protections in place before reintroducing any.
+- **Exception — staff self-reports** (`/kbw-notes/report`, `/kbw-notes/report/review`): real Supabase email+password accounts (~15, dashboard-provisioned; login-only UI via `StaffLogin` + `RoleGuard`). Donya carries `app_metadata.role = 'reviewer'` (checked by `is_reviewer()` in RLS). These routes sit OUTSIDE GateGuard. See `HANDOFF.md` Phase 4 for provisioning/deploy.
+- `AuthProvider` (`src/contexts/AuthContext.tsx`) exposes `signIn`/`signOut`/`isAdmin`/`isReviewer`. Keep RLS write protections in place before expanding authenticated UI further.
 - Admin role (future use) lives in `auth.users.raw_app_meta_data.role = 'admin'`; bootstrapped to `k@kbw.vc`.
 - `auth_audit` is retained as a historical log from the magic-link era; `hook_restrict_email_domain(jsonb)` still exists in the DB (dashboard hook disabled 2026-07-04) and can now be dropped.
 
@@ -115,6 +116,8 @@ Public reader routes are defined in `src/router.tsx`:
 - `/kbw-notes/post/:id` — Single post view with comments
 - `/kbw-notes/submissions` — Anonymous public draft intake
 - `/kbw-notes/settings` — Anonymous local reading/appearance preferences
+- `/kbw-notes/report` — Staff weekly AI-adoption self-report (real auth via RoleGuard, outside GateGuard)
+- `/kbw-notes/report/review` — Reviewer (Donya) worklist; requires reviewer/admin role
 - `*` — 404 catch-all
 
 Identity, notification, profile, and submission-management/admin pages are not exposed in routing or navigation. Public submissions write to `reader_submissions` through `submit_reader_submission(...)`; they do not publish content or grant edit access. Keep database RLS write protections in place before reintroducing any authenticated UI.

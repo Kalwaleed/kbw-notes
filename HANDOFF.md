@@ -75,11 +75,63 @@ unclosed `<img onerror=...>`, and stray specials to the deployed function — st
 contained zero `<` (scripts removed with content, tags stripped, leftovers entity-encoded),
 status `pending`. Smoke row deleted afterwards; the older `a9ef1bbb` smoke row was already gone.
 
+### Phase 4 — Weekly AI-Adoption Self-Reports — BUILT, NOT DEPLOYED (2026-07-04)
+Staff file the mandate's weekly self-report at `/kbw-notes/report`; Donya reviews at
+`/kbw-notes/report/review`. Real Supabase accounts (login-only UI, no signup/reset),
+`is_reviewer()` role via app_metadata, additive-only migration `20260704190000_self_reports`
+(self_reports + self_report_reviews; reviews RLS-hidden from staff; JSONB shape-checked;
+no DELETE policies — comp evidence survives). Thresholds live in ONE module:
+`src/lib/self-reports/thresholds.ts`. Drafts persist in localStorage until the server
+confirms. Routes sit OUTSIDE GateGuard (session > soft gate). NO equity/comp fields —
+comp decisions go through counsel, not this DB.
+
+Verified: 213 unit tests; 13/13 RLS integration checks vs local Postgres (forgery blocked,
+reviews invisible to staff, JSONB junk rejected, no deletes, upsert = same row + fresh
+submitted_at); 6/6 headless UI smoke (login → submit → reviewer sees → saves review;
+staff blocked from reviewer page). Local fixtures: `e2e-reviewer@kbw.vc` /
+`e2e-staff@kbw.vc` in `scripts/seed-local.mjs`.
+
+#### Deploy — Phase 4 (PK runs)
+```bash
+cd .../kbw-blog/kbw-notes
+supabase db push     # applies 20260704190000_self_reports
+vercel --prod
+```
+
+#### BEFORE inviting staff — SMTP check (one-time)
+Dashboard → Project Settings → Auth → SMTP. If custom SMTP is NOT configured, invite
+emails + password resets use Supabase's built-in mailer (rate-limited to a few per hour,
+spam-prone) — configure an SMTP provider first or the 15-invite batch will stall and PK
+becomes the manual reset path.
+
+#### Staff provisioning checklist (~15 accounts, one-time, dashboard)
+1. Auth → Users → Invite user — email ONLY. Do NOT set name metadata (the profiles
+   trigger would publish real names on the public site; without it they store 'Anonymous').
+2. Donya: after her user exists, set app metadata to `{"role":"reviewer"}`
+   (Auth → Users → her user → edit App Metadata). Staff get NO role. PK (k@kbw.vc) is
+   already admin and can see reports + write reviews.
+3. Share URLs: staff → `https://kalwaleed.com/kbw-notes/report` · Donya →
+   `https://kalwaleed.com/kbw-notes/report/review`. Sign-in is email + the password they
+   set from the invite email.
+4. Post-deploy spot check: submit from one test account; confirm Donya sees it and the
+   staff account cannot open the review page.
+
+#### Rollback (never DROP the tables — comp evidence)
+Backup first: `pg_dump "$DB_URL" -t public.self_reports -t public.self_report_reviews
+--data-only --column-inserts > self_reports_backup.sql`. Then: drop the staff
+INSERT/UPDATE policies (data stays readable), ban the staff users in the dashboard,
+`vercel rollback`. Sign-ins are natively logged in dashboard Auth logs.
+
 ## Backlog (not started)
 - Optional: server-side landing gate (Vercel middleware + signed cookie) per the old
   `phase-2-real-gate-plan.md`.
 - Optional: `drop function public.hook_restrict_email_domain(jsonb)` — safe now that the
   dashboard hook is disabled (2026-07-04).
+- Phase 4 fast-follow (after week-1 reports land): PK's Day-30/Day-60 KPI rollup view
+  (per-staff On Track / At Risk vs `thresholds.ts`), missed-submission list for Donya.
+- Phase 4 known-accepted: staff JWTs can like/comment on the public blog under their
+  account (ownership-scoped, display_name stays 'Anonymous'); no email reminders (no SMTP
+  automation yet).
 
 ## One-off cleanup
 - ~~Delete the smoke-test row in `reader_submissions` (`a9ef1bbb-...`)~~ — done; row was
