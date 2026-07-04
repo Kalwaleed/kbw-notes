@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// Seed local Supabase with the test users + invite list + admin role required
-// by e2e specs. Run AFTER `supabase start --exclude edge-runtime` (the
-// edge-runtime container is currently blocked by a deno.land outage).
+// Seed local Supabase with the test users + admin role required by e2e specs.
+// Run AFTER `supabase start --exclude edge-runtime` (the edge-runtime
+// container is currently blocked by a deno.land outage).
 //
 //   node scripts/seed-local.mjs
 //
@@ -61,20 +61,10 @@ async function ensureUser(email, { admin: isAdmin = false } = {}) {
   return data.user
 }
 
-async function ensureInvited(email) {
-  const { error } = await admin
-    .from('invited_emails')
-    .upsert({ email }, { onConflict: 'email' })
-  if (error) throw error
-  console.log(`invited: ${email}`)
-}
-
 async function main() {
   console.log(`url:  ${SUPABASE_URL}`)
   await ensureUser(ADMIN_EMAIL, { admin: true })
   await ensureUser(AUTHOR_EMAIL)
-  await ensureInvited(ADMIN_EMAIL)
-  await ensureInvited(AUTHOR_EMAIL)
   console.log('ready.')
 }
 

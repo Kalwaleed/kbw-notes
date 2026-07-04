@@ -26,11 +26,10 @@ npm run test:e2e:ui  # Playwright with UI
 ### Supabase
 
 ```bash
-supabase db push                              # Apply migrations to remote database
-supabase functions deploy moderate-comment    # Deploy moderation Edge Function
-supabase functions deploy request-magic-link  # Deploy invite-only magic-link request Edge Function
-supabase functions deploy auto-sign-in        # Deploy 410-Gone stub for legacy URL
-supabase functions serve                      # Run Edge Functions locally
+supabase db push                                        # Apply migrations to remote database
+supabase functions deploy moderate-comment              # Deploy moderation Edge Function
+supabase functions deploy submit-reader-submission      # Deploy public reader-submission intake
+supabase functions serve                                # Run Edge Functions locally
 supabase gen types typescript --project-id <ref> > src/lib/database.types.ts  # Regenerate DB types
 ```
 
@@ -51,13 +50,13 @@ Local URLs (default ports):
 - Studio:  `http://127.0.0.1:54323`
 - Mailpit: `http://127.0.0.1:54324` (captures auth emails)
 
-**Caveat — edge-runtime is currently excluded** because Supabase's local edge-runtime image fetches `https://deno.land/std/...` on boot, and intermittent deno.land outages cause exit 143 with no useful error. Auth/RLS/PostgREST tests run fine without it; tests that need `request-magic-link` or `moderate-comment` should mock the call or run against the deployed project instead.
+**Caveat — edge-runtime is currently excluded** because Supabase's local edge-runtime image fetches `https://deno.land/std/...` on boot, and intermittent deno.land outages cause exit 143 with no useful error. Auth/RLS/PostgREST tests run fine without it; tests that need `submit-reader-submission` or `moderate-comment` should mock the call or run against the deployed project instead.
 
 Local default keys are deterministic but NOT committed — pull them via `supabase status -o env`. They are the same on every Supabase install (not usable against your production project) but GitHub's secret scanner blocks pushes that contain the literal values, so we keep them out of source.
 
 Test fixtures:
 - `k@kbw.vc` — admin (`raw_app_meta_data.role = 'admin'`)
-- `e2e-author@kbw.vc` — regular invited author
+- `e2e-author@kbw.vc` — regular author
 - Password (both): `e2e-local-test-password`
 
 ### Running a Single Test
@@ -94,21 +93,23 @@ Components in `src/components/` are presentational — they receive data via pro
 
 ### Auth Architecture
 
-The reader app is public. Auth remains in the codebase only for future internal/admin capabilities and protected database writes:
+Entry to KBW Notes is a **single password on the static landing page**. There are no user
+accounts, no magic links, no invite gating, and no anonymous Supabase sessions (all torn
+out in Phase 2b, migration `20260704150000_remove_invite_machinery`):
 
-- `AuthProvider` in `src/contexts/AuthContext.tsx` — wraps the app, maintains a single `onAuthStateChange` subscription shared by all consumers
-- `useAuth` hook (`src/hooks/useAuth.ts`) — thin wrapper that reads from AuthContext
-- **Invite-only magic links** (no passwords): emails must exist in the `invited_emails` table. The `request-magic-link` Edge Function atomically rate-limits, validates `@kbw.vc`, checks `invited_emails`, and triggers a Supabase magic-link email via `auth.signInWithOtp`. The function never returns the token; the client only learns whether the request was accepted at the transport layer. All attempts (denied/rate-limited/sent) are logged to `auth_audit`. The legacy `auto-sign-in` URL returns `410 Gone` and logs a `legacy_endpoint` event so we can confirm no stale clients remain before deleting it.
-- Always returns `200 { ok: true }` to the client to prevent enumeration of the invite list.
-- Domain lock at the auth hook layer (migration 015) plus invited-email allowlist (migrations 016, 017) and admin-only invite-management RLS (migration 018) — all enforced server-side.
-- Admin role is stored in `auth.users.raw_app_meta_data.role = 'admin'` (so it appears in the JWT). Bootstrapped to `k@kbw.vc` only.
+- `public/landing.js` checks the password client-side and sets `localStorage['kbw-gate-passed']`.
+- `GateGuard` (`src/components/GateGuard.tsx`) wraps `/kbw-notes/*` and redirects to `/` when the flag is missing.
+- **The gate is soft**: the password ships in the JS bundle and the flag is settable via devtools. Accepted MVP risk envelope; the server-side upgrade (Vercel middleware + signed cookie) sits in the `HANDOFF.md` backlog.
+- The browser has **no write access** to the database or storage. All anonymous writes go through service-role Edge Functions (`moderate-comment`, `submit-reader-submission`) with per-IP rate limiting.
+- `AuthProvider` (`src/contexts/AuthContext.tsx`) and `useAuth` remain in the codebase only for future internal/admin capabilities; no route renders authenticated UI today. Keep RLS write protections in place before reintroducing any.
+- Admin role (future use) lives in `auth.users.raw_app_meta_data.role = 'admin'`; bootstrapped to `k@kbw.vc`.
+- `auth_audit` is retained as a historical log from the magic-link era; `hook_restrict_email_domain(jsonb)` still exists in the DB (dashboard hook disabled 2026-07-04) and can now be dropped.
 
 ### Routing
 
 Public reader routes are defined in `src/router.tsx`:
 
-- `/` — Redirects to `/kbw-notes/home`
-- `/rejected` — Shown to users whose email is not in `invited_emails`
+- `/` — Static landing page with the password popover (separate Vite input, not the SPA)
 - `/kbw-notes` — Redirects to `/kbw-notes/home` (index route)
 - `/kbw-notes/home` — Blog feed (reads from `submissions` table, NOT `blog_posts`)
 - `/kbw-notes/post/:id` — Single post view with comments
@@ -161,22 +162,21 @@ Identity, notification, profile, and submission-management/admin pages are not e
 - `profiles` — User profiles (extends Supabase auth.users)
 - `notifications` — User notifications with realtime support
 - `rate_limits` — Persistent rate limiting for Edge Functions (atomic via `rate_limit_increment` RPC)
-- `invited_emails` — Allowlist for magic-link sign-in (lowercase-enforced; admin-only RLS)
-- `auth_audit` — Append-only log of every sign-in attempt (admin-readable)
+- `reader_submissions` — Public intake drafts (via `submit_reader_submission` RPC; text sanitized server-side)
+- `auth_audit` — Historical sign-in attempt log from the magic-link era (retained, unused)
 
 **Legacy (do not use):**
 - `blog_posts` — Superseded by `submissions` table
 
 **Types:** `src/lib/database.types.ts` is auto-generated via `supabase gen types`. Do NOT manually edit. Convenience aliases (`Profile`, `CommentRow`, `SubmissionRow`, `NotificationRow`) are exported from this file.
 
-**Migrations:** `supabase/migrations/` contains migrations 001-018.
+**Migrations:** `supabase/migrations/` — numbered 001-018 plus timestamp-named migrations from 2026-07 onward (latest: `20260704150000_remove_invite_machinery`).
 
 ### Security Model
 
 Edge Functions:
 - `moderate-comment` — Claude-backed comment moderation. CORS restricted to allowed origins. CSRF via `Content-Type: application/json`. Rate limiting: database-backed, 10/min per IP (prefers `cf-connecting-ip` over spoofable headers). Input validation via Zod. NFKC Unicode normalization to prevent homograph attacks.
-- `request-magic-link` — Magic-link request handler. Atomic rate-limit (per-IP + per-email via `rate_limit_increment`), validates `@kbw.vc`, checks `invited_emails`, then triggers Supabase to email a magic link via `auth.signInWithOtp` — never returns the token. Logs every attempt to `auth_audit`. Returns `200 { ok: true }` for all outcomes to prevent enumeration.
-- `auto-sign-in` — Legacy URL stub. Returns `410 Gone` and logs a `legacy_endpoint` event. Delete once the audit log shows no traffic.
+- `submit-reader-submission` — Public reader-draft intake. CORS restricted + `Content-Type: application/json` CSRF guard. Rate limit: 5 per 10 min per IP (`cf-connecting-ip` only, fail-closed). Zod validation. Cover images uploaded server-side with the service role (client has no storage write). All text fields (name, title, excerpt, content, tags) HTML-stripped and entity-encoded via `_shared/sanitize.ts` before the `submit_reader_submission` RPC insert — any future admin review UI must STILL route them through `contentRenderer.ts` before `dangerouslySetInnerHTML`.
 
 Client-side:
 - XSS: DOMPurify sanitizes TipTap HTML in submission preview and blog post rendering

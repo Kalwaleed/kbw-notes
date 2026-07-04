@@ -76,10 +76,10 @@ contained zero `<` (scripts removed with content, tags stripped, leftovers entit
 status `pending`. Smoke row deleted afterwards; the older `a9ef1bbb` smoke row was already gone.
 
 ## Backlog (not started)
-- Update project `CLAUDE.md` "Auth Architecture" section to describe the password-gate model
-  (currently still documents magic-link/invite).
 - Optional: server-side landing gate (Vercel middleware + signed cookie) per the old
   `phase-2-real-gate-plan.md`.
+- Optional: `drop function public.hook_restrict_email_domain(jsonb)` — safe now that the
+  dashboard hook is disabled (2026-07-04).
 
 ## One-off cleanup
 - ~~Delete the smoke-test row in `reader_submissions` (`a9ef1bbb-...`)~~ — done; row was
