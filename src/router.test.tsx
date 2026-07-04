@@ -19,10 +19,6 @@ vi.mock('./pages/SubmissionsPage', () => ({
   SubmissionsPage: () => <div data-testid="submissions-page">Submissions</div>,
 }))
 
-vi.mock('./pages/RejectedPage', () => ({
-  RejectedPage: () => <div data-testid="rejected-page">Rejected</div>,
-}))
-
 vi.mock('./pages/NotFoundPage', () => ({
   NotFoundPage: () => <h1>404 Not Found</h1>,
 }))

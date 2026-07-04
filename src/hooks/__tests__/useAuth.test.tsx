@@ -8,10 +8,6 @@ vi.mock('../../lib/supabase', () => ({
   supabase: {
     auth: {
       getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
-      signInAnonymously: vi.fn().mockResolvedValue({
-        data: { session: null, user: null },
-        error: null,
-      }),
       onAuthStateChange: vi.fn().mockReturnValue({
         data: { subscription: { unsubscribe: vi.fn() } },
       }),
@@ -33,8 +29,7 @@ describe('useAuth', () => {
 
     const { result } = renderHook(() => useAuth(), { wrapper })
     expect(result.current).toHaveProperty('user')
-    expect(result.current).toHaveProperty('requestMagicLink')
     expect(result.current).toHaveProperty('signOut')
-    expect(result.current).toHaveProperty('isEmailAllowed')
+    expect(result.current).toHaveProperty('isAdmin')
   })
 })

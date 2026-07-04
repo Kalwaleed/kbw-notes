@@ -4,7 +4,6 @@ import { PostPage } from './pages/PostPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { SubmissionsPage } from './pages/SubmissionsPage'
 import { NotFoundPage } from './pages/NotFoundPage'
-import { RejectedPage } from './pages/RejectedPage'
 import { RouterErrorPage } from './pages/RouterErrorPage'
 import { GateGuard } from './components/GateGuard'
 
@@ -14,10 +13,6 @@ export const routes: RouteObject[] = [
     errorElement: <RouterErrorPage />,
     element: <Outlet />,
     children: [
-      {
-        path: '/rejected',
-        element: <RejectedPage />,
-      },
       {
         path: '/kbw-notes',
         element: <GateGuard><Outlet /></GateGuard>,
