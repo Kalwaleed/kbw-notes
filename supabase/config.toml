@@ -23,3 +23,8 @@ verify_jwt = false
 # Pre-auth sign-in endpoint. Function does its own rate-limit + domain +
 # invite-list gating; platform JWT check would block legitimate sign-ins.
 verify_jwt = false
+
+[functions.submit-reader-submission]
+# Public submission intake. Anonymous by design; the function does its own
+# origin/CSRF/rate-limit gating and uploads covers with the service role.
+verify_jwt = false

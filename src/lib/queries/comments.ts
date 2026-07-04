@@ -2,13 +2,19 @@ import { supabase } from '../supabase'
 import type { Comment } from '../../types/blog'
 import type { CommentRow } from '../database.types'
 
-/** CommentRow extended with the joined profiles relation */
+/** CommentRow extended with the joined profiles relation and like aggregate */
 type DbComment = CommentRow & {
   profiles: {
     id: string
     display_name: string
     avatar_url: string | null
   } | null
+  comment_likes: { count: number }[] | null
+}
+
+/** Read the like count out of the embedded `comment_likes(count)` aggregate. */
+function likeCountOf(dbComment: DbComment): number {
+  return dbComment.comment_likes?.[0]?.count ?? 0
 }
 
 /**
@@ -29,7 +35,7 @@ function buildCommentTree(flatComments: DbComment[]): Comment[] {
         avatarUrl: dbComment.profiles?.avatar_url ?? null,
       },
       createdAt: dbComment.created_at ?? '',
-      reactions: 0,
+      reactions: likeCountOf(dbComment),
       isModerated: dbComment.is_moderated ?? false,
       replies: [],
     }
@@ -65,7 +71,8 @@ const COMMENT_SELECT = `
     id,
     display_name,
     avatar_url
-  )
+  ),
+  comment_likes ( count )
 `
 
 /**
@@ -125,21 +132,7 @@ export async function fetchPendingCommentsForPost(postId: string): Promise<Comme
 export async function fetchCommentById(commentId: string): Promise<Comment | null> {
   const { data, error } = await supabase
     .from('comments')
-    .select(`
-      id,
-      post_id,
-      user_id,
-      content,
-      parent_id,
-      is_moderated,
-      created_at,
-      updated_at,
-      profiles:user_id (
-        id,
-        display_name,
-        avatar_url
-      )
-    `)
+    .select(COMMENT_SELECT)
     .eq('id', commentId)
     .single()
 
@@ -158,10 +151,32 @@ export async function fetchCommentById(commentId: string): Promise<Comment | nul
       avatarUrl: dbComment.profiles?.avatar_url ?? null,
     },
     createdAt: dbComment.created_at ?? '',
-    reactions: 0,
+    reactions: likeCountOf(dbComment),
     isModerated: dbComment.is_moderated ?? false,
     replies: [],
   }
+}
+
+/**
+ * Fetch the set of comment IDs the given user has liked among a post's comments.
+ * Used to hydrate optimistic like state on load so a reload doesn't reset the
+ * viewer's liked/unliked toggle (which would flip a real like the wrong way).
+ */
+export async function fetchUserLikedCommentIds(
+  postId: string,
+  userId: string
+): Promise<Set<string>> {
+  const { data, error } = await supabase
+    .from('comment_likes')
+    .select('comment_id, comments!inner(post_id)')
+    .eq('user_id', userId)
+    .eq('comments.post_id', postId)
+
+  if (error || !data) {
+    return new Set()
+  }
+
+  return new Set((data as { comment_id: string }[]).map((row) => row.comment_id))
 }
 
 // Comment writes go through the moderate-comment edge function (service role).

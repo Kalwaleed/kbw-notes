@@ -3,6 +3,7 @@ import type { Comment } from '../types/blog'
 import {
   fetchVisibleCommentsForPost,
   fetchCommentById,
+  fetchUserLikedCommentIds,
   deleteComment as deleteCommentQuery,
 } from '../lib/queries/comments'
 import { toggleEngagement } from '../lib/queries/engagement'
@@ -50,6 +51,14 @@ export function useComments(postId: string): UseCommentsResult {
     try {
       const fetchedComments = await fetchVisibleCommentsForPost(postId)
       setComments(fetchedComments)
+
+      // Hydrate the viewer's liked set so a reload doesn't reset the toggle.
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        setUserLikedComments(await fetchUserLikedCommentIds(postId, user.id))
+      } else {
+        setUserLikedComments(new Set())
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load comments')
     } finally {

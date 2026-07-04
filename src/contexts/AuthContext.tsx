@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect, useCallback, type ReactNode } from 'react'
+import { createContext, useState, useEffect, useCallback, useMemo, type ReactNode } from 'react'
 import { supabase } from '../lib/supabase'
 import type { User, Session } from '@supabase/supabase-js'
 import { isLocalAuthBypassEnabled, localDevSession, localDevUser } from '../lib/localDev'
@@ -40,35 +40,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let cancelled = false
 
     async function bootstrap() {
+      // Read any existing session (e.g. a bootstrapped admin), but never create
+      // one. Public reading needs no session, and cover uploads now go through
+      // the submit-reader-submission Edge Function (service role) rather than a
+      // client-side anonymous session.
       const {
         data: { session: existing },
       } = await supabase.auth.getSession()
       if (cancelled) return
-
-      if (existing) {
-        setSession(existing)
-        setUser(existing.user)
-        setIsLoading(false)
-        return
-      }
-
-      // Storage policy on the `post-images` bucket requires
-      // auth.role() = 'authenticated'. The public submissions page uploads
-      // covers, so bootstrap an anonymous session when none exists. If anon
-      // sign-in is disabled the SPA still works for reading; only the
-      // uploader degrades and surfaces its own error.
-      try {
-        const { data, error: anonError } = await supabase.auth.signInAnonymously()
-        if (cancelled) return
-        if (!anonError && data.session) {
-          setSession(data.session)
-          setUser(data.user)
-        }
-      } catch (err) {
-        console.warn('[AuthContext] anonymous sign-in failed', err)
-      } finally {
-        if (!cancelled) setIsLoading(false)
-      }
+      setSession(existing)
+      setUser(existing?.user ?? null)
+      setIsLoading(false)
     }
 
     bootstrap()
@@ -167,22 +149,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const isAdmin = ((user?.app_metadata as { role?: string } | undefined)?.role) === 'admin'
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        session,
-        isLoading,
-        isAdmin,
-        error,
-        requestMagicLink,
-        isEmailAllowed,
-        signOut,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+  const value = useMemo<AuthContextValue>(
+    () => ({
+      user,
+      session,
+      isLoading,
+      isAdmin,
+      error,
+      requestMagicLink,
+      isEmailAllowed,
+      signOut,
+    }),
+    [user, session, isLoading, isAdmin, error, requestMagicLink, isEmailAllowed, signOut]
   )
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
 export { AuthContext }
