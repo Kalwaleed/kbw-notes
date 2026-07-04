@@ -16,6 +16,11 @@ import {
 
 type SubmissionRowWithEditCount = SubmissionRow & { edit_count?: number | null }
 
+// Explicit projection: keeps reads stable if wide columns (embeddings, audit
+// blobs) are ever added to the table.
+const SUBMISSION_COLUMNS =
+  'id, author_id, title, slug, excerpt, content, cover_image_url, tags, status, published_at, created_at, updated_at, edit_count'
+
 interface FetchSubmissionsOptions {
   authorId: string
   status?: SubmissionStatus | 'all'
@@ -34,7 +39,7 @@ export async function fetchSubmissions({
 
   let query = supabase
     .from('submissions')
-    .select('*')
+    .select(SUBMISSION_COLUMNS)
     .eq('author_id', authorId)
     .order('updated_at', { ascending: false })
 
@@ -61,7 +66,7 @@ export async function fetchSubmission(id: string): Promise<Submission | null> {
 
   const { data, error } = await supabase
     .from('submissions')
-    .select('*')
+    .select(SUBMISSION_COLUMNS)
     .eq('id', id)
     .single()
 

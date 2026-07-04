@@ -9,7 +9,7 @@ import type { EditionRow } from '../database.types'
 export async function fetchCurrentEdition(): Promise<EditionRow | null> {
   const { data, error } = await supabase
     .from('editions')
-    .select('*')
+    .select('id, run_number, edition_date, is_current, started_at')
     .eq('is_current', true)
     .maybeSingle()
 
