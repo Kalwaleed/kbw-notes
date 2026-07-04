@@ -1,12 +1,11 @@
 import { createBrowserRouter, Navigate, Outlet, type RouteObject } from 'react-router-dom'
-import { HomePage } from './pages/HomePage'
-import { PostPage } from './pages/PostPage'
-import { SettingsPage } from './pages/SettingsPage'
-import { SubmissionsPage } from './pages/SubmissionsPage'
-import { NotFoundPage } from './pages/NotFoundPage'
 import { RouterErrorPage } from './pages/RouterErrorPage'
+import { NotFoundPage } from './pages/NotFoundPage'
 import { GateGuard } from './components/GateGuard'
 
+// Pages load through route-level `lazy` so each becomes its own chunk and the
+// entry bundle stays small. The error page and GateGuard stay eager: they must
+// render even when a lazy chunk fails to load.
 export const routes: RouteObject[] = [
   {
     // Root layout: errorElement here covers all child routes.
@@ -18,12 +17,28 @@ export const routes: RouteObject[] = [
         element: <GateGuard><Outlet /></GateGuard>,
         children: [
           { index: true, element: <Navigate to="home" replace /> },
-          { path: 'home', element: <HomePage /> },
-          { path: 'post/:id', element: <PostPage /> },
-          { path: 'submissions', element: <SubmissionsPage /> },
-          { path: 'settings', element: <SettingsPage /> },
+          {
+            path: 'home',
+            lazy: async () => ({ Component: (await import('./pages/HomePage')).HomePage }),
+          },
+          {
+            path: 'post/:id',
+            lazy: async () => ({ Component: (await import('./pages/PostPage')).PostPage }),
+          },
+          {
+            path: 'submissions',
+            lazy: async () => ({
+              Component: (await import('./pages/SubmissionsPage')).SubmissionsPage,
+            }),
+          },
+          {
+            path: 'settings',
+            lazy: async () => ({ Component: (await import('./pages/SettingsPage')).SettingsPage }),
+          },
         ],
       },
+      // Eager: RouterErrorPage imports NotFoundPage statically, so lazy-loading
+      // it here would not create a separate chunk anyway.
       {
         path: '*',
         element: <NotFoundPage />,

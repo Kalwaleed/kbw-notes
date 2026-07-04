@@ -31,6 +31,18 @@ export default defineConfig({
         landing: resolve(__dirname, 'index.html'),
         app:     resolve(__dirname, 'kbw-notes/index.html'),
       },
+      output: {
+        // Split stable vendors out of the app chunk so page edits don't bust
+        // the whole bundle's cache; route chunks come from router.tsx `lazy`.
+        manualChunks(id: string) {
+          if (!id.includes('node_modules')) return undefined
+          if (/node_modules\/(react|react-dom|react-router|react-router-dom|scheduler)\//.test(id)) {
+            return 'react-vendor'
+          }
+          if (id.includes('node_modules/@supabase')) return 'supabase-vendor'
+          return undefined
+        },
+      },
     },
   },
   server: {
