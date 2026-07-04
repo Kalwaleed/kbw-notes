@@ -1,4 +1,11 @@
-@import "tailwindcss";
+/*
+ * Scope Tailwind's class detection to src/. Auto-detection scans the whole
+ * repo (.claude/, mockups/, handoff HTML), which generated junk utilities —
+ * e.g. `[file:line]` tokens in agent docs became invalid `.\[file\:line\]`
+ * rules that tripped an esbuild warning on every build. All real class usage
+ * lives in src/; the landing page (index.html) ships its own CSS.
+ */
+@import "tailwindcss" source("../src");
 
 /* Class-based dark mode in Tailwind v4 */
 @custom-variant dark (&:where(.dark, .dark *));
