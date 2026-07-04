@@ -26,7 +26,7 @@ service-role Edge Functions.
 | BUG | real `comment_likes(count)` + hydrate viewer liked-state | query valid vs prod schema |
 | PERF | memoized AuthContext value | deployed |
 
-### Phase 2b — STAGED, NOT DEPLOYED (this commit)
+### Phase 2b — DEPLOYED 2026-07-04 (dashboard toggles still pending)
 Removed the dead magic-link / `@kbw.vc` / invite machinery:
 - `AuthContext`: removed `requestMagicLink`, `isEmailAllowed`, `ALLOWED_DOMAIN`, `AuthResult`.
 - Deleted `src/pages/RejectedPage.tsx` + `/rejected` route; `src/lib/queries/invites.ts`.
@@ -34,17 +34,10 @@ Removed the dead magic-link / `@kbw.vc` / invite machinery:
 - Migration `20260704150000_remove_invite_machinery.sql`: `drop table invited_emails cascade`.
 - Tests updated (AuthContext, useAuth, router). Build clean, 168/168 pass.
 
-## Deploy — Phase 2b (PK runs; agent can't push to prod)
+Deployed by PK 2026-07-04: migration pushed, `request-magic-link` + `auto-sign-in` deleted,
+client shipped via `vercel --prod` (aliased to kalwaleed.com).
 
-```bash
-cd .../kbw-blog/kbw-notes
-supabase db push                              # applies 20260704150000_remove_invite_machinery
-supabase functions delete request-magic-link  # remove the deployed (now-sourceless) function
-supabase functions delete auto-sign-in
-vercel --prod                                 # ship the client teardown
-```
-
-### Manual dashboard steps (do these too)
+### Manual dashboard steps — STILL PENDING
 1. **Auth > Hooks** → disable the **Before User Created** hook (`hook_restrict_email_domain`).
    Only after it's disabled is it safe to `drop function public.hook_restrict_email_domain(jsonb)`
    (left in place by the migration on purpose).
@@ -57,8 +50,9 @@ vercel --prod                                 # ship the client teardown
 - Submit a post w/ cover image → succeeds (server-side upload).
 - Post a comment → still moderated + visible; like count survives reload.
 
-### Phase 3 — #5 MED + LOW batch — STAGED, NOT DEPLOYED
-Commits `9828a96`..`b8b7660` (build clean, 179/179 tests, lint 0 errors):
+### Phase 3 — #5 MED + LOW batch — DEPLOYED 2026-07-04 & LIVE-VERIFIED
+Commits `9828a96`..`aea8d50` (build clean, 181/181 tests, lint 0 errors; CodeRabbit-reviewed,
+both findings fixed — in-flight-save unmount race + sanitizer perf regression test):
 - **#5 MED** — intake sanitization (details below).
 - **LOW** — explicit column lists replace `select('*')` in `submissions.ts`/`editions.ts`;
   `useSubmissionDraft` now flushes dirty edits on unmount (was silently dropping ≤30s);
@@ -76,19 +70,10 @@ dependency-free), unit-tested from `src/lib/__tests__/readerSubmissionSanitize.t
 > `src/lib/content/contentRenderer.ts` (`sanitizeForStorage`/`sanitizeForArticle`) before any
 > `dangerouslySetInnerHTML`. The intake-side strip is defense-in-depth, not a substitute.
 
-Post-deploy live check: submit a post containing `<script>alert(1)</script>` and `<b>x</b>`
-via the public form; confirm the stored row contains no `<`.
-
-## Deploy — Phase 3 (PK runs, after or with Phase 2b)
-
-```bash
-cd .../kbw-blog/kbw-notes
-supabase functions deploy submit-reader-submission  # picks up _shared/sanitize.ts
-vercel --prod                                       # client: code-split bundle + draft flush
-```
-
-Live check: submit via the public form with `<script>alert(1)</script><b>x</b>` in the body →
-stored row must contain no `<`.
+**Live-verified 2026-07-04:** POSTed a payload with `<script>` blocks, `<b>`/`<i>` tags, an
+unclosed `<img onerror=...>`, and stray specials to the deployed function — stored row
+contained zero `<` (scripts removed with content, tags stripped, leftovers entity-encoded),
+status `pending`. Smoke row deleted afterwards; the older `a9ef1bbb` smoke row was already gone.
 
 ## Backlog (not started)
 - Update project `CLAUDE.md` "Auth Architecture" section to describe the password-gate model
@@ -97,5 +82,6 @@ stored row must contain no `<`.
   `phase-2-real-gate-plan.md`.
 
 ## One-off cleanup
-- Delete the smoke-test row in `reader_submissions`: title `SMOKE TEST - please delete`,
-  id `a9ef1bbb-77c9-4501-8657-f236fe6be57d`.
+- ~~Delete the smoke-test row in `reader_submissions` (`a9ef1bbb-...`)~~ — done; row was
+  already absent when checked 2026-07-04.
+- Push `main` to `origin` (local was 9+ commits ahead after Phase 3).
