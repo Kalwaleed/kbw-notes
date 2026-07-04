@@ -41,6 +41,9 @@ export function useSubmissionDraft({
   const formDataRef = useRef<SubmissionFormData>(formData)
   const isSavingRef = useRef(false)
   const isMountedRef = useRef(true)
+  // Set when the unmount flush finds a save already in flight; the finishing
+  // save runs one more pass so edits made during that save aren't lost.
+  const pendingUnmountFlushRef = useRef(false)
 
   // The unmount flush effect has [] deps, so it reads this prop through a ref
   // to avoid a stale closure if autoSaveEnabled changes mid-session.
@@ -111,6 +114,10 @@ export function useSubmissionDraft({
       if (isMountedRef.current) {
         setIsSaving(false)
       }
+      if (pendingUnmountFlushRef.current) {
+        pendingUnmountFlushRef.current = false
+        void saveNowRef.current()
+      }
     }
   }
 
@@ -148,7 +155,12 @@ export function useSubmissionDraft({
         clearTimeout(saveTimeoutRef.current)
       }
       if (autoSaveEnabledRef.current) {
-        void saveNowRef.current()
+        if (isSavingRef.current) {
+          // saveNow would no-op mid-save; defer the flush to its finally block.
+          pendingUnmountFlushRef.current = true
+        } else {
+          void saveNowRef.current()
+        }
       }
     }
   }, [])

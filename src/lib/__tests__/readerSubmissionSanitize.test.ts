@@ -47,4 +47,16 @@ describe('sanitizeSubmissionText', () => {
   it('returns empty string for tag-only input', () => {
     expect(sanitizeSubmissionText('<script src="https://evil.example/x.js"></script>')).toBe('')
   })
+
+  it('stays fast on pathological input at the 30k zod cap', () => {
+    // Guards the strip loop against quadratic blowup if the regexes change.
+    const cases = [
+      '<'.repeat(15000) + '>'.repeat(15000),
+      '<a'.repeat(10000) + '>'.repeat(10000),
+      '<scr<b></b>ipt>'.repeat(2000),
+    ]
+    const start = performance.now()
+    for (const c of cases) sanitizeSubmissionText(c)
+    expect(performance.now() - start).toBeLessThan(500)
+  })
 })

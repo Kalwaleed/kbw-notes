@@ -180,6 +180,47 @@ describe('useSubmissionDraft', () => {
     expect(mockUpdateSubmission).toHaveBeenCalledTimes(1)
   })
 
+  it('flushes edits made during an in-flight save when unmounting', async () => {
+    let resolveFirst: () => void
+    mockUpdateSubmission.mockImplementationOnce(
+      () => new Promise<void>((r) => { resolveFirst = r })
+    )
+    mockUpdateSubmission.mockResolvedValue({})
+
+    const { result, unmount } = renderHook(() =>
+      useSubmissionDraft({ submissionId: 's-1', initialData })
+    )
+
+    act(() => {
+      result.current.updateField('title', 'First edit')
+    })
+
+    // Start a save that stays in flight...
+    let pending: Promise<Error | null>
+    act(() => {
+      pending = result.current.saveNow()
+    })
+
+    // ...edit again while it's saving, then unmount before it settles.
+    act(() => {
+      result.current.updateField('title', 'Edit during save')
+    })
+
+    unmount()
+
+    await act(async () => {
+      resolveFirst!()
+      await pending!
+    })
+
+    // The unmount flush must run once the in-flight save finishes.
+    expect(mockUpdateSubmission).toHaveBeenCalledTimes(2)
+    expect(mockUpdateSubmission).toHaveBeenLastCalledWith(
+      's-1',
+      expect.objectContaining({ title: 'Edit during save' })
+    )
+  })
+
   it('does not flush on unmount when data is clean', async () => {
     const { unmount } = renderHook(() =>
       useSubmissionDraft({ submissionId: 's-1', initialData })
