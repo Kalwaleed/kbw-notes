@@ -17,6 +17,9 @@ vi.mock('../hooks', () => ({
     deleteComment: vi.fn(),
     likeComment: vi.fn(),
   }),
+  useSettings: () => ({
+    reading: { defaultSort: 'newest', postsPerPage: 12, autoExpandComments: true },
+  }),
 }))
 
 vi.mock('../lib/queries/blog', () => ({

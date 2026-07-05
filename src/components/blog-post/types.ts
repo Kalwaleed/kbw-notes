@@ -25,6 +25,8 @@ export interface BlogPostCommentsProps {
   onToggleLike?: () => void
   /** Set of comment IDs the viewer has reported (renders as "Reported") */
   reportedComments?: Set<string>
+  /** Settings → Reading: start the discussion section expanded (default true) */
+  autoExpandComments?: boolean
   /** Whether comments are loading */
   isLoading?: boolean
   /** Whether there are more comments to load */

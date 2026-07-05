@@ -1,12 +1,16 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import { AppShell } from '../components/shell'
 import { BlogFeed } from '../components/blog-feed'
-import { useBlogPosts } from '../hooks'
+import { useBlogPosts, useSettings } from '../hooks'
 
 export function HomePage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { posts, isLoading, hasMore, loadMore, toggleLike } = useBlogPosts({ limit: 6 })
+  const { reading } = useSettings()
+  const { posts, isLoading, hasMore, loadMore, toggleLike } = useBlogPosts({
+    limit: reading.postsPerPage,
+    sort: reading.defaultSort,
+  })
 
   const navigationItems = [
     { label: 'Home',          href: '/kbw-notes/home',          isActive: location.pathname === '/kbw-notes/home' },

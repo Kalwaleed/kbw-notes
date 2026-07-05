@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { useAuth, useComments } from '../hooks'
+import { useAuth, useComments, useSettings } from '../hooks'
 import { AppShell } from '../components/shell'
 import { BlogPostView } from '../components/blog-post'
 import { fetchBlogPost, getPostLikeCount, hasAnonLikedPost } from '../lib/queries/blog'
@@ -20,6 +20,7 @@ export function PostPage() {
   const navigate = useNavigate()
   const { id: postId } = useParams<{ id: string }>()
   const { user } = useAuth()
+  const { reading } = useSettings()
   const [post, setPost] = useState<PostData | null>(null)
   const [postLoading, setPostLoading] = useState(true)
   const [postError, setPostError] = useState<string | null>(null)
@@ -236,6 +237,7 @@ export function PostPage() {
         isLiked={isLiked}
         onToggleLike={handleToggleLike}
         reportedComments={reportedComments}
+        autoExpandComments={reading.autoExpandComments}
         isLoading={isLoading}
         hasMoreComments={false}
         moderationError={moderationError}

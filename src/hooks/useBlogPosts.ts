@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
-import { fetchBlogPosts, type FetchPostsResult } from '../lib/queries/blog'
+import { fetchBlogPosts, type FetchPostsResult, type FeedSort } from '../lib/queries/blog'
 import { publicEngagement } from '../lib/queries/engagement'
 import { getAnonId } from '../lib/anonId'
 import type { BlogPost } from '../types/blog'
@@ -8,6 +8,7 @@ import { supabase } from '../lib/supabase'
 
 interface UseBlogPostsOptions {
   limit?: number
+  sort?: FeedSort
 }
 
 interface UseBlogPostsReturn {
@@ -21,7 +22,7 @@ interface UseBlogPostsReturn {
   toggleLike: (postId: string) => Promise<void>
 }
 
-export function useBlogPosts({ limit = 6 }: UseBlogPostsOptions = {}): UseBlogPostsReturn {
+export function useBlogPosts({ limit = 6, sort = 'newest' }: UseBlogPostsOptions = {}): UseBlogPostsReturn {
   const [posts, setPosts] = useState<BlogPost[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [hasMore, setHasMore] = useState(true)
@@ -41,6 +42,7 @@ export function useBlogPosts({ limit = 6 }: UseBlogPostsOptions = {}): UseBlogPo
     try {
       const result: FetchPostsResult = await fetchBlogPosts({
         limit,
+        sort,
         userId: userId ?? undefined,
         anonId: userId ? undefined : getAnonId(),
       })
@@ -54,7 +56,7 @@ export function useBlogPosts({ limit = 6 }: UseBlogPostsOptions = {}): UseBlogPo
       setIsLoading(false)
       isLoadingRef.current = false
     }
-  }, [limit, userId])
+  }, [limit, sort, userId])
 
   // Load more posts
   const loadMore = useCallback(async () => {
@@ -65,6 +67,7 @@ export function useBlogPosts({ limit = 6 }: UseBlogPostsOptions = {}): UseBlogPo
     try {
       const result: FetchPostsResult = await fetchBlogPosts({
         limit,
+        sort,
         cursor: cursorRef.current ?? undefined,
         userId: userId ?? undefined,
         anonId: userId ? undefined : getAnonId(),
@@ -79,7 +82,7 @@ export function useBlogPosts({ limit = 6 }: UseBlogPostsOptions = {}): UseBlogPo
       setIsLoading(false)
       isLoadingRef.current = false
     }
-  }, [limit, hasMore, userId])
+  }, [limit, sort, hasMore, userId])
 
   // Refresh posts from scratch
   const refresh = useCallback(() => {

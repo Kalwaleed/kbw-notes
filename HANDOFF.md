@@ -167,6 +167,18 @@ settings, submissions, self-reports, mobile). Findings + fixes:
   self-report submit → reviewer worklist → review save (temp accounts created
   and deleted), staff blocked from reviewer page, dark mode persistence,
   mobile 375px, 404s.
+- **FIXED — Settings → Reading controls were dead** (persisted to localStorage,
+  consumed by nothing). Now wired: Default Sort (newest/oldest server-side via
+  cursor direction; popular sorts a bounded 60-post window by like count —
+  documented cap, revisit with a like-count view if the archive outgrows it),
+  Posts per Page (feed limit), Auto-expand Comments (discussion collapses
+  behind a "Show discussion (N)" button when off; default flipped to TRUE so
+  untouched visitors keep today's always-expanded behavior).
+- Known no-op left alone: "Load more comments" markup exists but
+  hasMoreComments is hard-coded false and all comments load in one fetch —
+  nothing user-visible until comment pagination is a real need.
+- Intentionally unrouted (not regressions): Notifications/Profile/
+  ProfileSetup/NewSubmission/SubmissionDetail pages — per repo CLAUDE.md.
 - 219/219 unit tests, lint clean, build clean.
 
 #### Deploy — Phase 5 (PK runs; backend is already live)

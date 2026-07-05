@@ -92,6 +92,7 @@ export function BlogPostView({
   isLiked = false,
   onToggleLike,
   reportedComments,
+  autoExpandComments = true,
   isLoading = false,
   hasMoreComments = false,
   moderationError,
@@ -107,6 +108,9 @@ export function BlogPostView({
   onLoadMore,
 }: BlogPostCommentsProps) {
   const [isLoadingMore, setIsLoadingMore] = useState(false)
+  // Settings → Reading → Auto-expand Comments. Collapsed is the opt-out; the
+  // section header stays visible so the discussion is always discoverable.
+  const [discussionOpen, setDiscussionOpen] = useState(autoExpandComments)
 
   const filterVisibleComments = (commentsList: Comment[]): Comment[] => {
     return commentsList
@@ -490,6 +494,29 @@ export function BlogPostView({
             </h2>
           </div>
 
+          {!discussionOpen ? (
+            <button
+              type="button"
+              onClick={() => setDiscussionOpen(true)}
+              aria-expanded={false}
+              className="font-mono uppercase"
+              style={{
+                width: '100%',
+                height: 44,
+                background: 'transparent',
+                border: '1px solid var(--color-hair)',
+                borderRadius: 2,
+                fontSize: 'var(--text-mono-sm)',
+                fontWeight: 600,
+                letterSpacing: '0.04em',
+                color: 'var(--color-ink-muted)',
+                cursor: 'pointer',
+              }}
+            >
+              Show discussion{totalComments > 0 ? ` (${totalComments})` : ''}
+            </button>
+          ) : (
+          <>
           <div style={{ marginBottom: 'var(--space-7)' }}>
             <CommentForm
               placeholder="Share your thoughts."
@@ -563,6 +590,8 @@ export function BlogPostView({
                 </div>
               )}
             </>
+          )}
+          </>
           )}
         </section>
       </div>

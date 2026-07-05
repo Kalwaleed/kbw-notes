@@ -10,6 +10,10 @@ vi.mock('../hooks', () => ({
     isLoading: false,
     hasMore: false,
     loadMore: vi.fn(),
+    toggleLike: vi.fn(),
+  }),
+  useSettings: () => ({
+    reading: { defaultSort: 'newest', postsPerPage: 12, autoExpandComments: true },
   }),
 }))
 

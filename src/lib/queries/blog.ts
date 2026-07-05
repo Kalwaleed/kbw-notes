@@ -138,11 +138,20 @@ const LOCAL_DEV_SAMPLE_POSTS: Array<BlogPost & { content: string }> = [
   },
 ]
 
+export type FeedSort = 'newest' | 'oldest' | 'popular'
+
+// 'popular' cannot ride the published_at cursor (it orders by like count), so
+// it fetches one bounded window of the most recent posts and sorts those.
+// Exact while the archive is smaller than the window; older posts fall out of
+// the popular feed beyond it. Revisit with a like-count view if that matters.
+const POPULAR_FEED_WINDOW = 60
+
 export interface FetchPostsOptions {
   limit?: number
   cursor?: string // publishedAt timestamp for cursor-based pagination
   userId?: string // Current user ID for isLiked/isBookmarked
   anonId?: string // Device anon id for isLiked when there is no user session
+  sort?: FeedSort // Reader's Settings → Reading → Default Sort
 }
 
 export interface FetchPostsResult {
@@ -160,13 +169,21 @@ export async function fetchBlogPosts({
   cursor,
   userId,
   anonId,
+  sort = 'newest',
 }: FetchPostsOptions = {}): Promise<FetchPostsResult> {
   if (isLocalAuthBypassEnabled) {
-    const posts = [...LOCAL_DEV_SAMPLE_POSTS].sort(
-      (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
-    )
+    const posts = [...LOCAL_DEV_SAMPLE_POSTS].sort((a, b) => {
+      if (sort === 'popular') return b.likeCount - a.likeCount
+      const delta = new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+      return sort === 'oldest' ? -delta : delta
+    })
+    if (sort === 'popular') {
+      return { posts, nextCursor: null, hasMore: false }
+    }
     const visiblePosts = cursor
-      ? posts.filter((post) => post.publishedAt < cursor)
+      ? posts.filter((post) =>
+          sort === 'oldest' ? post.publishedAt > cursor : post.publishedAt < cursor
+        )
       : posts
     const page = visiblePosts.slice(0, limit)
     const hasMore = visiblePosts.length > limit
@@ -199,12 +216,16 @@ export async function fetchBlogPosts({
     .not('published_at', 'is', null)
     .gte('published_at', PUBLIC_FEED_RESET_AT)
     .lte('published_at', new Date().toISOString())
-    .order('published_at', { ascending: false })
-    .limit(limit + 1) // Fetch one extra to check if there are more
+    .order('published_at', { ascending: sort === 'oldest' })
+    // 'popular' fetches its whole window at once; the others fetch one extra
+    // row to detect whether more pages exist.
+    .limit(sort === 'popular' ? POPULAR_FEED_WINDOW : limit + 1)
 
-  // Apply cursor for pagination
-  if (cursor) {
-    query = query.lt('published_at', cursor)
+  // Apply cursor for pagination ('popular' is a single un-paginated window)
+  if (cursor && sort !== 'popular') {
+    query = sort === 'oldest'
+      ? query.gt('published_at', cursor)
+      : query.lt('published_at', cursor)
   }
 
   const { data: postsData, error: postsError } = await query
@@ -217,8 +238,8 @@ export async function fetchBlogPosts({
     return { posts: [], nextCursor: null, hasMore: false }
   }
 
-  // Check if there are more posts
-  const hasMore = postsData.length > limit
+  // Check if there are more posts (popular is a single fixed window)
+  const hasMore = sort === 'popular' ? false : postsData.length > limit
   const posts = hasMore ? postsData.slice(0, limit) : postsData
 
   // Get post IDs for likes and comments counts
@@ -297,6 +318,14 @@ export async function fetchBlogPosts({
       isBookmarked: userBookmarks.includes(post.id),
     }
   })
+
+  // Popular: order the fetched window by like count (ties break newest-first)
+  if (sort === 'popular') {
+    transformedPosts.sort(
+      (a, b) => b.likeCount - a.likeCount || b.publishedAt.localeCompare(a.publishedAt)
+    )
+    return { posts: transformedPosts, nextCursor: null, hasMore: false }
+  }
 
   // Get next cursor from the last post
   const lastPost = posts[posts.length - 1]

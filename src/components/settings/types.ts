@@ -47,7 +47,9 @@ export const defaultAppearanceSettings: AppearanceSettings = {
 export const defaultReadingSettings: ReadingSettings = {
   defaultSort: 'newest',
   postsPerPage: 12,
-  autoExpandComments: false,
+  // Default true: the discussion section has always rendered expanded, so the
+  // opt-out is the new behavior, not the default.
+  autoExpandComments: true,
 }
 
 export const defaultNotificationSettings: NotificationSettings = {
