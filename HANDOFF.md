@@ -194,7 +194,7 @@ Report on a comment flips to "Reported"; comment still moderates in ~5s.
 old client ignores it entirely; to disable anon engagement hard, delete the
 `public-engagement` function (`supabase functions delete public-engagement`).
 
-### Phase 6 — Per-post OG preview cards — BUILT, NOT DEPLOYED (2026-07-05)
+### Phase 6 — Per-post OG preview cards — DEPLOYED & LIVE-VERIFIED 2026-07-05
 Vercel routing middleware (`middleware.ts` at repo root, matcher `/kbw-notes/post/:id`)
 serves social crawlers (Twitterbot, LinkedInBot, facebookexternalhit, WhatsApp, Slackbot,
 Discordbot, TelegramBot) minimal HTML with per-post og:/twitter: tags; every other
@@ -227,17 +227,24 @@ package) to the SPA rewrite untouched.
   real post → 200 + real og tags (`hit`); human Chrome → SPA (`pass`); non-UUID id and
   unknown UUID with crawler UA → SPA (`pass`).
 
-#### Deploy — Phase 6 (PK runs)
-```bash
-cd .../kbw-blog/kbw-notes
-vercel --prod
-```
-Post-deploy checks:
-1. `curl -s -D - -o /dev/null -A "Twitterbot/1.0" https://kalwaleed.com/kbw-notes/post/<real-id>`
-   → `x-og-middleware: hit`; repeat without `-A` → `pass` and the SPA still renders.
-2. LinkedIn Post Inspector (`linkedin.com/post-inspector`) on a post URL → card shows
-   title/excerpt/cover.
-3. X compose box with a post URL pasted → card preview renders (the old cards-dev
+#### Deploy — Phase 6 — DONE (PK ran `vercel --prod` 2026-07-05, dpl_3TzjX9Q3…)
+Live-verified against kalwaleed.com the same day:
+- All four required crawler UAs (Twitterbot, LinkedInBot, facebookexternalhit,
+  WhatsApp) → `x-og-middleware: hit` with correct per-post og tags on both live
+  posts (escaped titles, real excerpts + cover images, `summary_large_image`).
+- Human UA → SPA untouched (`pass`); `/kbw-notes/home` with a crawler UA → middleware
+  not invoked at all (matcher correctly scoped).
+- Build-log wart fixed in follow-up commit `2abd942`: Vercel's middleware compile
+  type-checks under nodenext and logged a NON-fatal TS2835 on the extensionless
+  import (middleware shipped and works regardless — esbuild doesn't type-check).
+  Import now carries a `.js` extension; next deploy's log is clean. No redeploy
+  needed for function.
+
+Platform-UI checks left with PK (need account logins; scraper-level behavior already
+proven by the UA curls above):
+1. LinkedIn Post Inspector (`linkedin.com/post-inspector`) on a post URL → card shows
+   title/excerpt/cover. Re-inspecting also purges LinkedIn's ~7-day URL cache.
+2. X compose box with a post URL pasted → card preview renders (the old cards-dev
    validator is retired). X caches per-URL up to ~7 days; append `?v=2` to force a
    fresh scrape.
 

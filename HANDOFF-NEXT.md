@@ -1,8 +1,8 @@
 # KBW Notes — Remaining Items (post Phase 5)
 
 State as of 2026-07-05: full QA sweep done, site live-verified functional end to
-end (see `HANDOFF.md` Phase 5). Item 1 resolved; item 2 built and awaiting PK's
-`vercel --prod`; item 3 sits with PK + counsel. Nothing blocks the site.
+end (see `HANDOFF.md` Phase 5). Items 1 and 2 resolved; item 3 sits with PK +
+counsel. Nothing blocks the site.
 
 ---
 
@@ -48,17 +48,17 @@ sits.
 
 ---
 
-## 2. ~~Share links unfurl without preview cards (OG tags)~~ — BUILT 2026-07-05, awaiting deploy
+## 2. ~~Share links unfurl without preview cards (OG tags)~~ — RESOLVED 2026-07-05
 
 **Outcome:** Vercel routing middleware built, tested (267/267 incl. 48 new),
-and verified against `vercel dev` with spoofed crawler UAs — crawlers get
-per-post `og:title`/`og:description`/`og:image` from the `submissions` table,
-humans get the SPA untouched. Full detail, deploy checks, accepted-risk note,
-and rollback: `HANDOFF.md` Phase 6.
+deployed by PK (`vercel --prod`), and live-verified on kalwaleed.com: all four
+crawler UAs get per-post `og:title`/`og:description`/`og:image` from the
+`submissions` table; humans get the SPA untouched. Full detail, accepted-risk
+note, and rollback: `HANDOFF.md` Phase 6.
 
-**PK action:** run `vercel --prod` from the repo, then the three post-deploy
-checks in HANDOFF.md Phase 6 (curl header check, LinkedIn Post Inspector, X
-compose preview).
+**Remaining PK-only check (optional, needs account logins):** LinkedIn Post
+Inspector + X compose-box preview on a post URL — scraper-level behavior is
+already proven by crawler-UA curls against prod.
 
 <details><summary>Original item (for context)</summary>
 
