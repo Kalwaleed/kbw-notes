@@ -195,6 +195,8 @@ old client ignores it entirely; to disable anon engagement hard, delete the
 `public-engagement` function (`supabase functions delete public-engagement`).
 
 ## Backlog (not started)
+> The three active items (pending-submission review, OG unfurl cards, comp-language
+> counsel gate) are detailed with options/owners in **`HANDOFF-NEXT.md`**.
 - Per-post OG meta tags (X/LinkedIn unfurl cards). Share links WORK but unfurl
   generic — the SPA serves one static `<head>`. Needs prerender/edge middleware.
 - Admin surface for `reader_submissions` (32 pending rows sitting unreviewed as

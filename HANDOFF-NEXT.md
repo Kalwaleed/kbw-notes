@@ -1,0 +1,82 @@
+# KBW Notes — Remaining Items (post Phase 5)
+
+State as of 2026-07-05: full QA sweep done, site live-verified functional end to
+end (see `HANDOFF.md` Phase 5). Three items remain. None block the site; all
+need a PK decision before work starts.
+
+---
+
+## 1. 32 pending reader submissions — no review surface
+
+**What:** `reader_submissions` holds 32 rows, all `status='pending'`, dating
+back through the public intake launch. There is no UI to read, approve, or
+reject them — today they are reachable only via service-role SQL.
+
+**Why it matters:** Readers who submitted got "The draft is in review" and
+nothing has ever been reviewed. Reputation cost compounds the longer the queue
+sits.
+
+**Options (ranked):**
+1. **Digest first (zero build):** agent dumps title/name/excerpt of all 32 to a
+   private file; PK triages keep/kill in one pass; agent deletes rejects via
+   SQL. Decides whether a UI is even warranted. ~15 min.
+2. **Minimal admin surface:** `/kbw-notes/review-submissions` behind the
+   existing admin role (`k@kbw.vc`), mirroring the Phase 4 reviewer-page
+   pattern (RoleGuard + RLS). List → read → approve (promote to `submissions`
+   draft) / reject. ~0.5–1 day agent work + `vercel --prod`.
+3. Do nothing (queue keeps growing silently).
+
+**Hard rule if a UI is built:** `reader_submissions.*` must still pass through
+`contentRenderer.ts` sanitization before any `dangerouslySetInnerHTML`
+(HANDOFF.md Phase 3 note). Intake-side stripping is defense-in-depth only.
+
+**Owner:** PK decides option; agent executes. **Deadline:** none set.
+
+---
+
+## 2. Share links unfurl without preview cards (OG tags)
+
+**What:** X/LinkedIn share URLs work (verified live), but the SPA serves one
+static `<head>` for every route — no per-post `og:title` / `og:description` /
+`og:image`. Shared links render as bare URLs, not cards.
+
+**Why it matters:** Distribution. A card with the post title + cover image
+materially outperforms a naked link on both platforms.
+
+**Approach:** Vercel edge middleware (or a rewrite to an edge function) on
+`/kbw-notes/post/:id` that, for crawler user-agents (Twitterbot, LinkedInBot,
+facebookexternalhit, WhatsApp), fetches title/excerpt/cover from Supabase and
+returns HTML with populated meta tags; humans keep getting the SPA. No SSR
+migration needed.
+
+**Scope:** one middleware file + tests + deploy. ~0.5 day agent work +
+`vercel --prod`. Note: middleware deploy is `vercel --prod` — PK runs it.
+
+**Owner:** agent on PK's go. **Deadline:** none set.
+
+---
+
+## 3. Equity/comp language in `Handoff_from_design_agent/` drafts — counsel gate
+
+**What:** CodeRabbit review flagged, and agent confirmed:
+- `KBW-AI-Adoption-Staff-Email.md` — reads as a binding equity grant tied to
+  AI adoption ("Every staff member…", "Ownership means…").
+- `KBW-AI-Adoption-Mandate.md` (lines ~44–45) — ties Day-30 review compliance
+  to bonus/equity enforcement.
+
+**Why it matters:** This is compensation language, not an announcement. Repo
+policy already states comp decisions go through counsel, not this system
+(HANDOFF.md Phase 4: "NO equity/comp fields — comp decisions go through
+counsel"). Distributing as-is creates enforceable-promise risk.
+
+**Action:** PK routes both drafts through counsel/HR before any distribution.
+Agent does not edit these — they sit in the design-handoff drop zone under the
+cleanup gate (repo CLAUDE.md: no deletions without PK sign-off).
+
+**Owner:** PK + counsel. **Deadline:** before any staff distribution.
+
+---
+
+*File created 2026-07-05 during the Phase 5 QA session. Named `HANDOFF-NEXT.md`
+(not `handoff.md`) because macOS's case-insensitive filesystem would collide
+with `HANDOFF.md`.*
