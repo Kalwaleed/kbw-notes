@@ -23,6 +23,7 @@
     "@tiptap/extension-placeholder": "^3.17.1",
     "@tiptap/react": "^3.17.1",
     "@tiptap/starter-kit": "^3.17.1",
+    "@vercel/functions": "^3.7.5",
     "dompurify": "^3.3.1",
     "lowlight": "^3.3.0",
     "lucide-react": "^0.469.0",

@@ -194,11 +194,61 @@ Report on a comment flips to "Reported"; comment still moderates in ~5s.
 old client ignores it entirely; to disable anon engagement hard, delete the
 `public-engagement` function (`supabase functions delete public-engagement`).
 
+### Phase 6 — Per-post OG preview cards — BUILT, NOT DEPLOYED (2026-07-05)
+Vercel routing middleware (`middleware.ts` at repo root, matcher `/kbw-notes/post/:id`)
+serves social crawlers (Twitterbot, LinkedInBot, facebookexternalhit, WhatsApp, Slackbot,
+Discordbot, TelegramBot) minimal HTML with per-post og:/twitter: tags; every other
+request falls through (`next()` from `@vercel/functions` — new dependency, Vercel's own
+package) to the SPA rewrite untouched.
+
+- Logic lives in `src/lib/socialPreview.ts`, deliberately dependency-free — it is
+  bundled into the edge runtime, where a module-scope import failure (e.g. the supabase
+  client reading `import.meta.env` at import time) would 500 the whole route.
+- Crawler path: UA substring match → UUID gate on `:id` (doubles as the PostgREST
+  injection guard) → anon-key PostgREST read mirroring `fetchBlogPost`'s visibility
+  filter (`status=published`, `published_at >= PUBLIC_FEED_RESET_AT` — **keep in sync
+  with `src/lib/queries/blog.ts`**) with a 3s timeout → HTML with escaped values.
+  `cover_image_url` must be `^https?://` and ≤2048 chars, else the site og-image
+  fallback; excerpt → description (whitespace-collapsed, 300-char cap, site description
+  fallback).
+- Failure policy: any error/miss/missing-env → SPA fallthrough with today's generic
+  tags, never an error page. `x-og-middleware: hit|pass` response header makes the live
+  deploy curl-verifiable.
+- Crawler response is `Cache-Control: private, no-store` — deliberate: the URL is
+  shared with human traffic and URL-keyed CDN caching could serve the bot stub to a
+  browser. Crawler volume is a handful of unfurls; fresh fetches are noise.
+- **Accepted risk (flag from plan review, needs no action):** a spoofed crawler UA
+  reads a post's title/excerpt/cover without the landing password. The same metadata is
+  already publicly readable via anon-key PostgREST (the SPA's own read path), and
+  publishing it to social feeds is the feature's purpose. No new write surface.
+- Verified: 267/267 unit tests (48 new: `src/lib/__tests__/socialPreview.test.ts` +
+  `ogMiddleware.test.ts`), lint 0 errors, build clean (`middleware.ts` added to
+  `tsc -b` via `tsconfig.app.json` include). `vercel dev` live checks: Twitterbot on a
+  real post → 200 + real og tags (`hit`); human Chrome → SPA (`pass`); non-UUID id and
+  unknown UUID with crawler UA → SPA (`pass`).
+
+#### Deploy — Phase 6 (PK runs)
+```bash
+cd .../kbw-blog/kbw-notes
+vercel --prod
+```
+Post-deploy checks:
+1. `curl -s -D - -o /dev/null -A "Twitterbot/1.0" https://kalwaleed.com/kbw-notes/post/<real-id>`
+   → `x-og-middleware: hit`; repeat without `-A` → `pass` and the SPA still renders.
+2. LinkedIn Post Inspector (`linkedin.com/post-inspector`) on a post URL → card shows
+   title/excerpt/cover.
+3. X compose box with a post URL pasted → card preview renders (the old cards-dev
+   validator is retired). X caches per-URL up to ~7 days; append `?v=2` to force a
+   fresh scrape.
+
+#### Rollback (Phase 6)
+`vercel rollback` (instant alias re-point) + `git revert` the single Phase 6 commit so
+the next deploy doesn't re-ship it. Middleware is read-only — no backend or state to
+clean.
+
 ## Backlog (not started)
-> The three active items (pending-submission review, OG unfurl cards, comp-language
-> counsel gate) are detailed with options/owners in **`HANDOFF-NEXT.md`**.
-- Per-post OG meta tags (X/LinkedIn unfurl cards). Share links WORK but unfurl
-  generic — the SPA serves one static `<head>`. Needs prerender/edge middleware.
+> Remaining decision items (admin review surface, comp-language counsel gate) are
+> detailed with options/owners in **`HANDOFF-NEXT.md`**.
 - Admin surface for `reader_submissions` (32 pending rows sitting unreviewed as
   of 2026-07-05) and for `comment_reports` — service-role/SQL only today.
 - Optional: server-side landing gate (Vercel middleware + signed cookie) per the old

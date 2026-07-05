@@ -1,8 +1,8 @@
 # KBW Notes — Remaining Items (post Phase 5)
 
 State as of 2026-07-05: full QA sweep done, site live-verified functional end to
-end (see `HANDOFF.md` Phase 5). Three items remain. None block the site; all
-need a PK decision before work starts.
+end (see `HANDOFF.md` Phase 5). Item 1 resolved; item 2 built and awaiting PK's
+`vercel --prod`; item 3 sits with PK + counsel. Nothing blocks the site.
 
 ---
 
@@ -48,7 +48,19 @@ sits.
 
 ---
 
-## 2. Share links unfurl without preview cards (OG tags)
+## 2. ~~Share links unfurl without preview cards (OG tags)~~ — BUILT 2026-07-05, awaiting deploy
+
+**Outcome:** Vercel routing middleware built, tested (267/267 incl. 48 new),
+and verified against `vercel dev` with spoofed crawler UAs — crawlers get
+per-post `og:title`/`og:description`/`og:image` from the `submissions` table,
+humans get the SPA untouched. Full detail, deploy checks, accepted-risk note,
+and rollback: `HANDOFF.md` Phase 6.
+
+**PK action:** run `vercel --prod` from the repo, then the three post-deploy
+checks in HANDOFF.md Phase 6 (curl header check, LinkedIn Post Inspector, X
+compose preview).
+
+<details><summary>Original item (for context)</summary>
 
 **What:** X/LinkedIn share URLs work (verified live), but the SPA serves one
 static `<head>` for every route — no per-post `og:title` / `og:description` /
@@ -66,7 +78,9 @@ migration needed.
 **Scope:** one middleware file + tests + deploy. ~0.5 day agent work +
 `vercel --prod`. Note: middleware deploy is `vercel --prod` — PK runs it.
 
-**Owner:** agent on PK's go. **Deadline:** none set.
+</details>
+
+**Owner:** PK (deploy + post-deploy checks). **Deadline:** none set.
 
 ---
 
