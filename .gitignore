@@ -56,3 +56,6 @@ supabase/.branches/
 # Worktrees
 .worktrees/
 .gstack/
+
+# memsearch plugin index (contains session transcripts/secrets-adjacent notes)
+.memsearch/

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { sanitizeForArticle, trustTransformedHtml, type TrustedHtml } from '../../lib/content/contentRenderer'
-import { Twitter, Linkedin, Link2, MessageCircle } from 'lucide-react'
+import { Twitter, Linkedin, Link2, MessageCircle, Heart } from 'lucide-react'
 import type { BlogPostCommentsProps, Comment } from './types'
 import { CommentThread } from './CommentThread'
 import { CommentForm } from './CommentForm'
@@ -89,6 +89,9 @@ export function BlogPostView({
   comments,
   currentUserId,
   userReactions,
+  isLiked = false,
+  onToggleLike,
+  reportedComments,
   isLoading = false,
   hasMoreComments = false,
   moderationError,
@@ -453,6 +456,13 @@ export function BlogPostView({
             If this was worth reading, send it to one person who would also read it.
           </p>
           <div className="flex items-center" style={{ gap: 8 }}>
+            {onToggleLike && (
+              <LikeButton
+                liked={isLiked}
+                count={blogPost.likeCount ?? 0}
+                onClick={onToggleLike}
+              />
+            )}
             <ShareIconButton onClick={onShareTwitter} label="Share on X" Icon={Twitter} text="X" />
             <ShareIconButton onClick={onShareLinkedIn} label="Share on LinkedIn" Icon={Linkedin} text="IN" />
             <ShareIconButton onClick={onCopyLink} label="Copy link to clipboard" Icon={Link2} text="URL" />
@@ -516,6 +526,7 @@ export function BlogPostView({
                     onReact={onReact}
                     onReport={onReport}
                     userReactions={userReactions}
+                    reportedComments={reportedComments}
                   />
                 ))}
               </div>
@@ -560,6 +571,20 @@ export function BlogPostView({
         {typeof blogPost.readingTime === 'number' && (
           <MetaCard label="Reading time" value={`${blogPost.readingTime} MIN`} />
         )}
+        {onToggleLike && (
+          <MetaCard
+            label="React"
+            value={
+              <div className="flex" style={{ gap: 6, marginTop: 6 }}>
+                <LikeButton
+                  liked={isLiked}
+                  count={blogPost.likeCount ?? 0}
+                  onClick={onToggleLike}
+                />
+              </div>
+            }
+          />
+        )}
         <MetaCard
           label="Share"
           value={
@@ -600,6 +625,51 @@ function MetaCard({ label, value }: { label: string; value: React.ReactNode }) {
         {value}
       </div>
     </div>
+  )
+}
+
+function LikeButton({
+  liked,
+  count,
+  onClick,
+}: {
+  liked: boolean
+  count: number
+  onClick?: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={liked ? 'Unlike this post' : 'Like this post'}
+      aria-pressed={liked}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 6,
+        height: 32,
+        padding: '0 10px',
+        background: liked ? 'var(--color-accent-tint)' : 'transparent',
+        border: liked ? '1px solid var(--color-accent)' : '1px solid var(--color-hair)',
+        borderRadius: 2,
+        color: liked ? 'var(--color-rose)' : 'var(--color-ink)',
+        cursor: 'pointer',
+        transition: 'background-color 100ms ease',
+      }}
+    >
+      <Heart size={14} strokeWidth={1.5} fill={liked ? 'currentColor' : 'none'} />
+      <span
+        className="font-mono uppercase"
+        style={{
+          fontSize: 'var(--text-mono-xs)',
+          fontWeight: 600,
+          letterSpacing: '0.04em',
+          color: liked ? 'var(--color-rose)' : 'var(--color-ink-muted)',
+        }}
+      >
+        {(liked ? 'Liked' : 'Like') + (count > 0 ? ` · ${count}` : '')}
+      </span>
+    </button>
   )
 }
 

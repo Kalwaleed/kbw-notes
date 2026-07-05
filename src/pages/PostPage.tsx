@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth, useComments } from '../hooks'
 import { AppShell } from '../components/shell'
 import { BlogPostView } from '../components/blog-post'
-import { fetchBlogPost, getPostLikeCount } from '../lib/queries/blog'
+import { fetchBlogPost, getPostLikeCount, hasAnonLikedPost } from '../lib/queries/blog'
+import { publicEngagement } from '../lib/queries/engagement'
+import { getAnonId } from '../lib/anonId'
 
 type PostData = NonNullable<Awaited<ReturnType<typeof fetchBlogPost>>>
 
@@ -22,6 +24,8 @@ export function PostPage() {
   const [postLoading, setPostLoading] = useState(true)
   const [postError, setPostError] = useState<string | null>(null)
   const [likeCount, setLikeCount] = useState(0)
+  const [isLiked, setIsLiked] = useState(false)
+  const [reportedComments, setReportedComments] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     if (!postId) return
@@ -31,14 +35,16 @@ export function PostPage() {
 
     async function loadPost() {
       try {
-        const [data, likes] = await Promise.all([
+        const [data, likes, liked] = await Promise.all([
           fetchBlogPost(id),
           getPostLikeCount(id),
+          hasAnonLikedPost(id, getAnonId()),
         ])
         if (cancelled) return
         if (data) {
           setPost(data)
           setLikeCount(likes)
+          setIsLiked(liked)
         } else {
           setPostError('Post not found')
         }
@@ -94,14 +100,50 @@ export function PostPage() {
   const handleDelete = async (commentId: string) => { await deleteComment(commentId) }
 
   const handleReact = async (commentId: string) => {
-    if (!user) return
     try { await likeComment(commentId) } catch (err) {
       console.error('Failed to like comment:', err)
-      alert(err instanceof Error ? err.message : 'Failed to like comment')
     }
   }
 
-  const handleReport = () => { /* TODO: reports table */ }
+  // Device-scoped post like via the public-engagement Edge Function,
+  // optimistic with rollback. The ref blocks double-clicks from double-firing
+  // the server toggle before the first request settles.
+  const likeInFlightRef = useRef(false)
+  const handleToggleLike = async () => {
+    if (!postId || likeInFlightRef.current) return
+    likeInFlightRef.current = true
+    const wasLiked = isLiked
+    const previousCount = likeCount
+    setIsLiked(!wasLiked)
+    setLikeCount(Math.max(0, previousCount + (wasLiked ? -1 : 1)))
+    try {
+      const result = await publicEngagement('toggle_post_like', postId)
+      setIsLiked(result.liked ?? !wasLiked)
+      if (typeof result.count === 'number') setLikeCount(result.count)
+    } catch (err) {
+      setIsLiked(wasLiked)
+      setLikeCount(previousCount)
+      console.error('Failed to toggle post like:', err)
+    } finally {
+      likeInFlightRef.current = false
+    }
+  }
+
+  const handleReport = async (commentId: string) => {
+    // Optimistic: flip to "Reported" immediately; revert if the call fails.
+    setReportedComments((prev) => new Set(prev).add(commentId))
+    try {
+      await publicEngagement('report_comment', commentId)
+    } catch (err) {
+      setReportedComments((prev) => {
+        const next = new Set(prev)
+        next.delete(commentId)
+        return next
+      })
+      console.error('Failed to report comment:', err)
+    }
+  }
+
   const handleLoadMore = async () => { /* TODO: pagination */ }
 
   if (postLoading) {
@@ -191,6 +233,9 @@ export function PostPage() {
         isAuthenticated={!!user}
         currentUserId={user?.id}
         userReactions={userLikedComments}
+        isLiked={isLiked}
+        onToggleLike={handleToggleLike}
+        reportedComments={reportedComments}
         isLoading={isLoading}
         hasMoreComments={false}
         moderationError={moderationError}
@@ -201,7 +246,7 @@ export function PostPage() {
         onAddComment={handleAddComment}
         onReply={handleReply}
         onDelete={handleDelete}
-        onReact={user ? handleReact : undefined}
+        onReact={handleReact}
         onReport={handleReport}
         onLoadMore={handleLoadMore}
       />

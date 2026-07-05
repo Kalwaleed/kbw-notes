@@ -158,18 +158,19 @@ export async function fetchCommentById(commentId: string): Promise<Comment | nul
 }
 
 /**
- * Fetch the set of comment IDs the given user has liked among a post's comments.
+ * Liked comment IDs among a post's comments, filtered by one identity column.
  * Used to hydrate optimistic like state on load so a reload doesn't reset the
  * viewer's liked/unliked toggle (which would flip a real like the wrong way).
  */
-export async function fetchUserLikedCommentIds(
+async function fetchLikedCommentIdsBy(
   postId: string,
-  userId: string
+  column: 'user_id' | 'anon_id',
+  value: string
 ): Promise<Set<string>> {
   const { data, error } = await supabase
     .from('comment_likes')
     .select('comment_id, comments!inner(post_id)')
-    .eq('user_id', userId)
+    .eq(column, value)
     .eq('comments.post_id', postId)
 
   if (error || !data) {
@@ -177,6 +178,22 @@ export async function fetchUserLikedCommentIds(
   }
 
   return new Set((data as { comment_id: string }[]).map((row) => row.comment_id))
+}
+
+/** Liked comment IDs for a signed-in user among a post's comments. */
+export function fetchUserLikedCommentIds(
+  postId: string,
+  userId: string
+): Promise<Set<string>> {
+  return fetchLikedCommentIdsBy(postId, 'user_id', userId)
+}
+
+/** Liked comment IDs for an anonymous device (anon id) among a post's comments. */
+export function fetchAnonLikedCommentIds(
+  postId: string,
+  anonId: string
+): Promise<Set<string>> {
+  return fetchLikedCommentIdsBy(postId, 'anon_id', anonId)
 }
 
 // Comment writes go through the moderate-comment edge function (service role).

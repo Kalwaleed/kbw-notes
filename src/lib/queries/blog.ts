@@ -142,6 +142,7 @@ export interface FetchPostsOptions {
   limit?: number
   cursor?: string // publishedAt timestamp for cursor-based pagination
   userId?: string // Current user ID for isLiked/isBookmarked
+  anonId?: string // Device anon id for isLiked when there is no user session
 }
 
 export interface FetchPostsResult {
@@ -158,6 +159,7 @@ export async function fetchBlogPosts({
   limit = 6,
   cursor,
   userId,
+  anonId,
 }: FetchPostsOptions = {}): Promise<FetchPostsResult> {
   if (isLocalAuthBypassEnabled) {
     const posts = [...LOCAL_DEV_SAMPLE_POSTS].sort(
@@ -250,6 +252,16 @@ export async function fetchBlogPosts({
 
     userLikes = likesResult.data?.map((l) => l.post_id) ?? []
     userBookmarks = bookmarksResult.data?.map((b) => b.post_id) ?? []
+  } else if (anonId) {
+    // Anonymous viewer: hydrate liked-state by device anon id (public SELECT
+    // policy; the id is only ever queried, never written, from the client)
+    const { data: anonLikes } = await supabase
+      .from('post_likes')
+      .select('post_id')
+      .eq('anon_id', anonId)
+      .in('post_id', postIds)
+
+    userLikes = anonLikes?.map((l) => l.post_id) ?? []
   }
 
   // Count likes and comments per post
@@ -388,4 +400,19 @@ export async function getPostLikeCount(postId: string): Promise<number> {
 
   if (error) return 0
   return count ?? 0
+}
+
+/**
+ * Whether the given device (anon id) has liked a post. Hydrates the like
+ * toggle on the post page so a reload doesn't flip a real like the wrong way.
+ */
+export async function hasAnonLikedPost(postId: string, anonId: string): Promise<boolean> {
+  const { data } = await supabase
+    .from('post_likes')
+    .select('id')
+    .eq('post_id', postId)
+    .eq('anon_id', anonId)
+    .maybeSingle()
+
+  return !!data
 }

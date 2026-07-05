@@ -122,7 +122,71 @@ Backup first: `pg_dump "$DB_URL" -t public.self_reports -t public.self_report_re
 INSERT/UPDATE policies (data stays readable), ban the staff users in the dashboard,
 `vercel rollback`. Sign-ins are natively logged in dashboard Auth logs.
 
+### Phase 5 — Full-site QA sweep + anonymous engagement — 2026-07-05
+Full live audit of kalwaleed.com (gate, feed, post, comments, likes, shares,
+settings, submissions, self-reports, mobile). Findings + fixes:
+
+- **FIXED (prod, live) — comment moderation was broken.** `ANTHROPIC_API_KEY`
+  was never set as a function secret (only the stray `ClaudeCode` secret existed;
+  the code fallback to it was removed in Phase 0/1/2 #6). Every comment since
+  hit the degraded path: HTTP 202, inserted `is_moderated=false`, never shown.
+  Fixed via `supabase secrets set ANTHROPIC_API_KEY` (same key, digest-matched).
+  Live-verified: comment approved end-to-end in ~4s. PK's stuck 'test' comment
+  from 07-04 was deleted along with QA smoke rows.
+- **BUILT — anonymous engagement (likes + reports).** The public blog had NO
+  like UI at all (HomePage never passed `onLike`; PostPage had no post-like
+  affordance; comment likes were signed-in-only) because RLS correctly blocks
+  anon writes. New device-scoped path mirroring the comment architecture:
+  - Migration `20260705093249_anon_engagement` (applied to prod): nullable
+    `user_id` + `anon_id` on post_likes/comment_likes (exactly-one-identity
+    check, partial unique indexes), `comment_reports` table (service-role
+    only), service-role-only RPCs `toggle_post_like_anon` /
+    `toggle_comment_like_anon` / `report_comment_anon` (EXECUTE revoked from
+    client roles; anon REST call returns 42501 — verified), and
+    `notify_on_post_like` now skips anon likes (no actor).
+  - Edge Function `public-engagement` (deployed, verify_jwt=false): same
+    origin/CSRF/`cf-connecting-ip` guards as moderate-comment, 30 actions/min
+    per IP via `rate_limit_increment`. Guards live-verified (403/415/400/404).
+  - Client: `kbw-anon-id` UUID in localStorage (`src/lib/anonId.ts`); like
+    buttons on feed cards + post page (meta rail + share block); anonymous
+    comment likes; Report button now real (was a no-op TODO) with
+    optimistic "Reported" state; liked-state hydrates by anon id on load.
+  - Threat envelope: same as anonymous comments — localStorage identity is
+    best-effort dedupe; per-IP rate limit bounds count inflation. Accepted.
+- **FIXED — folio bar overlap on phone widths** (clock now hidden below `sm`,
+  left slug truncates).
+- **FIXED — `HydrateFallback` console warning** (root route
+  `hydrateFallbackElement: <></>`).
+- Checked, NOT bugs: header ThemeToggle dark-mode state (correct); self-report
+  wipe seen during automation was a test-tooling ref remap, not a product bug
+  (form gates on `loading`, drafts persist per keystroke).
+- Verified working (no changes needed): landing gate (wrong/right password),
+  share intents (X `twitter.com/intent/tweet` → 301 x.com with url+text;
+  LinkedIn `share-offsite` → shareArticle with url; NOTHING posted), reader
+  submission E2E incl. server-side cover upload + sanitization, staff
+  self-report submit → reviewer worklist → review save (temp accounts created
+  and deleted), staff blocked from reviewer page, dark mode persistence,
+  mobile 375px, 404s.
+- 219/219 unit tests, lint clean, build clean.
+
+#### Deploy — Phase 5 (PK runs; backend is already live)
+```bash
+cd .../kbw-blog/kbw-notes
+vercel --prod        # ships the new client (likes/report UI + folio fix)
+```
+Post-deploy check: like a post on kalwaleed.com → count sticks after reload;
+Report on a comment flips to "Reported"; comment still moderates in ~5s.
+
+#### Rollback (Phase 5)
+`vercel rollback` for the client. Backend: the migration is additive —
+old client ignores it entirely; to disable anon engagement hard, delete the
+`public-engagement` function (`supabase functions delete public-engagement`).
+
 ## Backlog (not started)
+- Per-post OG meta tags (X/LinkedIn unfurl cards). Share links WORK but unfurl
+  generic — the SPA serves one static `<head>`. Needs prerender/edge middleware.
+- Admin surface for `reader_submissions` (32 pending rows sitting unreviewed as
+  of 2026-07-05) and for `comment_reports` — service-role/SQL only today.
 - Optional: server-side landing gate (Vercel middleware + signed cookie) per the old
   `phase-2-real-gate-plan.md`.
 - Optional: `drop function public.hook_restrict_email_domain(jsonb)` — safe now that the

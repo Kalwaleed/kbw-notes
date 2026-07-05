@@ -2,21 +2,43 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, act, waitFor } from '@testing-library/react'
 import type { Comment } from '../../types/blog'
 
-// Mock all external modules before importing
-const mockFetchCommentsForPost = vi.fn()
-const mockFetchCommentById = vi.fn()
-const mockDeleteCommentQuery = vi.fn()
-const mockToggleEngagement = vi.fn()
+// Mock all external modules before importing (vi.hoisted per project convention)
+const {
+  mockFetchCommentsForPost,
+  mockFetchCommentById,
+  mockDeleteCommentQuery,
+  mockToggleEngagement,
+  mockFetchUserLikedCommentIds,
+  mockFetchAnonLikedCommentIds,
+  mockPublicEngagement,
+  mockSubmitCommentForModeration,
+  mockGetUser,
+} = vi.hoisted(() => ({
+  mockFetchCommentsForPost: vi.fn(),
+  mockFetchCommentById: vi.fn(),
+  mockDeleteCommentQuery: vi.fn(),
+  mockToggleEngagement: vi.fn(),
+  mockFetchUserLikedCommentIds: vi.fn(),
+  mockFetchAnonLikedCommentIds: vi.fn(),
+  mockPublicEngagement: vi.fn(),
+  mockSubmitCommentForModeration: vi.fn(),
+  mockGetUser: vi.fn(),
+}))
 vi.mock('../../lib/queries/comments', () => ({
   fetchVisibleCommentsForPost: (...args: unknown[]) => mockFetchCommentsForPost(...args),
   fetchCommentById: (...args: unknown[]) => mockFetchCommentById(...args),
+  fetchUserLikedCommentIds: (...args: unknown[]) => mockFetchUserLikedCommentIds(...args),
+  fetchAnonLikedCommentIds: (...args: unknown[]) => mockFetchAnonLikedCommentIds(...args),
   deleteComment: (...args: unknown[]) => mockDeleteCommentQuery(...args),
 }))
 vi.mock('../../lib/queries/engagement', () => ({
   toggleEngagement: (...args: unknown[]) => mockToggleEngagement(...args),
+  publicEngagement: (...args: unknown[]) => mockPublicEngagement(...args),
+}))
+vi.mock('../../lib/anonId', () => ({
+  getAnonId: () => '00000000-0000-4000-8000-000000000000',
 }))
 
-const mockSubmitCommentForModeration = vi.fn()
 vi.mock('../../lib/moderationService', () => ({
   submitCommentForModeration: (...args: unknown[]) => mockSubmitCommentForModeration(...args),
   ModerationError: class ModerationError extends Error {
@@ -29,7 +51,6 @@ vi.mock('../../lib/moderationService', () => ({
   },
 }))
 
-const mockGetUser = vi.fn()
 vi.mock('../../lib/supabase', () => ({
   supabase: {
     auth: { getUser: (...args: unknown[]) => mockGetUser(...args) },
@@ -64,6 +85,8 @@ describe('useComments', () => {
     vi.clearAllMocks()
     mockFetchCommentsForPost.mockResolvedValue([sampleComment])
     mockGetUser.mockResolvedValue({ data: { user: { id: 'u-1' } } })
+    mockFetchUserLikedCommentIds.mockResolvedValue(new Set())
+    mockFetchAnonLikedCommentIds.mockResolvedValue(new Set())
   })
 
   it('fetches comments on mount', async () => {
@@ -206,19 +229,37 @@ describe('useComments', () => {
     expect(result.current.userLikedComments.has('c-1')).toBe(false)
   })
 
-  it('likeComment requires authentication', async () => {
+  it('likeComment uses the anonymous engagement path when signed out', async () => {
     mockGetUser.mockResolvedValue({ data: { user: null } })
+    mockPublicEngagement.mockResolvedValue({ liked: true, count: 6 })
 
     const { result } = renderHook(() => useComments('post-1'))
     await waitFor(() => expect(result.current.isLoading).toBe(false))
 
     await act(async () => {
-      try {
-        await result.current.likeComment('c-1')
-      } catch (err) {
-        expect((err as Error).message).toBe('You must be logged in to like comments')
-      }
+      await result.current.likeComment('c-1')
     })
+
+    expect(mockPublicEngagement).toHaveBeenCalledWith('toggle_comment_like', 'c-1')
+    expect(mockToggleEngagement).not.toHaveBeenCalled()
+    expect(result.current.userLikedComments.has('c-1')).toBe(true)
+    // Server count is authoritative for the anonymous path
+    expect(result.current.comments[0].reactions).toBe(6)
+  })
+
+  it('likeComment keeps the user-scoped RPC path when signed in', async () => {
+    mockToggleEngagement.mockResolvedValue(true)
+
+    const { result } = renderHook(() => useComments('post-1'))
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+
+    await act(async () => {
+      await result.current.likeComment('c-1')
+    })
+
+    expect(mockToggleEngagement).toHaveBeenCalledWith('comment_like', 'c-1')
+    expect(mockPublicEngagement).not.toHaveBeenCalled()
+    expect(result.current.userLikedComments.has('c-1')).toBe(true)
   })
 
   it('clearModerationError clears the error', async () => {

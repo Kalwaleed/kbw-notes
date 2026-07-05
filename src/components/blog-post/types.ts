@@ -19,6 +19,12 @@ export interface BlogPostCommentsProps {
   currentUserId?: string
   /** Set of comment IDs the current user has reacted to */
   userReactions?: Set<string>
+  /** Whether the viewer (device or user) has liked the post */
+  isLiked?: boolean
+  /** Called when the viewer toggles the post like */
+  onToggleLike?: () => void
+  /** Set of comment IDs the viewer has reported (renders as "Reported") */
+  reportedComments?: Set<string>
   /** Whether comments are loading */
   isLoading?: boolean
   /** Whether there are more comments to load */

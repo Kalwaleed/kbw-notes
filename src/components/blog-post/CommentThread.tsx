@@ -13,6 +13,7 @@ interface CommentThreadProps {
   onReact?: (commentId: string) => void
   onReport?: (commentId: string) => void
   userReactions?: Set<string>
+  reportedComments?: Set<string>
 }
 
 function formatRelativeTime(dateString: string): string {
@@ -40,6 +41,7 @@ export function CommentThread({
   onReact,
   onReport,
   userReactions,
+  reportedComments,
 }: CommentThreadProps) {
   const maxDepth = 3
   const isNested = depth > 0
@@ -48,10 +50,12 @@ export function CommentThread({
   const isPendingReview = !comment.isModerated
   const isOwnComment = currentUserId && comment.commenter.id === currentUserId
   const hasUserAvatar = comment.commenter.avatarUrl && comment.commenter.avatarUrl.length > 0
+  const isReported = reportedComments?.has(comment.id) ?? false
 
   const [isReplying, setIsReplying] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isReporting, setIsReporting] = useState(false)
 
   const handleReplySubmit = async (content: string) => {
     setIsSubmitting(true)
@@ -70,6 +74,16 @@ export function CommentThread({
       await onDelete?.(comment.id)
     } finally {
       setIsDeleting(false)
+    }
+  }
+
+  const handleReport = async () => {
+    if (isReported || isReporting) return
+    setIsReporting(true)
+    try {
+      await onReport?.(comment.id)
+    } finally {
+      setIsReporting(false)
     }
   }
 
@@ -238,11 +252,12 @@ export function CommentThread({
                 )}
 
                 <ActionLink
-                  onClick={() => onReport?.(comment.id)}
-                  ariaLabel="Report comment"
+                  onClick={() => { void handleReport() }}
+                  disabled={isReported || isReporting}
+                  ariaLabel={isReported ? 'Comment reported' : 'Report comment'}
                 >
-                  <Flag size={14} strokeWidth={1.5} />
-                  Report
+                  <Flag size={14} strokeWidth={1.5} fill={isReported ? 'currentColor' : 'none'} />
+                  {isReported ? 'Reported' : 'Report'}
                 </ActionLink>
 
                 {isOwnComment && (
@@ -289,6 +304,7 @@ export function CommentThread({
               onReact={onReact}
               onReport={onReport}
               userReactions={userReactions}
+              reportedComments={reportedComments}
             />
           ))}
         </div>

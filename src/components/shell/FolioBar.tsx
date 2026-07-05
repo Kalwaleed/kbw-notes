@@ -70,7 +70,7 @@ export function FolioBar() {
       aria-label="Folio bar"
     >
       <span
-        className="font-mono uppercase truncate"
+        className="font-mono uppercase truncate min-w-0"
         style={{
           fontSize: 'var(--text-mono-xs)',
           color: 'var(--color-ink-muted)',
@@ -80,7 +80,7 @@ export function FolioBar() {
         {left}
       </span>
       <span
-        className="font-mono uppercase flex items-center gap-2"
+        className="font-mono uppercase flex items-center gap-2 whitespace-nowrap"
         style={{
           fontSize: 'var(--text-mono-xs)',
           color: 'var(--color-ink-muted)',
@@ -90,8 +90,10 @@ export function FolioBar() {
         <span className="live-dot" aria-hidden="true" />
         <span>LIVE</span>
       </span>
+      {/* The clock doesn't fit next to the run/edition slug on phone widths;
+          drop it below sm rather than let the slots overlap. */}
       <span
-        className="font-mono uppercase tabular-nums"
+        className="font-mono uppercase tabular-nums whitespace-nowrap hidden sm:inline"
         style={{
           fontSize: 'var(--text-mono-xs)',
           color: 'var(--color-ink-muted)',

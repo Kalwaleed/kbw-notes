@@ -7,30 +7,10 @@ export type Json =
   | Json[]
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.1"
   }
   public: {
     Tables: {
@@ -113,22 +93,25 @@ export type Database = {
       }
       comment_likes: {
         Row: {
+          anon_id: string | null
           comment_id: string
           created_at: string | null
           id: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
+          anon_id?: string | null
           comment_id: string
           created_at?: string | null
           id?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
+          anon_id?: string | null
           comment_id?: string
           created_at?: string | null
           id?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -141,6 +124,48 @@ export type Database = {
           {
             foreignKeyName: "comment_likes_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comment_reports: {
+        Row: {
+          anon_id: string | null
+          comment_id: string
+          created_at: string
+          id: string
+          reason: string | null
+          reporter_user_id: string | null
+        }
+        Insert: {
+          anon_id?: string | null
+          comment_id: string
+          created_at?: string
+          id?: string
+          reason?: string | null
+          reporter_user_id?: string | null
+        }
+        Update: {
+          anon_id?: string | null
+          comment_id?: string
+          created_at?: string
+          id?: string
+          reason?: string | null
+          reporter_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comment_reports_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comment_reports_reporter_user_id_fkey"
+            columns: ["reporter_user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -321,22 +346,25 @@ export type Database = {
       }
       post_likes: {
         Row: {
+          anon_id: string | null
           created_at: string | null
           id: string
           post_id: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
+          anon_id?: string | null
           created_at?: string | null
           id?: string
           post_id: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
+          anon_id?: string | null
           created_at?: string | null
           id?: string
           post_id?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -705,6 +733,10 @@ export type Database = {
         Args: { p_identifier: string; p_window_ms: number }
         Returns: number
       }
+      report_comment_anon: {
+        Args: { p_anon_id: string; p_comment_id: string }
+        Returns: boolean
+      }
       submit_reader_submission: {
         Args: {
           p_content: string
@@ -718,6 +750,20 @@ export type Database = {
         Returns: string
       }
       toggle_comment_like: { Args: { p_comment_id: string }; Returns: boolean }
+      toggle_comment_like_anon: {
+        Args: { p_anon_id: string; p_comment_id: string }
+        Returns: {
+          like_count: number
+          liked: boolean
+        }[]
+      }
+      toggle_post_like_anon: {
+        Args: { p_anon_id: string; p_post_id: string }
+        Returns: {
+          like_count: number
+          liked: boolean
+        }[]
+      }
     }
     Enums: {
       notification_type:
@@ -851,9 +897,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       notification_type: [

@@ -34,6 +34,15 @@ vi.mock('../lib/queries/blog', () => ({
     },
   })),
   getPostLikeCount: vi.fn(async () => 0),
+  hasAnonLikedPost: vi.fn(async () => false),
+}))
+
+vi.mock('../lib/queries/engagement', () => ({
+  publicEngagement: vi.fn(async () => ({ liked: true, count: 1 })),
+}))
+
+vi.mock('../lib/anonId', () => ({
+  getAnonId: () => '00000000-0000-4000-8000-000000000000',
 }))
 
 vi.mock('../components/shell', () => ({

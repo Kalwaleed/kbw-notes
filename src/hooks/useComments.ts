@@ -4,9 +4,11 @@ import {
   fetchVisibleCommentsForPost,
   fetchCommentById,
   fetchUserLikedCommentIds,
+  fetchAnonLikedCommentIds,
   deleteComment as deleteCommentQuery,
 } from '../lib/queries/comments'
-import { toggleEngagement } from '../lib/queries/engagement'
+import { toggleEngagement, publicEngagement } from '../lib/queries/engagement'
+import { getAnonId } from '../lib/anonId'
 import { supabase } from '../lib/supabase'
 import { submitCommentForModeration, ModerationError } from '../lib/moderationService'
 
@@ -57,7 +59,7 @@ export function useComments(postId: string): UseCommentsResult {
       if (user) {
         setUserLikedComments(await fetchUserLikedCommentIds(postId, user.id))
       } else {
-        setUserLikedComments(new Set())
+        setUserLikedComments(await fetchAnonLikedCommentIds(postId, getAnonId()))
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load comments')
@@ -185,12 +187,11 @@ export function useComments(postId: string): UseCommentsResult {
   useEffect(() => { commentsRef.current = comments }, [comments])
   useEffect(() => { userLikedCommentsRef.current = userLikedComments }, [userLikedComments])
 
-  // Like/unlike a comment with optimistic updates
+  // Like/unlike a comment with optimistic updates. Signed-in users toggle
+  // their own row under RLS; anonymous viewers go through the
+  // public-engagement Edge Function with the device anon id.
   const likeComment = useCallback(async (commentId: string) => {
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      throw new Error('You must be logged in to like comments')
-    }
 
     const findComment = (list: Comment[]): Comment | null => {
       for (const comment of list) {
@@ -230,8 +231,16 @@ export function useComments(postId: string): UseCommentsResult {
     })
 
     try {
-      const isNowLiked = await toggleEngagement('comment_like', commentId)
-      const actualCount = isNowLiked ? currentCount + 1 : currentCount - 1
+      let isNowLiked: boolean
+      let serverCount: number | null = null
+      if (user) {
+        isNowLiked = await toggleEngagement('comment_like', commentId)
+      } else {
+        const result = await publicEngagement('toggle_comment_like', commentId)
+        isNowLiked = result.liked ?? false
+        serverCount = typeof result.count === 'number' ? result.count : null
+      }
+      const actualCount = serverCount ?? (isNowLiked ? currentCount + 1 : currentCount - 1)
       setComments((prev) => updateReactionsInTree(prev, Math.max(0, actualCount)))
       setUserLikedComments((prev) => {
         const next = new Set(prev)

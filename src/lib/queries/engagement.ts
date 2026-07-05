@@ -1,11 +1,14 @@
 // Engagement: toggleable, idempotent, atomic interactions on a Submission or
 // Comment. See CONTEXT.md "Engagement" for the domain contract.
 //
-// Today's only kind is comment_like. Post-likes and bookmarks are not exposed
-// in the reader-only UI; if/when authenticated reading returns, add per-kind
-// RPCs and entries below.
+// Two identity paths:
+// - Authenticated (staff): `toggleEngagement` calls user-scoped RPCs under RLS.
+// - Anonymous (the public readership): `publicEngagement` posts to the
+//   `public-engagement` Edge Function with the device's anon id; the function
+//   writes via service-role-only RPCs. The browser has no direct write access.
 
 import { supabase } from '../supabase'
+import { getAnonId } from '../anonId'
 
 export type EngagementKind = 'comment_like'
 
@@ -32,4 +35,46 @@ export async function toggleEngagement(
       return Boolean(data)
     }
   }
+}
+
+export type PublicEngagementAction =
+  | 'toggle_post_like'
+  | 'toggle_comment_like'
+  | 'report_comment'
+
+export interface PublicEngagementResult {
+  liked?: boolean
+  count?: number
+  reported?: boolean
+  alreadyReported?: boolean
+}
+
+/**
+ * Anonymous engagement via the `public-engagement` Edge Function.
+ * Identity is the device's anon id (see lib/anonId.ts). Rate-limited
+ * server-side per IP; a 429 surfaces as a thrown Error with the server's
+ * message.
+ */
+export async function publicEngagement(
+  action: PublicEngagementAction,
+  targetId: string
+): Promise<PublicEngagementResult> {
+  const { data, error } = await supabase.functions.invoke('public-engagement', {
+    body: { action, targetId, anonId: getAnonId() },
+  })
+
+  if (error) {
+    let message = error.message || 'Action failed. Please try again.'
+    try {
+      if (error.context && typeof error.context.json === 'function') {
+        const body = await error.context.json()
+        message = body.error || message
+      }
+    } catch {
+      // could not parse error body; keep the default message
+    }
+    throw new Error(message)
+  }
+
+  return data as PublicEngagementResult
 }

@@ -6,7 +6,7 @@ import { useBlogPosts } from '../hooks'
 export function HomePage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { posts, isLoading, hasMore, loadMore } = useBlogPosts({ limit: 6 })
+  const { posts, isLoading, hasMore, loadMore, toggleLike } = useBlogPosts({ limit: 6 })
 
   const navigationItems = [
     { label: 'Home',          href: '/kbw-notes/home',          isActive: location.pathname === '/kbw-notes/home' },
@@ -17,6 +17,14 @@ export function HomePage() {
   const handleNavigate = (href: string) => navigate(href)
 
   const handleViewPost = (id: string) => navigate(`/kbw-notes/post/${id}`)
+
+  const handleLike = async (id: string) => {
+    try {
+      await toggleLike(id)
+    } catch {
+      // optimistic state already rolled back by the hook; stay quiet in the feed
+    }
+  }
 
   const handleShare = async (id: string) => {
     const post = posts.find((p) => p.id === id)
@@ -86,6 +94,7 @@ export function HomePage() {
         <BlogFeed
           blogPosts={posts}
           onViewPost={handleViewPost}
+          onLike={handleLike}
           onShare={handleShare}
           onLoadMore={loadMore}
           isLoading={isLoading}

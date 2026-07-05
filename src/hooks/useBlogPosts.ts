@@ -1,5 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { fetchBlogPosts, type FetchPostsResult } from '../lib/queries/blog'
+import { publicEngagement } from '../lib/queries/engagement'
+import { getAnonId } from '../lib/anonId'
 import type { BlogPost } from '../types/blog'
 import { useAuth } from './useAuth'
 import { supabase } from '../lib/supabase'
@@ -16,6 +18,7 @@ interface UseBlogPostsReturn {
   loadMore: () => void
   refresh: () => void
   updatePost: (postId: string, updates: Partial<BlogPost>) => void
+  toggleLike: (postId: string) => Promise<void>
 }
 
 export function useBlogPosts({ limit = 6 }: UseBlogPostsOptions = {}): UseBlogPostsReturn {
@@ -39,6 +42,7 @@ export function useBlogPosts({ limit = 6 }: UseBlogPostsOptions = {}): UseBlogPo
       const result: FetchPostsResult = await fetchBlogPosts({
         limit,
         userId: userId ?? undefined,
+        anonId: userId ? undefined : getAnonId(),
       })
 
       setPosts(result.posts)
@@ -63,6 +67,7 @@ export function useBlogPosts({ limit = 6 }: UseBlogPostsOptions = {}): UseBlogPo
         limit,
         cursor: cursorRef.current ?? undefined,
         userId: userId ?? undefined,
+        anonId: userId ? undefined : getAnonId(),
       })
 
       setPosts((prev) => [...prev, ...result.posts])
@@ -88,6 +93,44 @@ export function useBlogPosts({ limit = 6 }: UseBlogPostsOptions = {}): UseBlogPo
   const updatePost = useCallback((postId: string, updates: Partial<BlogPost>) => {
     setPosts((prev) => prev.map((post) => (post.id === postId ? { ...post, ...updates } : post)))
   }, [])
+
+  // Device-scoped like toggle via the public-engagement Edge Function, with
+  // optimistic update and rollback. Post likes are device-scoped for every
+  // viewer of the public blog (there are no reader accounts).
+  const postsRef = useRef(posts)
+  useEffect(() => { postsRef.current = posts }, [posts])
+  // Per-post in-flight guard: a second click before the request settles would
+  // read pre-toggle state from postsRef and double-fire the server toggle.
+  const likesInFlightRef = useRef<Set<string>>(new Set())
+
+  const toggleLike = useCallback(async (postId: string) => {
+    if (likesInFlightRef.current.has(postId)) return
+    const current = postsRef.current.find((p) => p.id === postId)
+    if (!current) return
+    likesInFlightRef.current.add(postId)
+
+    const wasLiked = current.isLiked
+    const previousCount = current.likeCount
+    updatePost(postId, {
+      isLiked: !wasLiked,
+      likeCount: Math.max(0, previousCount + (wasLiked ? -1 : 1)),
+    })
+
+    try {
+      const result = await publicEngagement('toggle_post_like', postId)
+      updatePost(postId, {
+        isLiked: result.liked ?? !wasLiked,
+        likeCount: typeof result.count === 'number'
+          ? result.count
+          : Math.max(0, previousCount + (wasLiked ? -1 : 1)),
+      })
+    } catch (err) {
+      updatePost(postId, { isLiked: wasLiked, likeCount: previousCount })
+      throw err
+    } finally {
+      likesInFlightRef.current.delete(postId)
+    }
+  }, [updatePost])
 
   // Load initial posts on mount and when userId changes
   useEffect(() => {
@@ -135,5 +178,6 @@ export function useBlogPosts({ limit = 6 }: UseBlogPostsOptions = {}): UseBlogPo
     loadMore,
     refresh,
     updatePost,
+    toggleLike,
   }
 }

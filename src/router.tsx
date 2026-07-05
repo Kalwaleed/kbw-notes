@@ -12,6 +12,10 @@ export const routes: RouteObject[] = [
     // Root layout: errorElement here covers all child routes.
     errorElement: <RouterErrorPage />,
     element: <Outlet />,
+    // Rendered while a lazy route chunk loads on first paint; an empty
+    // fragment keeps the paper background with no flash (and silences the
+    // HydrateFallback warning — react-router treats null as "not provided").
+    hydrateFallbackElement: <></>,
     children: [
       {
         path: '/kbw-notes',
