@@ -227,24 +227,27 @@ package) to the SPA rewrite untouched.
   real post → 200 + real og tags (`hit`); human Chrome → SPA (`pass`); non-UUID id and
   unknown UUID with crawler UA → SPA (`pass`).
 
-#### Deploy — Phase 6 — DONE (PK ran `vercel --prod` twice, 2026-07-05)
-**Final live state: prod `dpl_CtEXjE7G9aVLXDqdFLE3kGddPK1p`, `main` @ `eee7e8f`
+#### Deploy — Phase 6 — DONE (PK ran `vercel --prod`, 2026-07-05)
+**Final live state: prod `dpl_HdehhitNT8EWC68j5GvxwxaeKYjp`, `main` @ `e2e25d3`
 (deployed == committed, no drift). Build log clean.** Aliased to kalwaleed.com.
 
-Two deploys landed:
+Deploys landed:
 1. `dpl_3TzjX9Q3…` (from `e277a1a`) — shipped the middleware. Worked, but Vercel's
    separate middleware type-check runs under nodenext and logged a NON-fatal TS2835
    on the extensionless import (esbuild bundled + shipped it anyway).
-2. `dpl_CtEXjE7G…` (from `eee7e8f`) — carried the `.js` import fix (`2abd942`, clean
-   build log now), the `@kbwNotes` handle correction (`eee7e8f`), and docs (`94016ee`).
+2. `dpl_CtEXjE7G…` (from `eee7e8f`) — `.js` import fix (`2abd942`, clean build log),
+   handle correction to `@kbwNotes` (`eee7e8f`), docs (`94016ee`).
+3. `dpl_Hdehhit…` (from `e2e25d3`) — recased the handle to `@KbwNotes` to match the
+   real X account's exact display casing (verified live on x.com; case-insensitive to
+   X's resolver, cosmetic match).
 
 Live-verified against kalwaleed.com after the final deploy:
 - All four required crawler UAs (Twitterbot, LinkedInBot, facebookexternalhit,
   WhatsApp) → `x-og-middleware: hit` with correct per-post og tags on both live
   posts (escaped titles, real excerpts + cover images, `summary_large_image`).
 - `twitter:site` on post cards and `twitter:site`/`twitter:creator` on the homepage
-  now read `@kbwNotes` (was `@kbw_notes`, corrected per PK). No residual `@kbw_notes`
-  live anywhere.
+  read `@KbwNotes` (the real, verified X account — display name "Khaled bin Alwaleed").
+  No residual `@kbw_notes`/`@kbwNotes` live anywhere.
 - og:image confirmed X-valid: `image/jpeg`, ~627 KB (< X's 5 MB cap), fetchable by
   Twitterbot (no hotlink/403 guard on the Supabase bucket).
 - Human UA → SPA untouched (`pass`); `/kbw-notes/home` with a crawler UA → middleware
