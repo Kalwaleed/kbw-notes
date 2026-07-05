@@ -227,26 +227,38 @@ package) to the SPA rewrite untouched.
   real post → 200 + real og tags (`hit`); human Chrome → SPA (`pass`); non-UUID id and
   unknown UUID with crawler UA → SPA (`pass`).
 
-#### Deploy — Phase 6 — DONE (PK ran `vercel --prod` 2026-07-05, dpl_3TzjX9Q3…)
-Live-verified against kalwaleed.com the same day:
+#### Deploy — Phase 6 — DONE (PK ran `vercel --prod` twice, 2026-07-05)
+**Final live state: prod `dpl_CtEXjE7G9aVLXDqdFLE3kGddPK1p`, `main` @ `eee7e8f`
+(deployed == committed, no drift). Build log clean.** Aliased to kalwaleed.com.
+
+Two deploys landed:
+1. `dpl_3TzjX9Q3…` (from `e277a1a`) — shipped the middleware. Worked, but Vercel's
+   separate middleware type-check runs under nodenext and logged a NON-fatal TS2835
+   on the extensionless import (esbuild bundled + shipped it anyway).
+2. `dpl_CtEXjE7G…` (from `eee7e8f`) — carried the `.js` import fix (`2abd942`, clean
+   build log now), the `@kbwNotes` handle correction (`eee7e8f`), and docs (`94016ee`).
+
+Live-verified against kalwaleed.com after the final deploy:
 - All four required crawler UAs (Twitterbot, LinkedInBot, facebookexternalhit,
   WhatsApp) → `x-og-middleware: hit` with correct per-post og tags on both live
   posts (escaped titles, real excerpts + cover images, `summary_large_image`).
+- `twitter:site` on post cards and `twitter:site`/`twitter:creator` on the homepage
+  now read `@kbwNotes` (was `@kbw_notes`, corrected per PK). No residual `@kbw_notes`
+  live anywhere.
+- og:image confirmed X-valid: `image/jpeg`, ~627 KB (< X's 5 MB cap), fetchable by
+  Twitterbot (no hotlink/403 guard on the Supabase bucket).
 - Human UA → SPA untouched (`pass`); `/kbw-notes/home` with a crawler UA → middleware
-  not invoked at all (matcher correctly scoped).
-- Build-log wart fixed in follow-up commit `2abd942`: Vercel's middleware compile
-  type-checks under nodenext and logged a NON-fatal TS2835 on the extensionless
-  import (middleware shipped and works regardless — esbuild doesn't type-check).
-  Import now carries a `.js` extension; next deploy's log is clean. No redeploy
-  needed for function.
+  not invoked (matcher correctly scoped to post URLs).
 
-Platform-UI checks left with PK (need account logins; scraper-level behavior already
-proven by the UA curls above):
+Platform-UI checks left with PK (optional — need account logins; scraper-level behavior
+already proven by the UA curls above):
 1. LinkedIn Post Inspector (`linkedin.com/post-inspector`) on a post URL → card shows
    title/excerpt/cover. Re-inspecting also purges LinkedIn's ~7-day URL cache.
+   (Browser tooling here is Chrome/CDP-only; can't drive PK's signed-in Safari.)
 2. X compose box with a post URL pasted → card preview renders (the old cards-dev
-   validator is retired). X caches per-URL up to ~7 days; append `?v=2` to force a
-   fresh scrape.
+   validator is retired). X caches per-URL up to ~7 days with no manual purge; a URL
+   scraped before this deploy keeps the old `@kbw_notes`/generic card until it expires
+   — append `?v=2` on the next share to force a fresh scrape.
 
 #### Rollback (Phase 6)
 `vercel rollback` (instant alias re-point) + `git revert` the single Phase 6 commit so
