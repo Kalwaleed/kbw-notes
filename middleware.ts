@@ -8,7 +8,9 @@
 // verified with curl instead of guessing from card validators.
 
 import { next } from '@vercel/functions'
-import { crawlerPreviewResponse } from './src/lib/socialPreview'
+// .js extension: Vercel type-checks middleware under nodenext resolution
+// (TS2835 without it); TS/esbuild/vite all map it back to the .ts source.
+import { crawlerPreviewResponse } from './src/lib/socialPreview.js'
 
 export const config = { matcher: '/kbw-notes/post/:id' }
 
