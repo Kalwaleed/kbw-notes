@@ -6,11 +6,23 @@ need a PK decision before work starts.
 
 ---
 
-## 1. 32 pending reader submissions — no review surface
+## 1. ~~32 pending reader submissions~~ — RESOLVED 2026-07-05
 
-**What:** `reader_submissions` holds 32 rows, all `status='pending'`, dating
-back through the public intake launch. There is no UI to read, approve, or
-reject them — today they are reachable only via service-role SQL.
+**Outcome:** Triage showed all 32 rows were QA/test residue from the June
+26–27 intake build-out (every email @example.com or absent; all bodies
+self-describing test copy). No genuine reader submission has ever arrived.
+PK approved deletion; all 32 rows deleted (storage untouched — test rows
+referenced external URLs or real post covers; `reader-submissions/` prefix
+was already empty). Queue is now 0.
+
+**Follow-on decision, deferred:** build the admin review surface only when a
+first real submission arrives. Intake works and is verified; the digest
+process below can serve as the interim triage playbook.
+
+<details><summary>Original item (for context)</summary>
+
+**What:** `reader_submissions` held 32 rows, all `status='pending'`. There is
+no UI to read, approve, or reject them — reachable only via service-role SQL.
 
 **Why it matters:** Readers who submitted got "The draft is in review" and
 nothing has ever been reviewed. Reputation cost compounds the longer the queue
@@ -30,7 +42,9 @@ sits.
 `contentRenderer.ts` sanitization before any `dangerouslySetInnerHTML`
 (HANDOFF.md Phase 3 note). Intake-side stripping is defense-in-depth only.
 
-**Owner:** PK decides option; agent executes. **Deadline:** none set.
+</details>
+
+**Owner:** closed for now; reopens on first genuine submission.
 
 ---
 
