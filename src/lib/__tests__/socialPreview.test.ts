@@ -191,7 +191,7 @@ describe('buildPreviewHtml', () => {
     expect(html).toContain('<meta property="og:type" content="article">')
     expect(html).toContain('<meta property="og:site_name" content="kbw Notes">')
     expect(html).toContain('<meta name="twitter:card" content="summary_large_image">')
-    expect(html).toContain('<meta name="twitter:site" content="@kbwNotes">')
+    expect(html).toContain('<meta name="twitter:site" content="@KbwNotes">')
     expect(html).toContain(`<link rel="canonical" href="${postUrl}">`)
   })
 

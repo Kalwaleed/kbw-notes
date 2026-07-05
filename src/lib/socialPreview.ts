@@ -34,7 +34,7 @@ const PUBLIC_FEED_RESET_AT = '2026-04-30T10:00:28.000Z'
 // Site constants mirroring the static tags in index.html.
 const SITE_ORIGIN = 'https://kalwaleed.com'
 const SITE_NAME = 'kbw Notes'
-const TWITTER_HANDLE = '@kbwNotes'
+const TWITTER_HANDLE = '@KbwNotes'
 const FALLBACK_IMAGE = `${SITE_ORIGIN}/og-image.png`
 const FALLBACK_DESCRIPTION =
   "A working notebook from kbw — articles, ideas, and observations on capital, computation, and the systems we don't yet have words for."
