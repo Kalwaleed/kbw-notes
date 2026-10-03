@@ -124,6 +124,7 @@ Identity, notification, profile, and submission-management/admin pages are not e
 
 ### Design System
 
+- **KBW v3 rule (PK decision, 2026-10-03)**: new visual work follows the KBW v3 design (skill `kbw-design`, kit at `~/Documents/KBW-Design-System/`). The skin described below is legacy until the planned re-skin. Do not extend it with new colours or fonts.
 - **Primary**: Violet palette (`--color-primary-*`)
 - **Secondary**: Indigo palette (`--color-secondary-*`)
 - **Neutral**: Slate palette
