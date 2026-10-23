@@ -8,13 +8,15 @@ afterEach(() => {
 })
 
 // Mock IntersectionObserver for infinite scroll tests
-const mockIntersectionObserver = vi.fn()
-mockIntersectionObserver.mockReturnValue({
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-  disconnect: vi.fn(),
-})
-window.IntersectionObserver = mockIntersectionObserver
+// Vitest 4: a mock called with `new` needs a class implementation, not mockReturnValue.
+const mockIntersectionObserver = vi.fn(
+  class {
+    observe = vi.fn()
+    unobserve = vi.fn()
+    disconnect = vi.fn()
+  },
+)
+window.IntersectionObserver = mockIntersectionObserver as unknown as typeof IntersectionObserver
 
 // Mock navigator.share for share tests
 Object.defineProperty(navigator, 'share', {
