@@ -29,7 +29,8 @@ export function createMockSupabase() {
   for (const method of chainMethods) {
     const original = builder[method]
     builder[method] = vi.fn((...args: unknown[]) => {
-      original(...args)
+      // Vitest 4 types an untyped vi.fn() as possibly constructable; call it as a plain function.
+      ;(original as (...a: unknown[]) => unknown)(...args)
       return new Proxy(builder, {
         get(target, prop) {
           if (prop === 'then') return thenFn
