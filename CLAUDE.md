@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Design Handoff Folder
 
-`kbw-notes/Handoff_from_design_agent/` is the drop zone for website designs and any other HTML for this project.
+`Handoff_from_design_agent/` (at the repository root) is the drop zone for website designs and any other HTML for this project.
 
 Protocol:
 1. **Read first** — at the start of a task, read everything in this folder for new input and use it to drive the work.
@@ -100,7 +100,7 @@ out in Phase 2b, migration `20260704150000_remove_invite_machinery`):
 - `public/landing.js` checks the password client-side and sets `localStorage['kbw-gate-passed']`.
 - `GateGuard` (`src/components/GateGuard.tsx`) wraps `/kbw-notes/*` and redirects to `/` when the flag is missing.
 - **The gate is soft**: the password ships in the JS bundle and the flag is settable via devtools. Accepted MVP risk envelope; the server-side upgrade (Vercel middleware + signed cookie) sits in the `HANDOFF.md` backlog.
-- The browser has **no write access** to the database or storage. All anonymous writes go through service-role Edge Functions (`moderate-comment`, `submit-reader-submission`) with per-IP rate limiting.
+- The browser has **no write access** to the database or storage. All anonymous writes go through service-role Edge Functions (`moderate-comment`, `submit-reader-submission`, `public-engagement` for anonymous likes and comment reports) with per-IP rate limiting.
 - **Exception — staff self-reports** (`/kbw-notes/report`, `/kbw-notes/report/review`): real Supabase email+password accounts (~15, dashboard-provisioned; login-only UI via `StaffLogin` + `RoleGuard`). Donya carries `app_metadata.role = 'reviewer'` (checked by `is_reviewer()` in RLS). These routes sit OUTSIDE GateGuard. See `HANDOFF.md` Phase 4 for provisioning/deploy.
 - `AuthProvider` (`src/contexts/AuthContext.tsx`) exposes `signIn`/`signOut`/`isAdmin`/`isReviewer`. Keep RLS write protections in place before expanding authenticated UI further.
 - Admin role (future use) lives in `auth.users.raw_app_meta_data.role = 'admin'`; bootstrapped to `k@kbw.vc`.
@@ -174,7 +174,7 @@ Identity, notification, profile, and submission-management/admin pages are not e
 
 **Types:** `src/lib/database.types.ts` is auto-generated via `supabase gen types`. Do NOT manually edit. Convenience aliases (`Profile`, `CommentRow`, `SubmissionRow`, `NotificationRow`) are exported from this file.
 
-**Migrations:** `supabase/migrations/` — numbered 001-018 plus timestamp-named migrations from 2026-07 onward (latest: `20260704150000_remove_invite_machinery`).
+**Migrations:** `supabase/migrations/` — numbered 001-018 plus timestamp-named migrations from 2026-07 onward. List the folder for the latest one.
 
 ### Security Model
 
@@ -202,7 +202,7 @@ const mockSupabase = vi.hoisted(() => ({
 vi.mock('../lib/supabase', () => ({ supabase: mockSupabase }))
 ```
 
-Tests live alongside source in `__tests__/` directories. 111 tests across 9 files covering auth validation, hooks, moderation, protected routes, and blog feed.
+Tests live alongside source in `__tests__/` directories. They cover auth validation, hooks, moderation, protected routes, and blog feed.
 
 ## Environment Variables
 
