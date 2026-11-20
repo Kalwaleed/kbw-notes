@@ -23,6 +23,8 @@ npm run test:e2e     # Playwright end-to-end tests
 npm run test:e2e:ui  # Playwright with UI
 ```
 
+This repo uses npm (package-lock.json). This is an approved exception to the global bun default.
+
 ### Supabase
 
 ```bash
